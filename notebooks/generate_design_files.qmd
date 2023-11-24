@@ -23,8 +23,8 @@ library(tidyverse)
 readr::local_edition(1)
 ```
 
-# Code
-```{r}
+# Code Full Proteome
+```{r Design Files Full Proteome Data}
 #| message: false
 referenceDesign <- read_tsv(file = '~/multiomics/data/merged_ids.tsv',col_names = TRUE)
 batchDesign <- read_tsv(file = '~/multiomics/data/proteomics/full/design_experiment_order.txt') %>% 
@@ -37,6 +37,47 @@ samplesToRemove <- c('S000785','S003045','S002208','S000621','S000454')
 designFiltered <- mergedDesign %>% 
   filter(!(sample_id %in% samplesToRemove))
 write_tsv(x = designFiltered,file = '~/multiomics/results/design_files/mergedDesign_final_filtered.tsv')
+```
+
+# Code Phosphoproteome
+```{r Design Files Phospho Data}
+#| message: false
+
+# In the pdf report from DIA-NN, there are samples which have less than 10 000 precursors at 1% FDR. Therefore, before proceeding, these samples will be removed. A design file will be created to allow for that
+rm(list = ls())
+
+referenceDesign <- read_tsv(file = '~/multiomics/data/merged_ids.tsv',col_names = TRUE)
+designPhospho <- read_tsv(file = '~/multiomics/data/proteomics/phospho/design_phospho_experiment_order.tsv') %>% 
+  mutate(across(.cols = where(is.character),.fns = ~str_replace_all(string = .x,pattern = '\\-',replacement = '\\_')))
+mergedDesign <- dplyr::left_join(x = designPhospho,y = referenceDesign, by= join_by(sample_id==Sample), keep=TRUE)
+
+data <- read_tsv(file = '~/multiomics/data/proteomics/phospho/230815_report.pr_matrix.tsv') %>% 
+  mutate(across(where(is.double),~na_if(.,0.0))) %>% 
+  mutate(across(where(is.double),~na_if(.,0)))
+
+newColNames <- data %>%
+  select(-c(1:10)) %>%
+  colnames()
+newColNames <- newColNames %>%
+  str_extract(pattern = '(?<=\\\\)[:digit:]{6}\\_[:graph:]+(?=\\.mzML\\.dia)') %>%
+  str_replace_all(pattern = '\\-',replacement = '\\_')
+newColNames <- c(colnames(data)[1:10],newColNames)
+colnames(data) <- newColNames
+
+newData <- data %>% 
+  select(mergedDesign$file_name)
+colnames(newData) <- mergedDesign$sample_id
+
+newDesign <- newData %>% 
+  map(.x = ., .f = ~sum(!is.na(.x))) %>%
+  simplify(.) %>% 
+  tibble(sample_id = names(.),Precursors = .) %>% 
+  left_join(x=mergedDesign,y=.,by="sample_id")
+designFiltered <- newDesign %>% 
+  filter(Precursors >= 10000)
+
+write_tsv(x = newDesign,file = '~/multiomics/results/design_files/mergedDesign_PHOSPHO_final.tsv')
+write_tsv(x = designFiltered, file = '~/multiomics/results/design_files/mergedDesign_PHOSPHO_Filtered.tsv')
 ```
 
 

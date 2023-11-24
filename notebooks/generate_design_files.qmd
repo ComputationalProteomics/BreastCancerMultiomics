@@ -1,7 +1,42 @@
 ---
 title: "Generate Design Files"
 author: "Sergio Mosquim Junior"
-format: html
-editor: visual
+format:
+  html:
+    toc: true
+    code-fold: true
+    embed-resources: true
+    toc-location: left
+    smooth-scroll: true
+engine: knitr
 ---
+
+# Requires Packages:
+```{r}
+#| message: false
+#| warning: false
+library(tidyverse)
+```
+# Error with vroom FIX
+```{r}
+#| message: false
+readr::local_edition(1)
+```
+
+# Code
+```{r}
+#| message: false
+referenceDesign <- read_tsv(file = '~/multiomics/data/merged_ids.tsv',col_names = TRUE)
+batchDesign <- read_tsv(file = '~/multiomics/data/proteomics/full/design_experiment_order.txt') %>% 
+  mutate(across(.cols = where(is.character),.fns = ~str_replace_all(string = .x,pattern = '\\-',replacement = '\\_')))
+
+mergedDesign <- left_join(x = batchDesign,y = referenceDesign, by= join_by(sample_id==Sample), keep=TRUE)
+write_tsv(x = mergedDesign,file = '~/multiomics/results/design_files/mergedDesign_final.tsv')
+
+samplesToRemove <- c('S000785','S003045','S002208','S000621','S000454')
+designFiltered <- mergedDesign %>% 
+  filter(!(sample_id %in% samplesToRemove))
+write_tsv(x = designFiltered,file = '~/multiomics/results/design_files/mergedDesign_final_filtered.tsv')
+```
+
 

@@ -83,3 +83,79 @@ newGenesTPMNorm <- newGenesTPM %>%
 
 write_tsv(x = newGenesTPMNorm,file = '~/multiomics/data/transcriptomics/genematrix_unadjusted_tpm_normalized.tsv')
 ```
+
+
+## Proteomics Data
+### DIA-NN Peptide
+#### Data Clean-up
+```{r peptide data cleanup}
+#| message: false
+mergedDesign <- read_tsv(file = '~/multiomics/results/design_files/mergedDesign_final.tsv')
+data <- read_tsv(file = '~/multiomics/data/proteomics/full/230814_report.pr_matrix.tsv') %>% 
+  mutate(across(where(is.double),~na_if(.,0.0))) %>% 
+  mutate(across(where(is.double),~na_if(.,0))) %>% 
+  dplyr::filter(str_detect(Protein.Group,'^Cont\\_{1}[:alnum:]{6}(?!\\;)',negate = TRUE)) #remove rows with contaminant as single ID
+
+newColNames <- data %>%
+  select(-c(1:10)) %>%
+  colnames()
+newColNames <- newColNames %>%
+  str_extract(pattern = '(?<=\\\\)[:digit:]{6}\\_[:graph:]+(?=\\.mzML\\.dia)') %>%
+  str_replace_all(pattern = '\\-',replacement = '\\_')
+newColNames <- c(colnames(data)[1:10],newColNames)
+colnames(data) <- newColNames
+
+newData <- data %>% 
+  select(mergedDesign$file_name)
+colnames(newData) <- mergedDesign$sample_id
+newData <- bind_cols(data[,1:10],newData)
+
+write_tsv(x = newData,file = '~/multiomics/data/proteomics/full/report.pr_matrix_clean.tsv')
+```
+
+#### Peptide-level Normalization
+```{r peptide level normalization}
+jobName <- 'peptide_normalization'
+dataP <- '~/multiomics/data/proteomics/full/report.pr_matrix_clean.tsv'
+designP <- '~/multiomics/results/design_files/mergedDesign_final.tsv'
+outputP <- '~/multiomics/results/normalization/fullproteome'
+
+normalyzer(jobName = jobName,designPath = designP,dataPath = dataP,outputDir = outputP,normalizeRetentionTime = FALSE,zeroToNA = TRUE,sampleColName = 'sample_id',groupColName = 'group',writeReportAsPngs = TRUE)
+```
+
+## DIA-NN Protein Group Table
+### Data Clean-up
+```{r protein data cleanup}
+data <- read_tsv(file = '~/multiomics/data/proteomics/full/230814_report.pg_matrix.tsv') %>% 
+  mutate(across(where(is.double),~na_if(.,0.0))) %>% 
+  mutate(across(where(is.double),~na_if(.,0))) %>% 
+  filter(str_detect(Protein.Group,'^Cont\\_{1}[:alnum:]{6}(?!\\;)',negate = TRUE))
+designP <- '~/multiomics/results/design_files/mergedDesign_final.tsv'
+design <- read_tsv(designP)
+
+newColNames <- data %>% 
+  select(-c(1:5)) %>% 
+  colnames()
+newColNames <- newColNames %>%
+  str_extract(pattern = '(?<=\\\\)[:digit:]{6}\\_[:graph:]+(?=\\.mzML\\.dia)') %>% 
+  str_replace_all(pattern = '\\-',replacement = '\\_')
+newColNames <- c(colnames(data)[1:5],newColNames)
+colnames(data) <- newColNames
+
+newData <- data %>% 
+  select(design$file_name)
+colnames(newData) <- design$sample_id
+newData <- bind_cols(data[,1:5],newData)
+
+write_tsv(x = newData,file = '~/multiomics/data/proteomics/full/report.pg_matrix_clean.tsv')
+```
+
+### Protein-level Normalization
+```{r protein level normalization}
+jobName <- 'protein_normalization'
+dataP <- '~/multiomics/data/proteomics/full/report.pg_matrix_clean.tsv'
+designP <- '~/multiomics/results/design_files/mergedDesign_final.tsv'
+outputP <- '~/multiomics/results/normalization/fullproteome'
+
+normalyzer(jobName = jobName,designPath = designP,dataPath = dataP,outputDir = outputP,normalizeRetentionTime = FALSE,zeroToNA = TRUE,sampleColName = 'sample_id',groupColName = 'group',writeReportAsPngs = TRUE)
+```

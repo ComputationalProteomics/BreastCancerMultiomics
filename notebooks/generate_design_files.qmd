@@ -9,34 +9,45 @@ format:
     toc-location: left
     smooth-scroll: true
 engine: knitr
+params:
+  ref_design: '~/multiomics/data/merged_ids.tsv'
+  proteome_design: '~/multiomics/data/proteomics/full/design_experiment_order.txt'
+  phospho_design: '~/multiomics/data/proteomics/phospho/design_phospho_experiment_order.tsv'
+  phospho_data: '~/multiomics/data/proteomics/phospho/230815_report.pr_matrix.tsv'
+  proteome_out: '~/multiomics/results/design_files/mergedDesign_final.tsv'
+  proteome_out_filtered: '~/multiomics/results/design_files/mergedDesign_final_filtered.tsv'
+  phospho_out: '~/multiomics/results/design_files/mergedDesign_PHOSPHO_final.tsv'
+  phospho_out_filtered: '~/multiomics/results/design_files/mergedDesign_PHOSPHO_Filtered.tsv'
 ---
 
 # Requires Packages:
 ```{r}
 #| message: false
 #| warning: false
+#| eval: false
 library(tidyverse)
 ```
 # Error with vroom FIX
 ```{r}
 #| message: false
+#| eval: false
 readr::local_edition(1)
 ```
 
 # Code Full Proteome
 ```{r Design Files Full Proteome Data}
 #| message: false
-referenceDesign <- read_tsv(file = '~/multiomics/data/merged_ids.tsv',col_names = TRUE)
-batchDesign <- read_tsv(file = '~/multiomics/data/proteomics/full/design_experiment_order.txt') %>% 
+referenceDesign <- read_tsv(file = params$ref_design,col_names = TRUE)
+batchDesign <- read_tsv(file = params$proteome_design) %>% 
   mutate(across(.cols = where(is.character),.fns = ~str_replace_all(string = .x,pattern = '\\-',replacement = '\\_')))
 
 mergedDesign <- left_join(x = batchDesign,y = referenceDesign, by= join_by(sample_id==Sample), keep=TRUE)
-write_tsv(x = mergedDesign,file = '~/multiomics/results/design_files/mergedDesign_final.tsv')
+write_tsv(x = mergedDesign,file = params$proteome_out)
 
 samplesToRemove <- c('S000785','S003045','S002208','S000621','S000454')
 designFiltered <- mergedDesign %>% 
   filter(!(sample_id %in% samplesToRemove))
-write_tsv(x = designFiltered,file = '~/multiomics/results/design_files/mergedDesign_final_filtered.tsv')
+write_tsv(x = designFiltered,file = params$proteome_out_filtered)
 ```
 
 # Code Phosphoproteome
@@ -46,12 +57,12 @@ write_tsv(x = designFiltered,file = '~/multiomics/results/design_files/mergedDes
 # In the pdf report from DIA-NN, there are samples which have less than 10 000 precursors at 1% FDR. Therefore, before proceeding, these samples will be removed. A design file will be created to allow for that
 rm(list = ls())
 
-referenceDesign <- read_tsv(file = '~/multiomics/data/merged_ids.tsv',col_names = TRUE)
-designPhospho <- read_tsv(file = '~/multiomics/data/proteomics/phospho/design_phospho_experiment_order.tsv') %>% 
+referenceDesign <- read_tsv(file = params$ref_design,col_names = TRUE)
+designPhospho <- read_tsv(file = params$phospho_design) %>% 
   mutate(across(.cols = where(is.character),.fns = ~str_replace_all(string = .x,pattern = '\\-',replacement = '\\_')))
 mergedDesign <- dplyr::left_join(x = designPhospho,y = referenceDesign, by= join_by(sample_id==Sample), keep=TRUE)
 
-data <- read_tsv(file = '~/multiomics/data/proteomics/phospho/230815_report.pr_matrix.tsv') %>% 
+data <- read_tsv(file = params$phospho_data) %>% 
   mutate(across(where(is.double),~na_if(.,0.0))) %>% 
   mutate(across(where(is.double),~na_if(.,0)))
 
@@ -76,8 +87,8 @@ newDesign <- newData %>%
 designFiltered <- newDesign %>% 
   filter(Precursors >= 10000)
 
-write_tsv(x = newDesign,file = '~/multiomics/results/design_files/mergedDesign_PHOSPHO_final.tsv')
-write_tsv(x = designFiltered, file = '~/multiomics/results/design_files/mergedDesign_PHOSPHO_Filtered.tsv')
+write_tsv(x = newDesign,file = params$phospho_out)
+write_tsv(x = designFiltered, file = params$phospho_out_filtered)
 ```
 
 

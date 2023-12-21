@@ -159,3 +159,44 @@ outputP <- '~/multiomics/results/normalization/fullproteome'
 
 normalyzer(jobName = jobName,designPath = designP,dataPath = dataP,outputDir = outputP,normalizeRetentionTime = FALSE,zeroToNA = TRUE,sampleColName = 'sample_id',groupColName = 'group',writeReportAsPngs = TRUE)
 ```
+
+
+## Phosphoproteomics Data
+### DIA-NN Peptide
+#### Data Clean-up
+```{r}
+dataP <- 'results_newUniprotRun/phospho/230815_report.pr_matrix.tsv'
+
+# In the pdf report from DIA-NN, there are samples which have less than 10 000 precursors at 1% FDR. Therefore, before proceeding, these samples will be removed.
+mergedDesign <- read_tsv(file = 'results_final/phospho/mergedDesign_PHOSPHO_Filtered.tsv')
+data <- read_tsv(dataP) %>% 
+  mutate(across(where(is.double),~na_if(.,0.0))) %>% 
+  mutate(across(where(is.double),~na_if(.,0))) %>% 
+  filter(str_detect(Protein.Group,'^Cont\\_{1}[:alnum:]{6}(?!\\;)',negate = TRUE))
+
+newColNames <- data %>%
+  select(-c(1:10)) %>%
+  colnames()
+newColNames <- newColNames %>%
+  str_extract(pattern = '(?<=\\\\)[:digit:]{6}\\_[:graph:]+(?=\\.mzML\\.dia)') %>%
+  str_replace_all(pattern = '\\-',replacement = '\\_')
+newColNames <- c(colnames(data)[1:10],newColNames)
+colnames(data) <- newColNames
+
+newData <- data %>% 
+  select(mergedDesign$file_name)
+colnames(newData) <- mergedDesign$sample_id
+newData <- bind_cols(data[,1:10],newData)
+
+write_tsv(x = newData,file = 'results_newUniprotRun/phospho/report.pr_matrix_clean.tsv')
+```
+
+#### Peptide-level Normalization
+```{r}
+jobName <- 'peptide_normalization'
+dataP <- 'results_newUniprotRun/phospho/report.pr_matrix_clean.tsv'
+designP <- 'results_final/phospho/mergedDesign_PHOSPHO_Filtered.tsv'
+outputP <- 'results_final/phospho'
+
+normalyzer(jobName = jobName,designPath = designP,dataPath = dataP,outputDir = outputP,normalizeRetentionTime = FALSE,zeroToNA = TRUE,sampleColName = 'sample_id',groupColName = 'group')
+```

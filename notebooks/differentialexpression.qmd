@@ -1,0 +1,68 @@
+---
+title: "Differential Expression Analysis"
+author: "Sergio Mosquim Junior"
+format:
+  html:
+    toc: true
+    code-fold: true
+    embed-resources: true
+    toc-location: left
+    smooth-scroll: true
+engine: knitr
+---
+
+# Requires Packages:
+```{r required packages}
+#| message: false
+#| warning: false
+library(tidyverse)
+library(NormalyzerDE)
+```
+
+# Differential Expression Analysis
+## Ductal vs Lobular
+### Full Proteome
+#### Peptide Level
+
+```{r}
+dataP <- '~/multiomics/results/batchcorrection/fullproteome/cycloess_peptide_batchcorrected.tsv'
+designP <- '~/multiomics/results/design_files/design_Full_noPool.tsv'
+outDir <- '~/multiomics/results/differentialexpression'
+jDEName <- "DuctalvLobular_fullproteome_peptide"
+
+normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'InvCa.type',comparisons = c('Ductal-Lobular'),leastRepCount = 25)
+```
+
+#### Protein Level
+
+```{r}
+dataP <- '~/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv'
+designP <- '~/multiomics/results/design_files/design_Full_noPool.tsv'
+outDir <- '~/multiomics/results/differentialexpression'
+jDEName <- "DuctalvLobular_fullproteome_protein"
+
+normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'InvCa.type',comparisons = c('Ductal-Lobular'),leastRepCount = 25)
+```
+
+### Phosphoproteome
+#### Peptide Level
+
+```{r}
+dataP <- '~/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv'
+designP <- '~/multiomics/results/design_files/design_phospho_noPool.tsv'
+outDir <- '~/multiomics/results/differentialexpression'
+jDEName <- "DuctalvLobular_phosphoproteome_peptide"
+
+normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'InvCa.type',comparisons = c('Ductal-Lobular'),leastRepCount = 25)
+```
+
+#### Protein Level
+
+```{r}
+dataP <- '~/multiomics/results/batchcorrection/phosphoproteome/cycloess_rollup_genes_batchcorrected.tsv'
+designP <- '~/multiomics/results/design_files/design_phospho_noPool.tsv'
+outDir <- '~/multiomics/results/differentialexpression'
+jDEName <- "DuctalvLobular_phosphoproteome_protein"
+
+normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'InvCa.type',comparisons = c('Ductal-Lobular'),leastRepCount = 25)
+```

@@ -27,8 +27,8 @@ library(NormalyzerDE)
 ```{r}
 dataP <- '~/multiomics/results/batchcorrection/fullproteome/cycloess_peptide_batchcorrected.tsv'
 designP <- '~/multiomics/results/design_files/design_Full_noPool.tsv'
-outDir <- '~/multiomics/results/differentialexpression'
-jDEName <- "DuctalvLobular_fullproteome_peptide"
+outDir <- '~/multiomics/results/differentialexpression/DuctalvsLobular'
+jDEName <- "fullproteome_peptide"
 
 normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'InvCa.type',comparisons = c('Ductal-Lobular'),leastRepCount = 25)
 ```
@@ -38,8 +38,8 @@ normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir =
 ```{r}
 dataP <- '~/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv'
 designP <- '~/multiomics/results/design_files/design_Full_noPool.tsv'
-outDir <- '~/multiomics/results/differentialexpression'
-jDEName <- "DuctalvLobular_fullproteome_protein"
+outDir <- '~/multiomics/results/differentialexpression/DuctalvsLobular'
+jDEName <- "fullproteome_protein"
 
 normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'InvCa.type',comparisons = c('Ductal-Lobular'),leastRepCount = 25)
 ```
@@ -50,8 +50,8 @@ normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir =
 ```{r}
 dataP <- '~/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv'
 designP <- '~/multiomics/results/design_files/design_phospho_noPool.tsv'
-outDir <- '~/multiomics/results/differentialexpression'
-jDEName <- "DuctalvLobular_phosphoproteome_peptide"
+outDir <- '~/multiomics/results/differentialexpression/DuctalvsLobular'
+jDEName <- "phosphoproteome_peptide"
 
 normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'InvCa.type',comparisons = c('Ductal-Lobular'),leastRepCount = 25)
 ```
@@ -61,8 +61,18 @@ normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir =
 ```{r}
 dataP <- '~/multiomics/results/batchcorrection/phosphoproteome/cycloess_rollup_genes_batchcorrected.tsv'
 designP <- '~/multiomics/results/design_files/design_phospho_noPool.tsv'
-outDir <- '~/multiomics/results/differentialexpression'
-jDEName <- "DuctalvLobular_phosphoproteome_protein"
+outDir <- '~/multiomics/results/differentialexpression/DuctalvsLobular'
+jDEName <- "phosphoproteome_protein"
 
 normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'InvCa.type',comparisons = c('Ductal-Lobular'),leastRepCount = 25)
+```
+
+### Transcriptomics
+```{r}
+dataP <- '~/multiomics/data/transcriptomics/genematrix_unadjusted_tpm_normalized.tsv'
+designP <- '~/multiomics/results/design_files/design_RNA_noPool.tsv'
+outDir <- '~/multiomics/results/differentialexpression/DuctalvsLobular'
+jDEName <- "transcriptomics_tpm_normalized"
+
+normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'InvCa.type',comparisons = c('Ductal-Lobular'),leastRepCount = 25,logTrans = FALSE)
 ```

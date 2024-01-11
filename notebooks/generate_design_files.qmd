@@ -21,6 +21,12 @@ params:
   proteome_noPool: '~/multiomics/results/design_files/design_Full_noPool.tsv'
   phospho_noPool: '~/multiomics/results/design_files/design_phospho_noPool.tsv'
   transcriptome_noPool: '~/multiomics/results/design_files/design_RNA_noPool.tsv'
+  proteome_ductal: '~/multiomics/results/design_files/design_full_ductal.tsv'
+  phospho_ductal: '~/multiomics/results/design_files/design_phospho_ductal.tsv'
+  transcriptome_ductal: '~/multiomics/results/design_files/design_RNA_ductal.tsv'
+  proteome_lobular: '~/multiomics/results/design_files/design_full_lobular.tsv'
+  phospho_lobular: '~/multiomics/results/design_files/design_phospho_lobular.tsv'
+  transcriptome_lobular: '~/multiomics/results/design_files/design_RNA_lobular.tsv'
 ---
 
 # Requires Packages:
@@ -93,7 +99,7 @@ write_tsv(x = designFiltered, file = params$phospho_out_filtered)
 # Design Files without Pool samples
 ## Proteome
 ```{r}
-newDesign <- read_tsv(file = params$proteome_out_filtered)
+newDesign <- read_tsv(file = params$proteome_out_filtered) %>% 
   filter(str_detect(string = sample_id, pattern = 'Pool', negate = TRUE))
 
 write_tsv(x = newDesign,file = params$proteome_noPool)
@@ -101,7 +107,7 @@ write_tsv(x = newDesign,file = params$proteome_noPool)
 
 ## Phosphoproteome
 ```{r}
-newDesign <- read_tsv(file = params$phospho_out_filtered)
+newDesign <- read_tsv(file = params$phospho_out_filtered) %>% 
   filter(str_detect(string = sample_id, pattern = 'Pool', negate = TRUE))
 
 write_tsv(x = newDesign,file = params$phospho_noPool)
@@ -109,8 +115,58 @@ write_tsv(x = newDesign,file = params$phospho_noPool)
 
 ## Transcriptome
 ```{r}
-newDesign <- read_tsv(file = params$proteome_out)
+newDesign <- read_tsv(file = params$proteome_out) %>% 
   filter(str_detect(string = sample_id, pattern = 'Pool', negate = TRUE))
 
 write_tsv(x = newDesign,file = params$transcriptome_noPool)
+```
+
+# Design Files only Ductal (no Pool)
+## Proteome
+```{r}
+newDesign <- read_tsv(file = params$proteome_noPool) %>% 
+  filter(str_detect(string = InvCa.type, pattern = 'Ductal'))
+
+write_tsv(x = newDesign,file = params$proteome_ductal)
+```
+
+## Phosphoproteome
+```{r}
+newDesign <- read_tsv(file = params$phospho_noPool) %>% 
+  filter(str_detect(string = InvCa.type, pattern = 'Ductal'))
+
+write_tsv(x = newDesign,file = params$phospho_ductal)
+```
+
+## Transcriptome
+```{r}
+newDesign <- read_tsv(file = params$transcriptome_noPool) %>% 
+  filter(str_detect(string = InvCa.type, pattern = 'Ductal'))
+
+write_tsv(x = newDesign,file = params$transcriptome_ductal)
+```
+
+# Design Files only Lobular (no Pool)
+## Proteome
+```{r}
+newDesign <- read_tsv(file = params$proteome_noPool) %>% 
+  filter(str_detect(string = sample_id, pattern = 'Pool', negate = TRUE))
+
+write_tsv(x = newDesign,file = params$proteome_lobular)
+```
+
+## Phosphoproteome
+```{r}
+newDesign <- read_tsv(file = params$phospho_noPool) %>% 
+  filter(str_detect(string = sample_id, pattern = 'Pool', negate = TRUE))
+
+write_tsv(x = newDesign,file = params$phospho_lobular)
+```
+
+## Transcriptome
+```{r}
+newDesign <- read_tsv(file = params$transcriptome_noPool) %>% 
+  filter(str_detect(string = sample_id, pattern = 'Pool', negate = TRUE))
+
+write_tsv(x = newDesign,file = params$transcriptome_lobular)
 ```

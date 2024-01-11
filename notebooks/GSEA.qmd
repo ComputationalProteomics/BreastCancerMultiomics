@@ -29,13 +29,13 @@ source(file = '~/multiomics/notebooks/msigdb_gsea_function.R',chdir = TRUE)
 ### Full Proteome
 ```{r}
 data <- '~/multiomics/results/differentialexpression/DuctalvsLobular/fullproteome_protein/fullproteome_protein_stats.tsv'
-gseaMsigProt <- gseaMsigDB(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H',FCcolname = 'Ductal-Lobular_log2FoldChange')
+gseaMsigProt <- gseaMsigDBProt(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H',FCcolname = 'Ductal-Lobular_log2FoldChange')
 ```
 
 ### Phosphoproteome
 ```{r}
 data <- '~/multiomics/results/differentialexpression/DuctalvsLobular/phosphoproteome_peptide/phosphoproteome_peptide_stats.tsv'
-gseaMsigPhospho <- gseaMsigDB(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H',FCcolname = 'Ductal-Lobular_log2FoldChange')
+gseaMsigPhospho <- gseaMsigDBPhospho(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H',FCcolname = 'Ductal-Lobular_log2FoldChange')
 ```
 
 ### Transcriptome

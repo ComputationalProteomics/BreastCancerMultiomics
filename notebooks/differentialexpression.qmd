@@ -76,3 +76,95 @@ jDEName <- "transcriptomics_tpm_normalized"
 
 normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'InvCa.type',comparisons = c('Ductal-Lobular'),leastRepCount = 25,logTrans = FALSE)
 ```
+
+## LN+ vs LN-
+### Ductal
+#### Full Proteome
+##### Protein Level
+
+```{r}
+dataP <- '~/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv'
+designP <- '~/multiomics/results/design_files/design_full_ductal.tsv'
+outDir <- '~/multiomics/results/differentialexpression/LNposvsLNneg/Ductal'
+jDEName <- "fullproteome_protein"
+
+normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 25)
+```
+
+#### Phosphoproteome
+##### Peptide Level
+
+```{r}
+dataP <- '~/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv'
+designP <- '~/multiomics/results/design_files/design_phospho_ductal.tsv'
+outDir <- '~/multiomics/results/differentialexpression/LNposvsLNneg/Ductal'
+jDEName <- "phosphoproteome_peptide"
+
+normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 25)
+```
+
+##### Protein Level
+
+```{r}
+dataP <- '~/multiomics/results/batchcorrection/phosphoproteome/cycloess_rollup_genes_batchcorrected.tsv'
+designP <- '~/multiomics/results/design_files/design_phospho_ductal.tsv'
+outDir <- '~/multiomics/results/differentialexpression/LNposvsLNneg/Ductal'
+jDEName <- "phosphoproteome_protein"
+
+normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 25)
+```
+
+#### Transcriptomics
+```{r}
+dataP <- '~/multiomics/data/transcriptomics/genematrix_unadjusted_tpm_normalized.tsv'
+designP <- '~/multiomics/results/design_files/design_RNA_ductal.tsv'
+outDir <- '~/multiomics/results/differentialexpression/LNposvsLNneg/Ductal'
+jDEName <- "transcriptomics_tpm_normalized"
+
+normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 25,logTrans = FALSE)
+```
+### Lobular
+#### Full Proteome
+##### Protein Level
+
+```{r}
+dataP <- '~/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv'
+designP <- '~/multiomics/results/design_files/design_full_lobular.tsv'
+outDir <- '~/multiomics/results/differentialexpression/LNposvsLNneg/Lobular'
+jDEName <- "fullproteome_protein"
+
+normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 25)
+```
+
+#### Phosphoproteome
+##### Peptide Level
+
+```{r}
+dataP <- '~/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv'
+designP <- '~/multiomics/results/design_files/design_phospho_lobular.tsv'
+outDir <- '~/multiomics/results/differentialexpression/LNposvsLNneg/Lobular'
+jDEName <- "phosphoproteome_peptide"
+
+normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 25)
+```
+
+##### Protein Level
+
+```{r}
+dataP <- '~/multiomics/results/batchcorrection/phosphoproteome/cycloess_rollup_genes_batchcorrected.tsv'
+designP <- '~/multiomics/results/design_files/design_phospho_lobular.tsv'
+outDir <- '~/multiomics/results/differentialexpression/LNposvsLNneg/Lobular'
+jDEName <- "phosphoproteome_protein"
+
+normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 25)
+```
+
+#### Transcriptomics
+```{r}
+dataP <- '~/multiomics/data/transcriptomics/genematrix_unadjusted_tpm_normalized.tsv'
+designP <- '~/multiomics/results/design_files/design_RNA_lobular.tsv'
+outDir <- '~/multiomics/results/differentialexpression/LNposvsLNneg/Lobular'
+jDEName <- "transcriptomics_tpm_normalized"
+
+normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 25,logTrans = FALSE)
+```

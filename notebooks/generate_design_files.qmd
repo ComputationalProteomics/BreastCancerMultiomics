@@ -18,6 +18,9 @@ params:
   proteome_out_filtered: '~/multiomics/results/design_files/mergedDesign_final_filtered.tsv'
   phospho_out: '~/multiomics/results/design_files/mergedDesign_PHOSPHO_final.tsv'
   phospho_out_filtered: '~/multiomics/results/design_files/mergedDesign_PHOSPHO_Filtered.tsv'
+  proteome_noPool: '~/multiomics/results/design_files/design_Full_noPool.tsv'
+  phospho_noPool: '~/multiomics/results/design_files/design_phospho_noPool.tsv'
+  transcriptome_noPool: '~/multiomics/results/design_files/design_RNA_noPool.tsv'
 ---
 
 # Requires Packages:
@@ -27,7 +30,8 @@ params:
 library(tidyverse)
 ```
 
-# Code Full Proteome
+# Base Design Files
+## Full Proteome
 ```{r Design Files Full Proteome Data}
 #| message: false
 referenceDesign <- read_tsv(file = params$ref_design,col_names = TRUE)
@@ -43,7 +47,7 @@ designFiltered <- mergedDesign %>%
 write_tsv(x = designFiltered,file = params$proteome_out_filtered)
 ```
 
-# Code Phosphoproteome
+## Phosphoproteome
 ```{r Design Files Phospho Data}
 #| message: false
 
@@ -83,3 +87,30 @@ write_tsv(x = designFiltered, file = params$phospho_out_filtered)
 ```
 
 
+
+
+
+# Design Files without Pool samples
+## Proteome
+```{r}
+newDesign <- read_tsv(file = params$proteome_out_filtered)
+  filter(str_detect(string = sample_id, pattern = 'Pool', negate = TRUE))
+
+write_tsv(x = newDesign,file = params$proteome_noPool)
+```
+
+## Phosphoproteome
+```{r}
+newDesign <- read_tsv(file = params$phospho_out_filtered)
+  filter(str_detect(string = sample_id, pattern = 'Pool', negate = TRUE))
+
+write_tsv(x = newDesign,file = params$phospho_noPool)
+```
+
+## Transcriptome
+```{r}
+newDesign <- read_tsv(file = params$proteome_out)
+  filter(str_detect(string = sample_id, pattern = 'Pool', negate = TRUE))
+
+write_tsv(x = newDesign,file = params$transcriptome_noPool)
+```

@@ -40,6 +40,7 @@ if(!dir.exists(paths = '~/multiomics/results/batchcorrection/fullproteome/')) {
 }
 write_tsv(x = newData,file = '~/multiomics/results/batchcorrection/fullproteome/cycloess_peptide_batchcorrected.tsv')
 ```
+
 ### Protein level
 ```{r}
 data <- read_tsv(file = '~/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv')
@@ -75,6 +76,7 @@ if(!dir.exists(paths = '~/multiomics/results/batchcorrection/phosphoproteome/'))
 }
 write_tsv(x = newData,file = '~/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv')
 ```
+
 ### Protein level
 ```{r}
 data <- read_tsv(file = '~/multiomics/results/rollup/phosphoproteome/cycloess_Rollup_Genes.tsv')

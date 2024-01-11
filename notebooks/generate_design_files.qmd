@@ -108,7 +108,7 @@ write_tsv(x = newDesign,file = params$proteome_noPool)
 ## Phosphoproteome
 ```{r}
 newDesign <- read_tsv(file = params$phospho_out_filtered) %>% 
-  filter(str_detect(string = sample_id, pattern = 'Pool', negate = TRUE))
+  filter(str_detect(string = sample_id, pattern = 'POOL', negate = TRUE))
 
 write_tsv(x = newDesign,file = params$phospho_noPool)
 ```

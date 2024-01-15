@@ -1,0 +1,136 @@
+---
+title: "Unsupervised Clustering"
+author: "Sergio Mosquim Junior"
+format:
+  html:
+    toc: true
+    code-fold: true
+    embed-resources: true
+    toc-location: left
+    smooth-scroll: true
+engine: knitr
+---
+
+# Requires Packages:
+```{r required packages}
+#| message: false
+#| warning: false
+library(tidyverse)
+library(ComplexHeatmap)
+library(grid)
+library(ggplotify)
+library(factoextra)
+library(cluster)
+library(cowplot)
+source(file = '~/multiomics/notebooks/medianFiltering.R',chdir = TRUE)
+```
+
+# Unsupervised Clustering
+## Ductal vs Lobular
+### Proteome
+#### Load Data
+```{r}
+data <- read_tsv(file = '~/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
+  drop_na
+design <- read_tsv(file = '~/multiomics/results/design_files/design_Full_noPool.tsv')
+```
+#### Preprocessing
+```{r}
+proteinDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Genes')
+
+proteinDataFiltered <- proteinDataFiltered %>% 
+  dplyr::select(Protein,design$sample_id)
+
+proteinDataReduced <- proteinDataFiltered %>% 
+  dplyr::select(design$sample_id)
+```
+```{r}
+#Determining Optimal number of clusters
+factoextra::fviz_nbclust(proteinDataReduced, kmeans, method = "silhouette",k.max = 10,print.summary = TRUE,iter.max=100)
+
+```
+```{r}
+# Calculation of Z-Scores
+calZScore <- function(x) (x-mean(x))/sd(x)
+
+proteindataNorm <- t(apply(proteinDataReduced,1,calZScore))
+colnames(proteindataNorm) <- NULL
+annotationColumn <- HeatmapAnnotation(Group=anno_simple(x = designFull$Group.Info,
+                                                        col = c('Group.Group1'='#e31a1c','Group.Group2'='#fb9a99','Group.Group3'='#1f78b4','Group.Group4'='#a6cee3','Group.Group5'='#33a02c','Group.Group6'='darkblue'),
+                                                        na_col = '#808080',
+                                                        gp = gpar(title='Group')),
+                                      NHG=anno_simple(x = designFull$NHG,
+                                                      col = c('1'='#4daf4a','2'='#377eb8','3'='#e41a1c'),
+                                                      gp = gpar(title='NHS')),
+                                      Recurrence=anno_simple(x = designFull$DRFi_event,
+                                                             col = c('1'='black','0'='white'),
+                                                             gp = gpar(title='Recurrence')),
+                                      Treatment=anno_simple(x = designFull$TreatGroup,
+                                                            col = c('Endo'='#984ea3','ChemoEndo'='#ff7f00','Chemo'='#e41a1c','None'='white'),
+                                                            gp = gpar(title='Treatment')),
+                                      Batch=anno_simple(x = designFull$batch,
+                                                             col = c('1'='black','2'='white'),
+                                                             gp = gpar(title='Batch')),
+                                      BCFi=anno_simple(x = designFull$BCFi_event,
+                                                             col = c('1'='black','0'='white'),
+                                                             gp = gpar(title='Breast Cancer Recurrence')),
+                                      InvasiveType=anno_simple(x = designFull$InvCa.type,
+                                                       col = c('Ductal'='#000000','Lobular'='#ffffff'),
+                                                       na_col = '#808080',
+                                                       gp = gpar(title='InvasiveType')))
+
+legendNHG <- Legend(labels = c('1','2','3'),
+                      title = 'NHG',
+                      border = 'black',
+                      legend_gp = gpar(fill=c('1'='#4daf4a','2'='#377eb8','3'='#e41a1c')))
+legendRecurrence <- Legend(labels = c('1','0'),
+                      title = 'Recurrence',
+                      border = 'black',
+                      legend_gp = gpar(fill=c('1'='black','0'='white')))
+legendTreatment <- Legend(labels = c('Endo','ChemoEndo'),
+                      title = 'Treatment',
+                      border = 'black',
+                      legend_gp = gpar(fill=c('Endo'='#984ea3','ChemoEndo'='#ff7f00','Chemo'='#e41a1c','None'='white')))
+legendBatch <- Legend(labels = c('1','2'),
+                      title = 'Batch',
+                      border = 'black',
+                      legend_gp = gpar(fill=c('1'='black','2'='white')))
+legendBCFi <- Legend(labels = c('Yes','No'),
+                      title = 'Breast Cancer Recurrence',
+                      border = 'black',
+                      legend_gp = gpar(fill=c('Yes'='black','No'='white')))
+
+legendGroup <- Legend(labels = c('Group.Group1','Group.Group2','Group.Group3','Group.Group4','Group.Group5','Group.Group6'),
+                      title = 'Group',
+                      border = 'black',
+                      legend_gp = gpar(fill=c('Group.Group1'='#e31a1c','Group.Group2'='#fb9a99','Group.Group3'='#1f78b4','Group.Group4'='#a6cee3','Group.Group5'='#33a02c','Group.Group1'='darkblue')))
+
+legendInvType <- Legend(labels = c('Ductal','Lobular'),
+                   title = 'Invasive Type',
+                   border = 'black',
+                   legend_gp = gpar(fill=c('Ductal'='#000000','Lobular'='#ffffff')))
+
+allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendTreatment,legendBatch,legendBCFi,legendInvType)
+
+proteinHeatmap <- Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),column_km = 2,column_km_repeats = 1000)
+
+proteinHeatmapDraw <- grid.grabExpr(draw(proteinHeatmap,annotation_legend_list = allLegends, heatmap_legend_side = 'bottom', annotation_legend_side = 'right', legend_grouping = 'original')) %>% as.ggplot
+
+ggsave2(filename = 'kmeans_allsamples_proteome.pdf',plot = proteinHeatmapDraw,device = 'pdf',path = 'results_final/poster_HUPO/',dpi = 600,width = 12,height = 12,units = 'in')
+```
+### Phosphoproteome
+#### Load Data
+```{r}
+data <- read_tsv(file = '~/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv') %>% 
+  drop_na
+design <- read_tsv(file = '~/multiomics/results/design_files/design_phospho_noPool.tsv')
+```
+
+### Transcriptome
+#### Load Data
+```{r}
+data <- read_tsv(file = '~/multiomics/data/transcriptomics/genematrix_unadjusted_tpm_normalized.tsv') %>% 
+  drop_na
+design <- read_tsv(file = '~/multiomics/results/design_files/design_RNA_noPool.tsv')
+```
+

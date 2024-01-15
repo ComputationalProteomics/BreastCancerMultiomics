@@ -150,7 +150,7 @@ write_tsv(x = newDesign,file = params$transcriptome_ductal)
 ## Proteome
 ```{r}
 newDesign <- read_tsv(file = params$proteome_noPool) %>% 
-  filter(str_detect(string = sample_id, pattern = 'Pool', negate = TRUE))
+  filter(str_detect(string = InvCa.type, pattern = 'Lobular'))
 
 write_tsv(x = newDesign,file = params$proteome_lobular)
 ```
@@ -158,7 +158,7 @@ write_tsv(x = newDesign,file = params$proteome_lobular)
 ## Phosphoproteome
 ```{r}
 newDesign <- read_tsv(file = params$phospho_noPool) %>% 
-  filter(str_detect(string = sample_id, pattern = 'Pool', negate = TRUE))
+  filter(str_detect(string = InvCa.type, pattern = 'Lobular'))
 
 write_tsv(x = newDesign,file = params$phospho_lobular)
 ```
@@ -166,7 +166,7 @@ write_tsv(x = newDesign,file = params$phospho_lobular)
 ## Transcriptome
 ```{r}
 newDesign <- read_tsv(file = params$transcriptome_noPool) %>% 
-  filter(str_detect(string = sample_id, pattern = 'Pool', negate = TRUE))
+  filter(str_detect(string = InvCa.type, pattern = 'Lobular'))
 
 write_tsv(x = newDesign,file = params$transcriptome_lobular)
 ```

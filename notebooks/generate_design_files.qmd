@@ -11,6 +11,7 @@ format:
 engine: knitr
 params:
   ref_design: '~/multiomics/data/merged_ids.tsv'
+  mutation_design: '~/multiomics/data/mutation/samples.tsv'
   proteome_design: '~/multiomics/data/proteomics/full/design_experiment_order.txt'
   phospho_design: '~/multiomics/data/proteomics/phospho/design_phospho_experiment_order.tsv'
   phospho_data: '~/multiomics/data/proteomics/phospho/230815_report.pr_matrix.tsv'
@@ -37,6 +38,15 @@ library(tidyverse)
 ```
 
 # Base Design Files
+## Base file including data from SCANB Mutation Explorer
+```{r}
+referenceDesign <- read_tsv(file = params$ref_design,col_names = TRUE)
+mutation_design <- read_tsv(file = params$mutation_design,col_names = TRUE,skip = 19) %>% 
+  dplyr::select(SAMPLE,22:25,35:51)
+
+referenceDesign <- left_join(x = referenceDesign,y = mutation_design,by = c('Merged'='SAMPLE'))
+```
+
 ## Full Proteome
 ```{r Design Files Full Proteome Data}
 #| message: false

@@ -1,4 +1,4 @@
-medianFiltering <- function(data,design,sampleCol,annotation,...){
+medianFiltering <- function(data,design,sampleCol,annotation,cutoff=0.5,...){
   varianceNA <- function(data) var(data,na.rm=TRUE)
   
   rowName <- pull(data,annotation)
@@ -13,7 +13,7 @@ medianFiltering <- function(data,design,sampleCol,annotation,...){
     mutate(.,variance=varianceData,Protein=rowName)
   
   lowVarData <- dataVar %>% 
-    filter(variance > quantile(variance,0.5,na.rm = T))
+    filter(variance > quantile(variance,cutoff,na.rm = T))
   
   return(lowVarData)
 }

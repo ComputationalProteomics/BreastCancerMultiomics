@@ -12,6 +12,7 @@ engine: knitr
 params:
   ref_design: '~/multiomics/data/merged_ids.tsv'
   mutation_design: '~/multiomics/data/mutation/samples.tsv'
+  ref_design_mutation: '~/multiomics/results/design_files/mergedDesign_ref_mutation.tsv'
   proteome_design: '~/multiomics/data/proteomics/full/design_experiment_order.txt'
   phospho_design: '~/multiomics/data/proteomics/phospho/design_phospho_experiment_order.tsv'
   phospho_data: '~/multiomics/data/proteomics/phospho/230815_report.pr_matrix.tsv'
@@ -28,6 +29,7 @@ params:
   proteome_lobular: '~/multiomics/results/design_files/design_full_lobular.tsv'
   phospho_lobular: '~/multiomics/results/design_files/design_phospho_lobular.tsv'
   transcriptome_lobular: '~/multiomics/results/design_files/design_RNA_lobular.tsv'
+  multiomics_mofa: '~/multiomics/results/design_files/design_multiomics_mofa.tsv'
 ---
 
 # Requires Packages:
@@ -45,12 +47,13 @@ mutation_design <- read_tsv(file = params$mutation_design,col_names = TRUE,skip 
   dplyr::select(SAMPLE,22:25,35:51)
 
 referenceDesign <- left_join(x = referenceDesign,y = mutation_design,by = c('Merged'='SAMPLE'))
+write_tsv(x = referenceDesign,file = params$ref_design_mutation)
 ```
 
 ## Full Proteome
 ```{r Design Files Full Proteome Data}
 #| message: false
-referenceDesign <- read_tsv(file = params$ref_design,col_names = TRUE)
+referenceDesign <- read_tsv(file = params$ref_design_mutation,col_names = TRUE)
 batchDesign <- read_tsv(file = params$proteome_design) %>% 
   mutate(across(.cols = where(is.character),.fns = ~str_replace_all(string = .x,pattern = '\\-',replacement = '\\_')))
 
@@ -68,7 +71,7 @@ write_tsv(x = designFiltered,file = params$proteome_out_filtered)
 #| message: false
 
 # In the pdf report from DIA-NN, there are samples which have less than 10 000 precursors at 1% FDR. Therefore, before proceeding, these samples will be removed. A design file will be created to allow for that
-referenceDesign <- read_tsv(file = params$ref_design, col_names = TRUE)
+referenceDesign <- read_tsv(file = params$ref_design_mutation, col_names = TRUE)
 designPhospho <- read_tsv(file = params$phospho_design) %>% 
   mutate(across(.cols = where(is.character),.fns = ~str_replace_all(string = .x,pattern = '\\-',replacement = '\\_')))
 mergedDesign <- left_join(x = designPhospho,y = referenceDesign, by= join_by(sample_id==Sample), keep=TRUE)
@@ -180,3 +183,13 @@ newDesign <- read_tsv(file = params$transcriptome_noPool) %>%
 
 write_tsv(x = newDesign,file = params$transcriptome_lobular)
 ```
+
+# Design File Multiomics (MOFA)
+```{r}
+designprotein <- read_tsv(file = params$proteome_noPool)
+designphospho <- read_tsv(file = params$phospho_noPool)
+designMix <- inner_join(x = designprotein,y = designphospho,by = colnames(designphospho)[-c(1,2,4:6,120)])
+
+write_tsv(x = designMix,file = params$multiomics_mofa)
+```
+

@@ -8,6 +8,7 @@ format:
     embed-resources: true
     toc-location: left
     smooth-scroll: true
+    message: false
 engine: knitr
 params:
   ref_design: '~/multiomics/data/merged_ids.tsv'
@@ -30,6 +31,12 @@ params:
   phospho_lobular: '~/multiomics/results/design_files/design_phospho_lobular.tsv'
   transcriptome_lobular: '~/multiomics/results/design_files/design_RNA_lobular.tsv'
   multiomics_mofa: '~/multiomics/results/design_files/design_multiomics_mofa.tsv'
+  proteome_g1g2: '~/multiomics/results/design_files/design_full_g1g2.tsv'
+  phospho_g1g2: '~/multiomics/results/design_files/design_phospho_g1g2.tsv'
+  transcriptome_g1g2: '~/multiomics/results/design_files/design_RNA_g1g2.tsv'
+  proteome_g3g4: '~/multiomics/results/design_files/design_full_g3g4.tsv'
+  phospho_g3g4: '~/multiomics/results/design_files/design_phospho_g3g4.tsv'
+  transcriptome_g3g4: '~/multiomics/results/design_files/design_RNA_g3g4.tsv'
 ---
 
 # Requires Packages:
@@ -193,3 +200,52 @@ designMix <- inner_join(x = designprotein,y = designphospho,by = colnames(design
 write_tsv(x = designMix,file = params$multiomics_mofa)
 ```
 
+# Design File Group 1+2
+## Proteome
+```{r}
+newDesign <- read_tsv(file = params$proteome_noPool) %>% 
+  filter(str_detect(string = Group.Info, pattern = 'Group1|Group2'))
+
+write_tsv(x = newDesign,file = params$proteome_g1g2)
+```
+
+## Phosphoproteome
+```{r}
+newDesign <- read_tsv(file = params$phospho_noPool) %>% 
+  filter(str_detect(string = Group.Info, pattern = 'Group1|Group2'))
+
+write_tsv(x = newDesign,file = params$phospho_g1g2)
+```
+
+## Transcriptome
+```{r}
+newDesign <- read_tsv(file = params$transcriptome_noPool) %>% 
+  filter(str_detect(string = Group.Info, pattern = 'Group1|Group2'))
+
+write_tsv(x = newDesign,file = params$transcriptome_g1g2)
+```
+
+# Design File Group 3+4
+## Proteome
+```{r}
+newDesign <- read_tsv(file = params$proteome_noPool) %>% 
+  filter(str_detect(string = Group.Info, pattern = 'Group3|Group4'))
+
+write_tsv(x = newDesign,file = params$proteome_g3g4)
+```
+
+## Phosphoproteome
+```{r}
+newDesign <- read_tsv(file = params$phospho_noPool) %>% 
+  filter(str_detect(string = Group.Info, pattern = 'Group3|Group4'))
+
+write_tsv(x = newDesign,file = params$phospho_g3g4)
+```
+
+## Transcriptome
+```{r}
+newDesign <- read_tsv(file = params$transcriptome_noPool) %>% 
+  filter(str_detect(string = Group.Info, pattern = 'Group3|Group4'))
+
+write_tsv(x = newDesign,file = params$transcriptome_g3g4)
+```

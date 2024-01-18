@@ -168,3 +168,95 @@ jDEName <- "transcriptomics_tpm_normalized"
 
 normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,logTrans = FALSE)
 ```
+
+## Group1 vs Group2
+### Full Proteome
+#### Protein Level
+
+```{r}
+dataP <- '~/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv'
+designP <- '~/multiomics/results/design_files/design_full_g1g2.tsv'
+outDir <- '~/multiomics/results/differentialexpression/Group1vsGroup2'
+jDEName <- "fullproteome_protein"
+
+normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'Group.Info',comparisons = c('Group1-Group2'),leastRepCount = 3,batchCol = 'group')
+```
+
+### Phosphoproteome
+#### Peptide Level
+
+```{r}
+dataP <- '~/multiomics/results/rollup/phosphoproteome/cycloess_normalized_sorted.tsv'
+designP <- '~/multiomics/results/design_files/design_phospho_g1g2.tsv'
+outDir <- '~/multiomics/results/differentialexpression/Group1vsGroup2'
+jDEName <- "phosphoproteome_peptide"
+
+normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'Group.Info',comparisons = c('Group1-Group2'),leastRepCount = 3,batchCol = 'group')
+```
+
+#### Protein Level
+
+```{r}
+dataP <- '~/multiomics/results/rollup/phosphoproteome/cycloess_Rollup_Genes.tsv'
+designP <- '~/multiomics/results/design_files/design_phospho_g1g2.tsv'
+outDir <- '~/multiomics/results/differentialexpression/Group1vsGroup2'
+jDEName <- "phosphoproteome_protein"
+
+normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'Group.Info',comparisons = c('Group1-Group2'),leastRepCount = 3,batchCol = 'group')
+```
+
+### Transcriptomics
+```{r}
+dataP <- '~/multiomics/data/transcriptomics/genematrix_unadjusted_tpm_normalized.tsv'
+designP <- '~/multiomics/results/design_files/design_RNA_g1g2.tsv'
+outDir <- '~/multiomics/results/differentialexpression/Group1vsGroup2'
+jDEName <- "transcriptomics_tpm_normalized"
+
+normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'Group.Info',comparisons = c('Group1-Group2'),leastRepCount = 3,logTrans = FALSE)
+```
+
+## Group3 vs Group4
+### Full Proteome
+#### Protein Level
+
+```{r}
+dataP <- '~/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv'
+designP <- '~/multiomics/results/design_files/design_full_g3g4.tsv'
+outDir <- '~/multiomics/results/differentialexpression/Group3vsGroup4'
+jDEName <- "fullproteome_protein"
+
+normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'Group.Info',comparisons = c('Group3-Group4'),leastRepCount = 3,batchCol = 'group')
+```
+
+### Phosphoproteome
+#### Peptide Level
+
+```{r}
+dataP <- '~/multiomics/results/rollup/phosphoproteome/cycloess_normalized_sorted.tsv'
+designP <- '~/multiomics/results/design_files/design_phospho_g3g4.tsv'
+outDir <- '~/multiomics/results/differentialexpression/Group3vsGroup4'
+jDEName <- "phosphoproteome_peptide"
+
+normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'Group.Info',comparisons = c('Group3-Group4'),leastRepCount = 3,batchCol = 'group')
+```
+
+#### Protein Level
+
+```{r}
+dataP <- '~/multiomics/results/rollup/phosphoproteome/cycloess_Rollup_Genes.tsv'
+designP <- '~/multiomics/results/design_files/design_phospho_g3g4.tsv'
+outDir <- '~/multiomics/results/differentialexpression/Group3vsGroup4'
+jDEName <- "phosphoproteome_protein"
+
+normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'Group.Info',comparisons = c('Group3-Group4'),leastRepCount = 3,batchCol = 'group')
+```
+
+### Transcriptomics
+```{r}
+dataP <- '~/multiomics/data/transcriptomics/genematrix_unadjusted_tpm_normalized.tsv'
+designP <- '~/multiomics/results/design_files/design_RNA_g3g4.tsv'
+outDir <- '~/multiomics/results/differentialexpression/Group3vsGroup4'
+jDEName <- "transcriptomics_tpm_normalized"
+
+normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'Group.Info',comparisons = c('Group3-Group4'),leastRepCount = 3,logTrans = FALSE)
+```

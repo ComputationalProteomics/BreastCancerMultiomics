@@ -17,15 +17,10 @@ engine: knitr
 ```{r required packages}
 #| message: false
 #| warning: false
-# library(data.table)
-# library(ggplot2)
 library(tidyverse)
 library(MOFA2)
-# library(MOFAdata)
-# library(NormalyzerDE)
 source(file = '~/multiomics/notebooks/medianFiltering.R',chdir = TRUE)
 library(reticulate)
-# use_condaenv(condaenv = '~/multiomics/work/conda/multiomics_mofa*/lib/python3.12')
 ```
 
 # MultiOmics Factor Analysis - MOFA

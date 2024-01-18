@@ -1,0 +1,494 @@
+---
+title: "MultiOmics Factor Analysis"
+author: "Sergio Mosquim Junior"
+format:
+  html:
+    toc: true
+    code-fold: true
+    embed-resources: true
+    toc-location: left
+    smooth-scroll: true
+    message: false
+engine: knitr
+---
+
+# Requires Packages:
+
+```{r required packages}
+#| message: false
+#| warning: false
+# library(data.table)
+# library(ggplot2)
+library(tidyverse)
+library(MOFA2)
+# library(MOFAdata)
+# library(NormalyzerDE)
+source(file = '~/multiomics/notebooks/medianFiltering.R',chdir = TRUE)
+library(reticulate)
+use_condaenv(condaenv = 'multiomics_mofa')
+```
+
+# MultiOmics Factor Analysis - MOFA
+## All samples with infiltration
+```{r}
+if(!dir.exists(paths = '~/multiomics/results/figures/MOFA/all_samples/infiltration')) {
+  dir.create(path = '~/multiomics/results/figures/MOFA/all_samples/infiltration',recursive = TRUE)
+}
+
+if(!dir.exists(paths = '~/multiomics/results/MOFA/all_samples/infiltration')) {
+  dir.create(path = '~/multiomics/results/MOFA/all_samples/infiltration',recursive = TRUE)
+}
+```
+
+### Data preprocessing and multiomics dataframe creation
+```{r}
+design <- read_tsv('~/multiomics/results/design_files/design_multiomics_mofa.tsv')
+proteindata <- read_tsv(file = '~/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
+prot <- proteindata %>% 
+  medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
+protFeatures <- prot$Protein.Names
+prot <- prot %>% 
+  dplyr::select(design$sample_id) %>% 
+  as.matrix
+
+phosphodata <- read_tsv(file = '~/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv')
+phospho <- phosphodata %>%
+  medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
+phosphoFeatures <- phospho$Protein.Names
+phospho <- phospho %>% 
+  dplyr::select(design$sample_id) %>% 
+  as.matrix
+
+genedata <- read_tsv(file = '~/multiomics/data/transcriptomics/genematrix_unadjusted_tpm_normalized.tsv')
+gene <- genedata %>% 
+  medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene',cutoff = 0.75)
+geneFeatures <- gene$Gene
+gene <- gene %>% 
+  dplyr::select(design$sample_id) %>% 
+  as.matrix
+
+immuneData <- read_tsv(file = '~/multiomics/data/Immune_infiltration/epic_gene.tsv')
+immuneFeatures <- immuneData$cell_type
+immune <- immuneData %>% 
+  dplyr::select(design$sample_id) %>% 
+  as.matrix
+
+calZScore <- function(x) (x-mean(x))/sd(x)
+immune <- t(apply(immune,1,calZScore))
+
+dataMix <- list(proteomics=prot,
+                phosphoproteomics=phospho,
+                transcriptomics=gene,
+                infiltration=immune)
+
+response <- design %>% 
+  dplyr::select(sample_id,Group.Info)
+```
+
+### Model Parameters
+#### Sizes
+
+```{r}
+purrr::map(.x = dataMix,.f = dim)
+```
+
+#### Create MOFA object
+
+```{r}
+MOFAobject <- create_mofa(dataMix)
+```
+
+#### Plot data overview
+
+```{r}
+plot_data_overview(MOFAobject)
+```
+
+#### Data options
+
+```{r}
+data_opts <- get_default_data_options(MOFAobject)
+```
+
+#### Model options
+
+```{r}
+model_opts <- get_default_model_options(MOFAobject)
+model_opts$num_factors <- 15
+```
+
+#### Training options
+
+```{r}
+train_opts <- get_default_training_options(MOFAobject)
+train_opts$convergence_mode <- "fast"
+train_opts$seed <- 42
+```
+
+### Model Training
+
+```{r}
+MOFAobject <- prepare_mofa(MOFAobject,
+  data_options = data_opts,
+  model_options = model_opts,
+  training_options = train_opts
+)
+
+MOFAobject <- run_mofa(MOFAobject)
+```
+
+### Model evaluation
+#### Add metadata
+
+```{r}
+# Add metadata
+design <- design %>% 
+  dplyr::rename(sample=sample_id)
+samples_metadata(MOFAobject) <- design
+
+# Add Feature Names
+updated_features_names <- features_names(MOFAobject)
+updated_features_names[["proteomics"]] <- protFeatures
+updated_features_names[["phosphoproteomics"]] <- phosphoFeatures
+updated_features_names[["transcriptomics"]] <- geneFeatures
+updated_features_names[["infiltration"]] <- immuneFeatures
+
+features_names(MOFAobject) <- updated_features_names
+```
+```{r}
+slotNames(MOFAobject)
+```
+
+#### Save model
+```{r}
+saveRDS(object = MOFAobject,file = '~/multiomics/results/MOFA/all_samples/infiltration/model.hdf5',compress = 'gzip')
+```
+
+#### Correlation between factors
+```{r}
+factor_corr_plot <- {plot_factor_cor(object = MOFAobject)
+  grDevices::recordPlot()}
+
+ggsave(filename = 'factor_corr_plot.png',plot = grDevices::replayPlot(factor_corr_plot),device = 'png',path = '~/multiomics/results/figures/MOFA/all_samples/infiltration/')
+```
+
+#### Variance decomposition
+```{r}
+plotVariance <- plot_variance_explained(MOFAobject,max_r2 = 10)
+
+ggsave(filename = 'MOFA_variance_allgroups.pdf',plot = plotVariance,device = 'pdf',path = '~/multiomics/results/figures/MOFA/all_samples/infiltration/',dpi = 600,width = 10,height = 10,units = 'in')
+```
+
+#### Factor correlation
+```{r}
+covariatePlot <- correlate_factors_with_covariates(MOFAobject, 
+  covariates = c('Group.Info','Size.mm','NCN.PAM50','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","PR",'SSP.PAM50',"NHG",'BCFi_event','tumor_mutational_burden'), 
+  plot="log_pval",
+  abs = TRUE,
+  alpha = 0.05
+)
+
+ggsave(filename = 'covariance.pdf',plot = covariatePlot,device = 'pdf',path = '~/multiomics/results/figures/MOFA/all_samples/infiltration/',dpi = 600,width = 10,height = 10,units = 'in')
+```
+
+#### Plot feature weights
+```{r}
+immune_weights <- plot_top_weights(object = MOFAobject,
+                 view = 'infiltration',
+                 factors = 3,
+                 scale = TRUE,
+                 sign = 'all')
+
+prot_weights <- plot_top_weights(MOFAobject,
+                 view = "proteomics",
+                 factor = 3,
+                 nfeatures = 100,     # Top number of features to highlight
+                 scale = T           # Scale weights from -1 to 1
+)
+
+phospho_weigths <- plot_top_weights(MOFAobject,
+                 view = "phosphoproteomics",
+                 factor = 3,
+                 nfeatures = 100,     # Top number of features to highlight
+                 scale = T           # Scale weights from -1 to 1
+)
+rna_weights <- plot_top_weights(MOFAobject,
+                 view = "transcriptomics",
+                 factor = 3,
+                 nfeatures = 100,     # Top number of features to highlight
+                 scale = T           # Scale weights from -1 to 1
+)
+
+figPath <- c('prot_weights.png','phospho_weigths.png','rna_weights.png','immune_weights.png')
+weightPlots <- list(prot_weights,phospho_weigths,rna_weights,immune_weights)
+map2(.x = weightPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '~/multiomics/results/figures/MOFA/all_samples/infiltration/',dpi = 300,width = 15,height = 15,units = 'in'))
+```
+
+#### Plot Heatmaps
+```{r}
+prot_heatmap <- plot_data_heatmap(MOFAobject, 
+  view = "proteomics",
+  factor = 3,  
+  features = 100,
+  cluster_rows = TRUE, cluster_cols = TRUE,
+  show_rownames = TRUE, show_colnames = FALSE,
+  scale = "row",
+  denoise = TRUE,
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type')
+)
+
+rna_heatmap <- plot_data_heatmap(MOFAobject, 
+  view = "transcriptomics",
+  factor = 3,  
+  features = 100,
+  cluster_rows = TRUE, cluster_cols = TRUE,
+  show_rownames = TRUE, show_colnames = FALSE,
+  scale = "row",
+  denoise = TRUE,
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type')
+)
+
+phospho_heatmap <- plot_data_heatmap(MOFAobject, 
+  view = "phosphoproteomics",
+  factor = 3,  
+  features = 100,
+  cluster_rows = TRUE, cluster_cols = TRUE,
+  show_rownames = TRUE, show_colnames = FALSE,
+  scale = "row",
+  denoise = TRUE,
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type')
+)
+
+immune_heatmap <- plot_data_heatmap(MOFAobject, 
+  view = "infiltration",
+  factor = 3,  
+  features = 8,
+  cluster_rows = TRUE, cluster_cols = TRUE,
+  show_rownames = TRUE, show_colnames = FALSE,
+  scale = "row",
+  denoise = TRUE,
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type')
+)
+
+figPath <- c('prot_heatmap.png','phospho_heatmap.png','rna_heatmap.png','immune_heatmap.png')
+heatmapPlots <- list(prot_heatmap,phospho_heatmap,rna_heatmap,immune_heatmap)
+map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '~/multiomics/results/figures/MOFA/all_samples/infiltration/',dpi = 300,width = 15,height = 15,units = 'in'))
+```
+
+## All samples without infiltration
+```{r}
+if(!dir.exists(paths = '~/multiomics/results/figures/MOFA/all_samples/no_infiltration')) {
+  dir.create(path = '~/multiomics/results/figures/MOFA/all_samples/no_infiltration',recursive = TRUE)
+}
+
+if(!dir.exists(paths = '~/multiomics/results/MOFA/all_samples/no_infiltration')) {
+  dir.create(path = '~/multiomics/results/MOFA/all_samples/no_infiltration',recursive = TRUE)
+}
+```
+
+### Data preprocessing and multiomics dataframe creation
+```{r}
+design <- read_tsv('~/multiomics/results/design_files/design_multiomics_mofa.tsv')
+proteindata <- read_tsv(file = '~/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
+prot <- proteindata %>% 
+  medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
+protFeatures <- prot$Protein.Names
+prot <- prot %>% 
+  dplyr::select(design$sample_id) %>% 
+  as.matrix
+
+phosphodata <- read_tsv(file = '~/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv')
+phospho <- phosphodata %>%
+  medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
+phosphoFeatures <- phospho$Protein.Names
+phospho <- phospho %>% 
+  dplyr::select(design$sample_id) %>% 
+  as.matrix
+
+genedata <- read_tsv(file = '~/multiomics/data/transcriptomics/genematrix_unadjusted_tpm_normalized.tsv')
+gene <- genedata %>% 
+  medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene',cutoff = 0.75)
+geneFeatures <- gene$Gene
+gene <- gene %>% 
+  dplyr::select(design$sample_id) %>% 
+  as.matrix
+
+dataMix <- list(proteomics=prot,
+                phosphoproteomics=phospho,
+                transcriptomics=gene)
+
+response <- design %>% 
+  dplyr::select(sample_id,Group.Info)
+```
+
+### Model Parameters
+#### Sizes
+
+```{r}
+purrr::map(.x = dataMix,.f = dim)
+```
+
+#### Create MOFA object
+
+```{r}
+MOFAobject <- create_mofa(dataMix)
+```
+
+#### Plot data overview
+
+```{r}
+plot_data_overview(MOFAobject)
+```
+
+#### Data options
+
+```{r}
+data_opts <- get_default_data_options(MOFAobject)
+```
+
+#### Model options
+
+```{r}
+model_opts <- get_default_model_options(MOFAobject)
+model_opts$num_factors <- 15
+```
+
+#### Training options
+
+```{r}
+train_opts <- get_default_training_options(MOFAobject)
+train_opts$convergence_mode <- "fast"
+train_opts$seed <- 42
+```
+
+### Model Training
+
+```{r}
+MOFAobject <- prepare_mofa(MOFAobject,
+  data_options = data_opts,
+  model_options = model_opts,
+  training_options = train_opts
+)
+
+MOFAobject <- run_mofa(MOFAobject)
+```
+
+### Model evaluation
+#### Add metadata
+
+```{r}
+# Add metadata
+design <- design %>% 
+  dplyr::rename(sample=sample_id)
+samples_metadata(MOFAobject) <- design
+
+# Add Feature Names
+updated_features_names <- features_names(MOFAobject)
+updated_features_names[["proteomics"]] <- protFeatures
+updated_features_names[["phosphoproteomics"]] <- phosphoFeatures
+updated_features_names[["transcriptomics"]] <- geneFeatures
+
+features_names(MOFAobject) <- updated_features_names
+```
+```{r}
+slotNames(MOFAobject)
+```
+
+#### Save model
+```{r}
+saveRDS(object = MOFAobject,file = '~/multiomics/results/MOFA/all_samples/no_infiltration/model.hdf5',compress = 'gzip')
+```
+
+#### Correlation between factors
+```{r}
+factor_corr_plot <- {plot_factor_cor(MOFAobject)
+  grDevices::recordPlot()}
+
+ggsave(filename = 'factor_corr_plot.png',plot = grDevices::replayPlot(factor_corr_plot),device = 'png',path = '~/multiomics/results/figures/MOFA/all_samples/no_infiltration/')
+```
+
+#### Variance decomposition
+```{r}
+plotVariance <- plot_variance_explained(MOFAobject,max_r2 = 10)
+
+ggsave(filename = 'MOFA_variance_allgroups.pdf',plot = plotVariance,device = 'pdf',path = '~/multiomics/results/figures/MOFA/all_samples/no_infiltration/',dpi = 600,width = 10,height = 10,units = 'in')
+```
+
+#### Factor correlation
+```{r}
+covariatePlot <- correlate_factors_with_covariates(MOFAobject, 
+  covariates = c('Group.Info','Size.mm','NCN.PAM50','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","PR",'SSP.PAM50',"NHG",'BCFi_event','tumor_mutational_burden'), 
+  plot="log_pval",
+  abs = TRUE,
+  alpha = 0.05
+)
+
+ggsave(filename = 'covariance.pdf',plot = covariatePlot,device = 'pdf',path = '~/multiomics/results/figures/MOFA/all_samples/no_infiltration/',dpi = 600,width = 10,height = 10,units = 'in')
+```
+
+#### Plot feature weights
+```{r}
+prot_weights <- plot_top_weights(MOFAobject,
+                 view = "proteomics",
+                 factor = 3,
+                 nfeatures = 100,     # Top number of features to highlight
+                 scale = T           # Scale weights from -1 to 1
+)
+
+phospho_weigths <- plot_top_weights(MOFAobject,
+                 view = "phosphoproteomics",
+                 factor = 3,
+                 nfeatures = 100,     # Top number of features to highlight
+                 scale = T           # Scale weights from -1 to 1
+)
+rna_weights <- plot_top_weights(MOFAobject,
+                 view = "transcriptomics",
+                 factor = 3,
+                 nfeatures = 100,     # Top number of features to highlight
+                 scale = T           # Scale weights from -1 to 1
+)
+
+figPath <- c('prot_weights.png','phospho_weigths.png','rna_weights.png')
+weightPlots <- list(prot_weights,phospho_weigths,rna_weights)
+map2(.x = weightPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '~/multiomics/results/figures/MOFA/all_samples/no_infiltration/',dpi = 300,width = 15,height = 15,units = 'in'))
+```
+
+#### Plot Heatmaps
+```{r}
+prot_heatmap <- plot_data_heatmap(MOFAobject, 
+  view = "proteomics",
+  factor = 3,  
+  features = 100,
+  cluster_rows = TRUE, cluster_cols = TRUE,
+  show_rownames = TRUE, show_colnames = FALSE,
+  scale = "row",
+  denoise = TRUE,
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type')
+)
+
+rna_heatmap <- plot_data_heatmap(MOFAobject, 
+  view = "transcriptomics",
+  factor = 3,  
+  features = 100,
+  cluster_rows = TRUE, cluster_cols = TRUE,
+  show_rownames = TRUE, show_colnames = FALSE,
+  scale = "row",
+  denoise = TRUE,
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type')
+)
+
+phospho_heatmap <- plot_data_heatmap(MOFAobject, 
+  view = "phosphoproteomics",
+  factor = 3,  
+  features = 100,
+  cluster_rows = TRUE, cluster_cols = TRUE,
+  show_rownames = TRUE, show_colnames = FALSE,
+  scale = "row",
+  denoise = TRUE,
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type')
+)
+
+figPath <- c('prot_heatmap.png','phospho_heatmap.png','rna_heatmap.png')
+heatmapPlots <- list(prot_heatmap,phospho_heatmap,rna_heatmap)
+map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '~/multiomics/results/figures/MOFA/all_samples/no_infiltration/',dpi = 300,width = 15,height = 15,units = 'in'))
+```

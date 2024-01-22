@@ -13,6 +13,7 @@ engine: knitr
 params:
   ref_design: '~/multiomics/data/merged_ids.tsv'
   mutation_design: '~/multiomics/data/mutation/samples.tsv'
+  hiscore_data: '~/multiomics/data/Immune_infiltration/HisScoreComplete.tsv'
   ref_design_mutation: '~/multiomics/results/design_files/mergedDesign_ref_mutation.tsv'
   proteome_design: '~/multiomics/data/proteomics/full/design_experiment_order.txt'
   phospho_design: '~/multiomics/data/proteomics/phospho/design_phospho_experiment_order.tsv'
@@ -52,8 +53,10 @@ library(tidyverse)
 referenceDesign <- read_tsv(file = params$ref_design,col_names = TRUE)
 mutation_design <- read_tsv(file = params$mutation_design,col_names = TRUE,skip = 19) %>% 
   dplyr::select(SAMPLE,22:25,35:51)
+hiscore_data <- read_tsv(file = params$hiscore_data)
 
 referenceDesign <- left_join(x = referenceDesign,y = mutation_design,by = c('Merged'='SAMPLE'))
+referenceDesign <- left_join(x = referenceDesign,y = hiscore_data,by = c('Sample'='Name'))
 write_tsv(x = referenceDesign,file = params$ref_design_mutation)
 ```
 
@@ -195,7 +198,7 @@ write_tsv(x = newDesign,file = params$transcriptome_lobular)
 ```{r}
 designprotein <- read_tsv(file = params$proteome_noPool)
 designphospho <- read_tsv(file = params$phospho_noPool)
-designMix <- inner_join(x = designprotein,y = designphospho,by = colnames(designphospho)[-c(1,2,4:6,120)])
+designMix <- inner_join(x = designprotein,y = designphospho,by = colnames(designphospho)[-c(1,2,4:6,128)])
 
 write_tsv(x = designMix,file = params$multiomics_mofa)
 ```

@@ -17,6 +17,7 @@ engine: knitr
 #| warning: false
 library(tidyverse)
 library(NormalyzerDE)
+library(data.table)
 ```
 
 # Data Pre-processing
@@ -27,7 +28,7 @@ library(NormalyzerDE)
 # Data Downloaded from https://data.mendeley.com/datasets/yzxtxn4nmd
 load('~/multiomics/data/transcriptomics/Gene.ID.ann.Rdata')
 load('~/multiomics/data/transcriptomics/SCANB.9206.genematrix_noNeg.Rdata')
-design <- read_tsv('~/multiomics/results/design_files/mergedDesign_final.tsv') %>% 
+design <- read_tsv('~/multiomics/results/design_files/mergedDesign_ref_mutation.tsv') %>% 
   filter(!is.na(GEX.assay))
 
 geneNames <- rownames(SCANB.9206.genematrix_noNeg)
@@ -38,52 +39,21 @@ newGenes <- SCANB.9206.genematrix_noNeg %>%
 
 sampleNames <- newGenes %>% 
   colnames %>% 
-  str_sub(start = 1,end = 7)
+  str_split_i(pattern = '\\.',i = 1)
 
 colnames(newGenes) <- sampleNames
-newGenes <- bind_cols(Gene=geneNames,newGenes)
-# it does not appear that the adjusted data is log2 transformed even if it is described as being (max value is over 70000)
 newGenes <- newGenes %>% 
-  mutate(across(where(is.double),~na_if(.,0))) %>% 
-  mutate(across(where(is.numeric),~log2(.x)))
+  mutate(across(everything(),function(x){log2(x+0.1)}))
+
+# Running this step as data.table for memory efficiency
+newGenes <- as.data.table(newGenes)
+newGenes <- newGenes[, lapply(.SD, function(x) x - mean(x)), by = .I]
+
 # The row order between the annotation matrix and the gene matrix is the same, so one can just swap gene names
-
-write_tsv(x = newGenes,file =  '~/multiomics/data/transcriptomics/genematrix_filtered_adjusted.tsv')
-```
-
-```{r Transcriptomics Data preprocessing continued}
-#| message: false
-# Data Downloaded from https://data.mendeley.com/datasets/yzxtxn4nmd
-load('~/multiomics/data/transcriptomics/SCANB.9206.mymatrix.Rdata')
-
-geneNames <- rownames(SCANB.9206.mymatrix)
-
-newGenes <- SCANB.9206.mymatrix %>% 
-  as_tibble() %>% 
-  dplyr::select(design$GEX.assay)
-
-sampleNames <- newGenes %>% 
-  colnames %>% 
-  str_sub(start = 1,end = 7)
-
-colnames(newGenes) <- sampleNames
 newGenes <- bind_cols(Gene=geneNames,newGenes)
-# The row order between the annotation matrix and the gene matrix is the same, so one can just swap gene names
 
-write_tsv(x = newGenes,file = '~/multiomics/data/transcriptomics/genematrix_filtered_unadjusted.tsv')
-
-newGenesTPM <- newGenes %>% 
-  dplyr::mutate(across(where(is.numeric),~(.x/sum(.x)*10**6)))
-
-write_tsv(x = newGenesTPM,file = '~/multiomics/data/transcriptomics/genematrix_unadjusted_tpm.tsv')
-
-newGenesTPMNorm <- newGenesTPM %>% 
-  mutate(across(where(is.double),~na_if(.,0))) %>% 
-  mutate(across(where(is.numeric),~log2(.x)))
-
-write_tsv(x = newGenesTPMNorm,file = '~/multiomics/data/transcriptomics/genematrix_unadjusted_tpm_normalized.tsv')
+write_tsv(x = newGenes,file =  '~/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv')
 ```
-
 
 ## Proteomics Data
 ### DIA-NN Peptide

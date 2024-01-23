@@ -69,7 +69,7 @@ normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir =
 
 ### Transcriptomics
 ```{r}
-dataP <- '~/multiomics/data/transcriptomics/genematrix_unadjusted_tpm_normalized.tsv'
+dataP <- '~/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv'
 designP <- '~/multiomics/results/design_files/design_RNA_noPool.tsv'
 outDir <- '~/multiomics/results/differentialexpression/DuctalvsLobular'
 jDEName <- "transcriptomics_tpm_normalized"
@@ -116,7 +116,7 @@ normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir =
 
 #### Transcriptomics
 ```{r}
-dataP <- '~/multiomics/data/transcriptomics/genematrix_unadjusted_tpm_normalized.tsv'
+dataP <- '~/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv'
 designP <- '~/multiomics/results/design_files/design_RNA_ductal.tsv'
 outDir <- '~/multiomics/results/differentialexpression/LNposvsLNneg/Ductal'
 jDEName <- "transcriptomics_tpm_normalized"
@@ -161,7 +161,7 @@ normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir =
 
 #### Transcriptomics
 ```{r}
-dataP <- '~/multiomics/data/transcriptomics/genematrix_unadjusted_tpm_normalized.tsv'
+dataP <- '~/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv'
 designP <- '~/multiomics/results/design_files/design_RNA_lobular.tsv'
 outDir <- '~/multiomics/results/differentialexpression/LNposvsLNneg/Lobular'
 jDEName <- "transcriptomics_tpm_normalized"
@@ -207,7 +207,7 @@ normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir =
 
 ### Transcriptomics
 ```{r}
-dataP <- '~/multiomics/data/transcriptomics/genematrix_unadjusted_tpm_normalized.tsv'
+dataP <- '~/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv'
 designP <- '~/multiomics/results/design_files/design_RNA_g1g2.tsv'
 outDir <- '~/multiomics/results/differentialexpression/Group1vsGroup2'
 jDEName <- "transcriptomics_tpm_normalized"
@@ -253,7 +253,7 @@ normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir =
 
 ### Transcriptomics
 ```{r}
-dataP <- '~/multiomics/data/transcriptomics/genematrix_unadjusted_tpm_normalized.tsv'
+dataP <- '~/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv'
 designP <- '~/multiomics/results/design_files/design_RNA_g3g4.tsv'
 outDir <- '~/multiomics/results/differentialexpression/Group3vsGroup4'
 jDEName <- "transcriptomics_tpm_normalized"

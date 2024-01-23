@@ -54,7 +54,7 @@ phospho <- phospho %>%
   dplyr::select(design$sample_id) %>% 
   as.matrix
 
-genedata <- read_tsv(file = '~/multiomics/data/transcriptomics/genematrix_unadjusted_tpm_normalized.tsv')
+genedata <- read_tsv(file = '~/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv')
 gene <- genedata %>% 
   medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene',cutoff = 0.75)
 geneFeatures <- gene$Gene
@@ -302,7 +302,7 @@ phospho <- phospho %>%
   dplyr::select(design$sample_id) %>% 
   as.matrix
 
-genedata <- read_tsv(file = '~/multiomics/data/transcriptomics/genematrix_unadjusted_tpm_normalized.tsv')
+genedata <- read_tsv(file = '~/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv')
 gene <- genedata %>% 
   medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene',cutoff = 0.75)
 geneFeatures <- gene$Gene
@@ -523,7 +523,7 @@ phospho <- phospho %>%
   dplyr::select(design$sample_id) %>% 
   as.matrix
 
-genedata <- read_tsv(file = '~/multiomics/data/transcriptomics/genematrix_unadjusted_tpm_normalized.tsv')
+genedata <- read_tsv(file = '~/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv')
 gene <- genedata %>% 
   medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene',cutoff = 0.75)
 geneFeatures <- gene$Gene
@@ -772,7 +772,7 @@ phospho <- phospho %>%
   dplyr::select(design$sample_id) %>% 
   as.matrix
 
-genedata <- read_tsv(file = '~/multiomics/data/transcriptomics/genematrix_unadjusted_tpm_normalized.tsv')
+genedata <- read_tsv(file = '~/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv')
 gene <- genedata %>% 
   medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene',cutoff = 0.75)
 geneFeatures <- gene$Gene

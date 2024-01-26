@@ -1,0 +1,560 @@
+---
+title: "Consensus Clustering"
+author: "Sergio Mosquim Junior"
+format:
+  html:
+    toc: true
+    code-fold: true
+    embed-resources: true
+    toc-location: left
+    smooth-scroll: true
+engine: knitr
+---
+
+# Required Packages
+```{r}
+library(ConsensusClusterPlus)
+library(tidyverse)
+library(ComplexHeatmap)
+source(file = '~/multiomics/notebooks/medianFiltering.R',chdir = TRUE)
+```
+
+# Consensus Clustering
+## Ductal vs Lobular
+```{r}
+if(!dir.exists(paths = '~/multiomics/results/consensus_clustering/DuctalvsLobular/')) {
+  dir.create(path = '~/multiomics/results/consensus_clustering/DuctalvsLobular/',recursive = TRUE)
+}
+```
+
+### Proteome
+#### Load Data
+```{r}
+data <- read_tsv(file = '~/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
+  drop_na()
+design <- read_tsv(file = '~/multiomics/results/design_files/design_Full_noPool.tsv')
+```
+
+#### Preprocessing
+```{r}
+proteinDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Genes',cutoff = 0.75)
+
+proteinDataFiltered <- proteinDataFiltered %>% 
+  dplyr::select(Protein,design$sample_id)
+
+proteinDataReduced <- proteinDataFiltered %>% 
+  dplyr::select(design$sample_id) %>% 
+  as.matrix
+```
+
+#### Plotting
+```{r}
+setwd('~/multiomics/results/consensus_clustering/DuctalvsLobular/')
+results <-  ConsensusClusterPlus(d = proteinDataReduced,
+                                 maxK = 12,
+                                 clusterAlg = 'km',
+                                 seed = 123,
+                                 verbose = TRUE,reps = 50,plot = 'pdf',writeTable = TRUE,
+                                 title = 'proteome')
+```
+
+##### Testing manual plot generation
+```{r}
+# consensus_results <- results %>% 
+#   map(~pluck(.x,'consensusMatrix')) %>% 
+#   discard(~is.null(.x)) %>%
+#   map(as.data.frame)
+# 
+# cdf_data <- results %>% 
+#   map(~pluck(.x,'consensusMatrix')) %>% 
+#   discard(~is.null(.x)) %>% 
+#   map(~as.data.frame(.x)) %>% 
+#   map(~pivot_longer(data=.x,cols = everything(),names_to = 'Cluster',values_to = 'Probability')) #%>% 
+#   map(~arrange(.x,Probability)) %>% 
+#   imap(.f = function(list,name){mutate(list,k=name)}) %>% 
+#   list_rbind()
+# 
+# p <- ggplot(cdf_data,mapping = aes(x=Probability))+
+#   stat_ecdf(mapping = aes(color=k),geom='smooth')+
+#   labs(title = "Cumulative Distribution Function (CDF) Plot",
+#        x = "Probability",
+#        y = "Cumulative Probability") +
+#   theme_minimal()
+# 
+# calculate_delta <- function(cdf1, cdf2) {
+#   sum(1 - pmin(cdf1$Probability, cdf2$Probability))
+# }
+# 
+# delta_values_list <- map2_dbl(cdf_data[-1], cdf_data[-length(cdf_data)], calculate_delta)
+# delta_plot_data <- data.frame(
+#   Delta = delta_values_list,
+#   ClusterPair = seq_along(delta_values_list)
+# )
+# 
+# ggplot(delta_plot_data, aes(x = ClusterPair, y = Delta)) +
+#   geom_bar(stat = "identity", fill = "skyblue", width = 0.7) +
+#   labs(title = "Delta Values Between Consecutive CDF Matrices",
+#        x = "Consecutive Cluster Pair",
+#        y = "Delta Value") +
+#   theme_minimal()
+```
+
+
+
+### Phosphoproteome
+#### Load Data
+```{r}
+data <- read_tsv(file = '~/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv') %>% 
+  drop_na
+design <- read_tsv(file = '~/multiomics/results/design_files/design_phospho_noPool.tsv')
+```
+#### Preprocessing
+```{r}
+phosphoDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Genes')
+
+phosphoDataFiltered <- phosphoDataFiltered %>% 
+  dplyr::select(Protein,design$sample_id)
+
+phosphoDataReduced <- phosphoDataFiltered %>% 
+  dplyr::select(design$sample_id) %>% 
+  as.matrix()
+```
+
+#### Plotting
+```{r}
+setwd('~/multiomics/results/consensus_clustering/DuctalvsLobular/')
+results <-  ConsensusClusterPlus(d = phosphoDataReduced,
+                                 maxK = 12,
+                                 clusterAlg = 'km',
+                                 seed = 123,
+                                 verbose = TRUE,reps = 50,plot = 'pdf',writeTable = TRUE,
+                                 title = 'phosphoproteome')
+```
+
+### Transcriptome
+#### Load Data
+```{r}
+data <- read_tsv(file = '~/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv') %>% 
+  drop_na
+design <- read_tsv(file = '~/multiomics/results/design_files/design_RNA_noPool.tsv')
+```
+
+#### Preprocessing
+```{r}
+rnaDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene')
+
+rnaDataFiltered <- rnaDataFiltered %>% 
+  dplyr::select(Gene,design$sample_id)
+
+rnaDataReduced <- rnaDataFiltered %>% 
+  dplyr::select(design$sample_id) %>% 
+  as.matrix()
+```
+
+#### Plotting
+```{r}
+setwd('~/multiomics/results/consensus_clustering/DuctalvsLobular/')
+results <-  ConsensusClusterPlus(d = rnaDataReduced,
+                                 maxK = 12,
+                                 clusterAlg = 'km',
+                                 seed = 123,
+                                 verbose = TRUE,reps = 50,plot = 'pdf',writeTable = TRUE,
+                                 title = 'transcriptome')
+```
+
+## LN+ vs LN-
+### Ductal
+```{r}
+if(!dir.exists(paths = '~/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/')) {
+  dir.create(path = '~/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/',recursive = TRUE)
+}
+```
+
+#### Proteome
+##### Load Data
+```{r}
+data <- read_tsv(file = '~/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
+  drop_na()
+design <- read_tsv(file = '~/multiomics/results/design_files/design_full_ductal.tsv')
+```
+
+##### Preprocessing
+```{r}
+proteinDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Genes',cutoff = 0.75)
+
+proteinDataFiltered <- proteinDataFiltered %>% 
+  dplyr::select(Protein,design$sample_id)
+
+proteinDataReduced <- proteinDataFiltered %>% 
+  dplyr::select(design$sample_id) %>% 
+  as.matrix
+```
+
+##### Plotting
+```{r}
+setwd('~/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/')
+results <-  ConsensusClusterPlus(d = proteinDataReduced,
+                                 maxK = 12,
+                                 clusterAlg = 'km',
+                                 seed = 123,
+                                 verbose = TRUE,reps = 50,plot = 'pdf',writeTable = TRUE,
+                                 title = 'proteome')
+```
+
+#### Phosphoproteome
+##### Load Data
+```{r}
+data <- read_tsv(file = '~/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv') %>% 
+  drop_na
+design <- read_tsv(file = '~/multiomics/results/design_files/design_phospho_ductal.tsv')
+```
+##### Preprocessing
+```{r}
+phosphoDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Genes')
+
+phosphoDataFiltered <- phosphoDataFiltered %>% 
+  dplyr::select(Protein,design$sample_id)
+
+phosphoDataReduced <- phosphoDataFiltered %>% 
+  dplyr::select(design$sample_id) %>% 
+  as.matrix()
+```
+
+##### Plotting
+```{r}
+setwd('~/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/')
+results <-  ConsensusClusterPlus(d = phosphoDataReduced,
+                                 maxK = 12,
+                                 clusterAlg = 'km',
+                                 seed = 123,
+                                 verbose = TRUE,reps = 50,plot = 'pdf',writeTable = TRUE,
+                                 title = 'phosphoproteome')
+```
+
+#### Transcriptome
+##### Load Data
+```{r}
+data <- read_tsv(file = '~/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv') %>% 
+  drop_na
+design <- read_tsv(file = '~/multiomics/results/design_files/design_RNA_ductal.tsv')
+```
+
+##### Preprocessing
+```{r}
+rnaDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene')
+
+rnaDataFiltered <- rnaDataFiltered %>% 
+  dplyr::select(Gene,design$sample_id)
+
+rnaDataReduced <- rnaDataFiltered %>% 
+  dplyr::select(design$sample_id) %>% 
+  as.matrix()
+```
+
+##### Plotting
+```{r}
+setwd('~/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/')
+results <-  ConsensusClusterPlus(d = rnaDataReduced,
+                                 maxK = 12,
+                                 clusterAlg = 'km',
+                                 seed = 123,
+                                 verbose = TRUE,reps = 50,plot = 'pdf',writeTable = TRUE,
+                                 title = 'transcriptome')
+```
+
+### Lobular
+```{r}
+if(!dir.exists(paths = '~/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/')) {
+  dir.create(path = '~/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/',recursive = TRUE)
+}
+```
+
+#### Proteome
+##### Load Data
+```{r}
+data <- read_tsv(file = '~/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
+  drop_na()
+design <- read_tsv(file = '~/multiomics/results/design_files/design_full_lobular.tsv')
+```
+
+##### Preprocessing
+```{r}
+proteinDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Genes',cutoff = 0.75)
+
+proteinDataFiltered <- proteinDataFiltered %>% 
+  dplyr::select(Protein,design$sample_id)
+
+proteinDataReduced <- proteinDataFiltered %>% 
+  dplyr::select(design$sample_id) %>% 
+  as.matrix
+```
+
+##### Plotting
+```{r}
+setwd('~/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/')
+results <-  ConsensusClusterPlus(d = proteinDataReduced,
+                                 maxK = 12,
+                                 clusterAlg = 'km',
+                                 seed = 123,
+                                 verbose = TRUE,reps = 50,plot = 'pdf',writeTable = TRUE,
+                                 title = 'proteome')
+```
+
+#### Phosphoproteome
+##### Load Data
+```{r}
+data <- read_tsv(file = '~/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv') %>% 
+  drop_na
+design <- read_tsv(file = '~/multiomics/results/design_files/design_phospho_lobular.tsv')
+```
+##### Preprocessing
+```{r}
+phosphoDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Genes')
+
+phosphoDataFiltered <- phosphoDataFiltered %>% 
+  dplyr::select(Protein,design$sample_id)
+
+phosphoDataReduced <- phosphoDataFiltered %>% 
+  dplyr::select(design$sample_id) %>% 
+  as.matrix()
+```
+
+##### Plotting
+```{r}
+setwd('~/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/')
+results <-  ConsensusClusterPlus(d = phosphoDataReduced,
+                                 maxK = 12,
+                                 clusterAlg = 'km',
+                                 seed = 123,
+                                 verbose = TRUE,reps = 50,plot = 'pdf',writeTable = TRUE,
+                                 title = 'phosphoproteome')
+```
+
+#### Transcriptome
+##### Load Data
+```{r}
+data <- read_tsv(file = '~/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv') %>% 
+  drop_na
+design <- read_tsv(file = '~/multiomics/results/design_files/design_RNA_lobular.tsv')
+```
+
+##### Preprocessing
+```{r}
+rnaDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene')
+
+rnaDataFiltered <- rnaDataFiltered %>% 
+  dplyr::select(Gene,design$sample_id)
+
+rnaDataReduced <- rnaDataFiltered %>% 
+  dplyr::select(design$sample_id) %>% 
+  as.matrix()
+```
+
+##### Plotting
+```{r}
+setwd('~/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/')
+results <-  ConsensusClusterPlus(d = rnaDataReduced,
+                                 maxK = 12,
+                                 clusterAlg = 'km',
+                                 seed = 123,
+                                 verbose = TRUE,reps = 50,plot = 'pdf',writeTable = TRUE,
+                                 title = 'transcriptome')
+```
+
+## Group1 vs Group2
+```{r}
+if(!dir.exists(paths = '~/multiomics/results/consensus_clustering/Group1vsGroup2/')) {
+  dir.create(path = '~/multiomics/results/consensus_clustering/Group1vsGroup2/',recursive = TRUE)
+}
+```
+
+### Proteome
+#### Load Data
+```{r}
+data <- read_tsv(file = '~/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
+  drop_na()
+design <- read_tsv(file = '~/multiomics/results/design_files/design_full_g1g2.tsv')
+```
+
+#### Preprocessing
+```{r}
+proteinDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Genes',cutoff = 0.75)
+
+proteinDataFiltered <- proteinDataFiltered %>% 
+  dplyr::select(Protein,design$sample_id)
+
+proteinDataReduced <- proteinDataFiltered %>% 
+  dplyr::select(design$sample_id) %>% 
+  as.matrix
+```
+
+#### Plotting
+```{r}
+setwd('~/multiomics/results/consensus_clustering/Group1vsGroup2/')
+results <-  ConsensusClusterPlus(d = proteinDataReduced,
+                                 maxK = 12,
+                                 clusterAlg = 'km',
+                                 seed = 123,
+                                 verbose = TRUE,reps = 50,plot = 'pdf',writeTable = TRUE,
+                                 title = 'proteome')
+```
+
+### Phosphoproteome
+#### Load Data
+```{r}
+data <- read_tsv(file = '~/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv') %>% 
+  drop_na
+design <- read_tsv(file = '~/multiomics/results/design_files/design_phospho_g1g2.tsv')
+```
+#### Preprocessing
+```{r}
+phosphoDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Genes')
+
+phosphoDataFiltered <- phosphoDataFiltered %>% 
+  dplyr::select(Protein,design$sample_id)
+
+phosphoDataReduced <- phosphoDataFiltered %>% 
+  dplyr::select(design$sample_id) %>% 
+  as.matrix()
+```
+
+#### Plotting
+```{r}
+setwd('~/multiomics/results/consensus_clustering/Group1vsGroup2/')
+results <-  ConsensusClusterPlus(d = phosphoDataReduced,
+                                 maxK = 12,
+                                 clusterAlg = 'km',
+                                 seed = 123,
+                                 verbose = TRUE,reps = 50,plot = 'pdf',writeTable = TRUE,
+                                 title = 'phosphoproteome')
+```
+
+### Transcriptome
+#### Load Data
+```{r}
+data <- read_tsv(file = '~/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv') %>% 
+  drop_na
+design <- read_tsv(file = '~/multiomics/results/design_files/design_RNA_g1g2.tsv')
+```
+
+#### Preprocessing
+```{r}
+rnaDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene')
+
+rnaDataFiltered <- rnaDataFiltered %>% 
+  dplyr::select(Gene,design$sample_id)
+
+rnaDataReduced <- rnaDataFiltered %>% 
+  dplyr::select(design$sample_id) %>% 
+  as.matrix()
+```
+
+#### Plotting
+```{r}
+setwd('~/multiomics/results/consensus_clustering/Group1vsGroup2/')
+results <-  ConsensusClusterPlus(d = rnaDataReduced,
+                                 maxK = 12,
+                                 clusterAlg = 'km',
+                                 seed = 123,
+                                 verbose = TRUE,reps = 50,plot = 'pdf',writeTable = TRUE,
+                                 title = 'transcriptome')
+```
+
+## Group3 vs Group4
+```{r}
+if(!dir.exists(paths = '~/multiomics/results/consensus_clustering/Group3vsGroup4/')) {
+  dir.create(path = '~/multiomics/results/consensus_clustering/Group3vsGroup4/',recursive = TRUE)
+}
+```
+
+### Proteome
+#### Load Data
+```{r}
+data <- read_tsv(file = '~/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
+  drop_na()
+design <- read_tsv(file = '~/multiomics/results/design_files/design_full_g3g4.tsv')
+```
+
+#### Preprocessing
+```{r}
+proteinDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Genes',cutoff = 0.75)
+
+proteinDataFiltered <- proteinDataFiltered %>% 
+  dplyr::select(Protein,design$sample_id)
+
+proteinDataReduced <- proteinDataFiltered %>% 
+  dplyr::select(design$sample_id) %>% 
+  as.matrix
+```
+
+#### Plotting
+```{r}
+setwd('~/multiomics/results/consensus_clustering/Group3vsGroup4/')
+results <-  ConsensusClusterPlus(d = proteinDataReduced,
+                                 maxK = 12,
+                                 clusterAlg = 'km',
+                                 seed = 123,
+                                 verbose = TRUE,reps = 50,plot = 'pdf',writeTable = TRUE,
+                                 title = 'proteome')
+```
+
+### Phosphoproteome
+#### Load Data
+```{r}
+data <- read_tsv(file = '~/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv') %>% 
+  drop_na
+design <- read_tsv(file = '~/multiomics/results/design_files/design_phospho_g3g4.tsv')
+```
+#### Preprocessing
+```{r}
+phosphoDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Genes')
+
+phosphoDataFiltered <- phosphoDataFiltered %>% 
+  dplyr::select(Protein,design$sample_id)
+
+phosphoDataReduced <- phosphoDataFiltered %>% 
+  dplyr::select(design$sample_id) %>% 
+  as.matrix()
+```
+
+#### Plotting
+```{r}
+setwd('~/multiomics/results/consensus_clustering/Group3vsGroup4/')
+results <-  ConsensusClusterPlus(d = phosphoDataReduced,
+                                 maxK = 12,
+                                 clusterAlg = 'km',
+                                 seed = 123,
+                                 verbose = TRUE,reps = 50,plot = 'pdf',writeTable = TRUE,
+                                 title = 'phosphoproteome')
+```
+
+### Transcriptome
+#### Load Data
+```{r}
+data <- read_tsv(file = '~/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv') %>% 
+  drop_na
+design <- read_tsv(file = '~/multiomics/results/design_files/design_RNA_g3g4.tsv')
+```
+
+#### Preprocessing
+```{r}
+rnaDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene')
+
+rnaDataFiltered <- rnaDataFiltered %>% 
+  dplyr::select(Gene,design$sample_id)
+
+rnaDataReduced <- rnaDataFiltered %>% 
+  dplyr::select(design$sample_id) %>% 
+  as.matrix()
+```
+
+#### Plotting
+```{r}
+setwd('~/multiomics/results/consensus_clustering/Group3vsGroup4/')
+results <-  ConsensusClusterPlus(d = rnaDataReduced,
+                                 maxK = 12,
+                                 clusterAlg = 'km',
+                                 seed = 123,
+                                 verbose = TRUE,reps = 50,plot = 'pdf',writeTable = TRUE,
+                                 title = 'transcriptome')
+```

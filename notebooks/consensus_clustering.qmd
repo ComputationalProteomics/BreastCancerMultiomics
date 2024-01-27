@@ -141,10 +141,10 @@ design <- read_tsv(file = '~/multiomics/results/design_files/design_RNA_noPool.t
 
 #### Preprocessing
 ```{r}
-rnaDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene')
+rnaDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID')
 
 rnaDataFiltered <- rnaDataFiltered %>% 
-  dplyr::select(Gene,design$sample_id)
+  dplyr::select(Gene.ID,design$sample_id)
 
 rnaDataReduced <- rnaDataFiltered %>% 
   dplyr::select(design$sample_id) %>% 
@@ -241,10 +241,10 @@ design <- read_tsv(file = '~/multiomics/results/design_files/design_RNA_ductal.t
 
 ##### Preprocessing
 ```{r}
-rnaDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene')
+rnaDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID')
 
 rnaDataFiltered <- rnaDataFiltered %>% 
-  dplyr::select(Gene,design$sample_id)
+  dplyr::select(Gene.ID,design$sample_id)
 
 rnaDataReduced <- rnaDataFiltered %>% 
   dplyr::select(design$sample_id) %>% 
@@ -340,10 +340,10 @@ design <- read_tsv(file = '~/multiomics/results/design_files/design_RNA_lobular.
 
 ##### Preprocessing
 ```{r}
-rnaDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene')
+rnaDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID')
 
 rnaDataFiltered <- rnaDataFiltered %>% 
-  dplyr::select(Gene,design$sample_id)
+  dplyr::select(Gene.ID,design$sample_id)
 
 rnaDataReduced <- rnaDataFiltered %>% 
   dplyr::select(design$sample_id) %>% 
@@ -439,10 +439,10 @@ design <- read_tsv(file = '~/multiomics/results/design_files/design_RNA_g1g2.tsv
 
 #### Preprocessing
 ```{r}
-rnaDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene')
+rnaDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID')
 
 rnaDataFiltered <- rnaDataFiltered %>% 
-  dplyr::select(Gene,design$sample_id)
+  dplyr::select(Gene.ID,design$sample_id)
 
 rnaDataReduced <- rnaDataFiltered %>% 
   dplyr::select(design$sample_id) %>% 
@@ -538,10 +538,10 @@ design <- read_tsv(file = '~/multiomics/results/design_files/design_RNA_g3g4.tsv
 
 #### Preprocessing
 ```{r}
-rnaDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene')
+rnaDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID')
 
 rnaDataFiltered <- rnaDataFiltered %>% 
-  dplyr::select(Gene,design$sample_id)
+  dplyr::select(Gene.ID,design$sample_id)
 
 rnaDataReduced <- rnaDataFiltered %>% 
   dplyr::select(design$sample_id) %>% 

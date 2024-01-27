@@ -42,7 +42,7 @@ gseaMsigPhospho <- gseaMsigDBPhospho(data = data,qvaluecutoff = 0.25,padjustmeth
 ### Transcriptome
 ```{r}
 data <- '~/multiomics/results/differentialexpression/DuctalvsLobular/transcriptomics_tpm_normalized/transcriptomics_tpm_normalized_stats.tsv'
-gseaMsigRNA <- gseaMsigDBRNA(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H',genecol = 'Gene')
+gseaMsigRNA <- gseaMsigDBRNA(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H',genecol = 'Gene.ID')
 ```
 
 ### MultiOmics GSEA Plot
@@ -101,7 +101,7 @@ gseaMsigPhospho <- gseaMsigDBPhospho(data = data,qvaluecutoff = 0.25,padjustmeth
 #### Transcriptome
 ```{r}
 data <- '~/multiomics/results/differentialexpression/LNposvsLNneg/Ductal/transcriptomics_tpm_normalized/transcriptomics_tpm_normalized_stats.tsv'
-gseaMsigRNA <- gseaMsigDBRNA(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H',genecol = 'Gene')
+gseaMsigRNA <- gseaMsigDBRNA(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H',genecol = 'Gene.ID')
 ```
 
 #### MultiOmics GSEA Plot
@@ -158,7 +158,7 @@ gseaMsigPhospho <- gseaMsigDBPhospho(data = data,qvaluecutoff = 0.25,padjustmeth
 #### Transcriptome
 ```{r}
 data <- '~/multiomics/results/differentialexpression/LNposvsLNneg/Lobular/transcriptomics_tpm_normalized/transcriptomics_tpm_normalized_stats.tsv'
-gseaMsigRNA <- gseaMsigDBRNA(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H',genecol = 'Gene')
+gseaMsigRNA <- gseaMsigDBRNA(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H',genecol = 'Gene.ID')
 ```
 
 #### MultiOmics GSEA Plot
@@ -215,7 +215,7 @@ gseaMsigPhospho <- gseaMsigDBPhospho(data = data,qvaluecutoff = 0.25,padjustmeth
 ### Transcriptome
 ```{r}
 data <- '~/multiomics/results/differentialexpression/Group1vsGroup2/transcriptomics_tpm_normalized/transcriptomics_tpm_normalized_stats.tsv'
-gseaMsigRNA <- gseaMsigDBRNA(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H',genecol = 'Gene')
+gseaMsigRNA <- gseaMsigDBRNA(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H',genecol = 'Gene.ID')
 ```
 
 ### MultiOmics GSEA Plot
@@ -272,7 +272,7 @@ gseaMsigPhospho <- gseaMsigDBPhospho(data = data,qvaluecutoff = 0.25,padjustmeth
 ### Transcriptome
 ```{r}
 data <- '~/multiomics/results/differentialexpression/Group3vsGroup4/transcriptomics_tpm_normalized/transcriptomics_tpm_normalized_stats.tsv'
-gseaMsigRNA <- gseaMsigDBRNA(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H',genecol = 'Gene')
+gseaMsigRNA <- gseaMsigDBRNA(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H',genecol = 'Gene.ID')
 ```
 
 ### MultiOmics GSEA Plot

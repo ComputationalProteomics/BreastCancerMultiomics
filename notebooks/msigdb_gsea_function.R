@@ -60,7 +60,7 @@ gseaMsigDBPhospho <- function(data,genecol='Genes',sequenceCol = 'Stripped.Seque
 # Transcriptome function
 gseaMsigDBRNA <- function(data,genecol='Gene',qvaluecutoff,padjustmethod='fdr',species='Homo sapiens',category='H',...){
   data <- read_tsv(data) %>% 
-    dplyr::mutate(Gene=str_split_i(string = Gene,pattern = '\\.',i = 1))
+    dplyr::mutate(Gene=str_split_i(string = Gene.ID,pattern = '\\.',i = 1))
   comparison <- data %>% dplyr::select(contains('FoldChange')) %>% colnames %>% str_split_i(pattern = '\\_',i = 1)
   FCCol <- paste0(comparison,'_log2FoldChange')
   PValCol <- paste0(comparison,'_PValue')

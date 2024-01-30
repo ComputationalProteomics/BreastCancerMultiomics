@@ -30,6 +30,10 @@ source(file = '~/multiomics/notebooks/medianFiltering.R',chdir = TRUE)
 if(!dir.exists(paths = '~/multiomics/results/DIABLO/DuctalvsLobular')) {
   dir.create(path = '~/multiomics/results/DIABLO/DuctalvsLobular',recursive = TRUE)
 }
+
+if(!dir.exists(paths = '~/multiomics/results/figures/DIABLO/DuctalvsLobular')) {
+  dir.create(path = '~/multiomics/results/figures/DIABLO/DuctalvsLobular',recursive = TRUE)
+}
 ```
 
 ## Create training and test datasets
@@ -95,7 +99,7 @@ dataTest <- list(proteomics=protTest,
                 transcriptomics=geneTest)
 
 varKeep <- c('dataTest','dataTrain','responseTrain','responseTest')
-rm(list = setdiff(ls(),varKeep))
+# rm(list = setdiff(ls(),varKeep))
 ```
 
 ## Setup
@@ -198,55 +202,109 @@ final.diablo.model <- block.splsda(X = dataTrain, Y = responseTrain, ncomp = nco
 saveRDS(object = final.diablo.model,file = '~/multiomics/results/DIABLO/DuctalvsLobular/model.gzip',compress = 'gzip')
 ```
 
+## Table of selected variables
 ```{r}
-selectVar(final.diablo.model, block = 'proteomics', comp = 1)$proteomics$name
+ncomp <- 5
+modelVar <- map(.x = 1:ncomp,.f = ~selectVar(final.diablo.model,comp=.x))
+names(modelVar) <- paste0('Comp',1:5)
+modelVar <- map(1:ncomp,function(x){
+  proteomics <- pluck(modelVar,x,'proteomics','name')
+  phosphoproteomics <- pluck(modelVar,x,'phosphoproteomics','name')
+  transcriptomics <- pluck(modelVar,x,'transcriptomics','name')
+  list(proteomics=proteomics,phosphoproteomics=phosphoproteomics,transcriptomics=transcriptomics)
+})
+names(modelVar) <- paste0('Comp',1:5)
+modelVar <- modelVar %>% 
+  map_depth(.,2,~data.frame(ID=.x)) %>% 
+  map_depth(.,1,~list_rbind(.x,names_to = 'Omics')) %>% 
+  list_rbind(names_to = 'Comp')
+
+write_tsv(x = modelVar,file = '~/multiomics/results/DIABLO/DuctalvsLobular/model_variables.tsv')
 ```
 
+## Figures
+### Market Plot
+```{r,message=FALSE}
+pdf(file = '~/multiomics/results/figures/DIABLO/DuctalvsLobular/marker_plot.pdf',width = 30,height = 10,onefile = TRUE)
+map(1:ncomp,~plotMarkers(object = final.diablo.model,block = 'proteomics',comp = .x))
+map(1:ncomp,~plotMarkers(object = final.diablo.model,block = 'phosphoproteomics',comp = .x))
+map(1:ncomp,~plotMarkers(object = final.diablo.model,block = 'transcriptomics',comp = .x))
+dev.off()
+```
+
+
+### DIABLO Plot
 ```{r}
-pdf(file = '~/multiomics/results/DIABLO/DuctalvsLobular/corrplot.pdf',width = 10,height = 10,onefile = TRUE)
-plotDiablo(final.diablo.model, ncomp = 1)
+pdf(file = '~/multiomics/results/figures/DIABLO/DuctalvsLobular/corrplot.pdf',width = 10,height = 10,onefile = TRUE)
+map(1:ncomp,~plotDiablo(final.diablo.model,ncomp = .x,legend = TRUE))
 dev.off
 ```
+
+### Sample Plot
 ```{r}
-plotIndiv(final.diablo.model, ind.names = FALSE, legend = TRUE, 
-          title = 'DIABLO Sample Plots')
+combinations <- combn(x = ncomp,m = 2,simplify = FALSE)
+pdf(file = '~/multiomics/results/figures/DIABLO/DuctalvsLobular/indiv_plot.pdf',width = 10,height = 10,onefile = TRUE)
+map(.x = combinations,~plotIndiv(final.diablo.model,comp = .x, ind.names = FALSE, legend = TRUE,ellipse = TRUE,ellipse.level = 0.95,title = 'DIABLO Sample Plots'))
+dev.off()
 ```
 
+### Circos Plot
 ```{r}
-circosPlot(final.diablo.model, cutoff = 0.7, line = TRUE,
+pdf(file = '~/multiomics/results/figures/DIABLO/DuctalvsLobular/circos_plot.pdf',onefile = TRUE,width = 8.5)
+circosPlot(final.diablo.model, cutoff = 0.9, line = TRUE,
            color.blocks= c('darkorchid', 'brown1', 'lightgreen'),
-           color.cor = c("chocolate3","grey20"), size.labels = 1.5)
-```
-
-```{r}
-pdf('test-network.pdf')
-network(final.diablo.model, )
-```
-
-```{r}
-pdf()
-plotLoadings(final.diablo.model, comp = 3, contrib = 'max', method = 'median')
+           color.cor = c("chocolate3","grey20"),
+           size.labels = 1,
+           size.variables = 0.3,
+           legend = TRUE)
 dev.off()
 ```
+
+### Network Plot
 ```{r}
-pdf(width = 15,height = 15)
-cimDiablo(final.diablo.model)
+pdf(file = '~/multiomics/results/figures/DIABLO/DuctalvsLobular/network_plot.pdf',onefile = TRUE,width = 20,height = 20)
+network(final.diablo.model,
+        blocks = c('proteomics','phosphoproteomics','transcriptomics'),
+        color.node = c('proteomics'='darkorchid', 'phosphoproteomics'='brown1', 'transcriptomics'='lightgreen'),
+        cutoff = abs(0.8),
+        size.node = 0.1,
+        graph.scale = 0.3)
 dev.off()
 ```
+
+### Loadings Plot
+```{r}
+pdf(file = '~/multiomics/results/figures/DIABLO/DuctalvsLobular/loadings_plot.pdf',onefile = TRUE,width = 20,height = 20)
+modelContributions <- map(1:ncomp,~plotLoadings(final.diablo.model,comp = .x, contrib = 'max', method = 'median'))
+dev.off()
+```
+
+
+### Heatmap
+```{r}
+pdf(file = '~/multiomics/results/figures/DIABLO/DuctalvsLobular/heatmap.pdf',onefile = TRUE,width = 10,height = 10)
+diabloHeatmap <- map(1:ncomp,~cimDiablo(final.diablo.model,transpose = TRUE,comp = .x,margins = c(5,25),legend.position = 'topright',size.legend = 1))
+dev.off()
+```
+
+### Plot AUC
+```{r}
+pdf(file = '~/multiomics/results/figures/DIABLO/DuctalvsLobular/roc_curve.pdf',onefile = TRUE,width = 10,height = 10)
+auc.splsda = auroc(final.diablo.model,roc.block = c('proteomics','phosphoproteomics','transcriptomics'),newdata = dataTest,outcome.test = responseTest, print = FALSE)
+dev.off()
+```
+
+## Model Evaluation
 ```{r}
 # run repeated CV performance evaluation
-perf.diablo = perf(final.diablo.model, validation = 'Mfold', 
+perf.diablo <- perf(final.diablo.model, validation = 'Mfold', 
                    M = 10, nrepeat = 10, 
-                   dist = 'centroids.dist') 
+                   dist = 'centroids.dist',cpus = parallel::detectCores()-2) 
 
 perf.diablo$MajorityVote.error.rate
 ```
 
-```{r}
-auc.splsda = auroc(final.diablo.model, roc.block = "miRNA", 
-                   roc.comp = 2, print = FALSE)
-```
-
+## Model Prediction on Test data
 ```{r}
 predict.diablo = predict(final.diablo.model, newdata = dataTest)
 confusion.mat = get.confusion_matrix(truth = responseTest,

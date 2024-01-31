@@ -205,16 +205,16 @@ saveRDS(object = final.diablo.model,file = '~/multiomics/results/DIABLO/Group1vs
 
 ## Table of selected variables
 ```{r}
-ncomp <- 5
+ncomp <- final.diablo.model$ncomp[['Y']]
 modelVar <- map(.x = 1:ncomp,.f = ~selectVar(final.diablo.model,comp=.x))
-names(modelVar) <- paste0('Comp',1:5)
+names(modelVar) <- paste0('Comp',1:ncomp)
 modelVar <- map(1:ncomp,function(x){
   proteomics <- pluck(modelVar,x,'proteomics','name')
   phosphoproteomics <- pluck(modelVar,x,'phosphoproteomics','name')
   transcriptomics <- pluck(modelVar,x,'transcriptomics','name')
   list(proteomics=proteomics,phosphoproteomics=phosphoproteomics,transcriptomics=transcriptomics)
 })
-names(modelVar) <- paste0('Comp',1:5)
+names(modelVar) <- paste0('Comp',1:ncomp)
 modelVar <- modelVar %>% 
   map_depth(.,2,~data.frame(ID=.x)) %>% 
   map_depth(.,1,~list_rbind(.x,names_to = 'Omics')) %>% 
@@ -245,7 +245,7 @@ dev.off
 ```{r}
 combinations <- combn(x = ncomp,m = 2,simplify = FALSE)
 pdf(file = '~/multiomics/results/figures/DIABLO/Group1vsGroup1/indiv_plot.pdf',width = 10,height = 10,onefile = TRUE)
-map(.x = combinations,~plotIndiv(final.diablo.model,comp = .x, ind.names = FALSE, legend = TRUE,ellipse = TRUE,ellipse.level = 0.95,title = 'DIABLO Sample Plots'))
+samplePlot <- map(.x = combinations,~plotIndiv(final.diablo.model,comp = .x, ind.names = FALSE, legend = TRUE,ellipse = TRUE,ellipse.level = 0.95,title = 'DIABLO Sample Plots'))
 dev.off()
 ```
 

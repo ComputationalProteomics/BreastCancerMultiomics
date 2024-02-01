@@ -1,0 +1,80 @@
+---
+title: "Survival Analysis"
+author: "Sergio Mosquim Junior"
+format:
+  html:
+    toc: true
+    code-fold: true
+    embed-resources: true
+    toc-location: left
+    smooth-scroll: true
+    message: false
+engine: knitr
+---
+
+# Requires Packages:
+
+```{r required packages}
+#| message: false
+#| warning: false
+library(tidyverse)
+library(survival)
+library(survminer)
+library(tidymodels)
+library(MOFA2)
+source(file = '~/multiomics/notebooks/medianFiltering.R',chdir = TRUE)
+```
+
+# Survival Analysis
+## MOFA Models
+### All samples
+#### Load MOFA Model
+```{r}
+model <- readRDS(file = '~/multiomics/results/MOFA/all_samples/infiltration/model.RDS')
+factors <- get_factors(model)[[1]]
+```
+
+#### Fit Cox Model
+```{r}
+objSurv <- Surv(time = model@samples_metadata$DRFi_days,event = model@samples_metadata$DRFi_event)
+fit <- coxph(formula = objSurv~factors)
+```
+
+### Plot Hazard Ratios
+```{r}
+s <- summary(fit)
+coef <- s[["coefficients"]]
+
+df <- data.frame(
+  factor = factor(rownames(coef), levels = rev(rownames(coef))),
+  p      = coef[,"Pr(>|z|)"], 
+  coef   = coef[,"exp(coef)"], 
+  lower  = s[["conf.int"]][,"lower .95"], 
+  higher = s[["conf.int"]][,"upper .95"]
+)
+
+ggplot(df, aes(x=factor, y=coef, ymin=lower, ymax=higher)) +
+  geom_pointrange( col='#619CFF') + 
+  coord_flip() +
+  scale_x_discrete() + 
+  labs(y="Hazard Ratio", x="") + 
+  geom_hline(aes(yintercept=1), linetype="dotted") +
+  theme_bw()
+```
+
+### Kaplan Meier plots
+```{r}
+df <- data.frame(
+  time = objSurv[,1], 
+  event = objSurv[,2], Factor3 = factors[,3],
+  Sample=rownames(factors)
+)
+df <- left_join(df,model@samples_metadata)
+cut <- surv_cutpoint(df, variables='Factor3')
+df$FactorCluster <- df$Factor3 > cut$cutpoint$cutpoint
+fit <- survfit(Surv(time, event) ~ df$NCN.PAM50, df)
+
+ggsurvplot(fit, data = df,
+  conf.int = TRUE, pval = TRUE)
+```
+

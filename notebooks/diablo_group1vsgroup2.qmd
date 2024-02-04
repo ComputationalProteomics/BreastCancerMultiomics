@@ -103,14 +103,6 @@ varKeep <- c('dataTest','dataTrain','responseTrain','responseTest')
 rm(list = setdiff(ls(),varKeep))
 ```
 
-## Investigate individual omics
-### Proteomics
-```{r}
-list.keepX <- c(1:10,seq(15,50,5))
-set.seed(123)
-prot.splsda <- tune.splsda(X = dataTrain$proteomics,Y = responseTrain,folds = 5,test.keepX = list.keepX,nrepeat = 10)
-```
-
 
 ## Setup
 ```{r}
@@ -124,28 +116,8 @@ pls2 <- spls(dataTrain[["proteomics"]], dataTrain[["phosphoproteomics"]],
              keepX = list.keepX, keepY = list.keepY)
 pls3 <- spls(dataTrain[["phosphoproteomics"]], dataTrain[["transcriptomics"]], 
              keepX = list.keepX, keepY = list.keepY)
-
-# plot features of first PLS
-plotVar(pls1, cutoff = 0.5, title = "(a) proteomics vs transcriptomics", 
-        legend = c("proteomics", "transcriptomics"), 
-        var.names = FALSE, style = 'graphics', 
-        pch = c(16, 17), cex = c(2,2), 
-        col = c('darkorchid', 'lightgreen'))
-
-# plot features of second PLS
-plotVar(pls2, cutoff = 0.5, title = "(b) proteomics vs phosphoproteomics", 
-        legend = c("proteomics", "phosphoproteomics"), 
-        var.names = FALSE, style = 'graphics', 
-        pch = c(16, 17), cex = c(2,2), 
-        col = c('darkorchid', 'lightgreen'))
-
-# plot features of third PLS
-plotVar(pls3, cutoff = 0.5, title = "(c) phosphoproteomics vs transcriptomics", 
-        legend = c("phosphoproteomics", "transcriptomics"), 
-        var.names = FALSE, style = 'graphics', 
-        pch = c(16, 17), cex = c(2,2), 
-        col = c('darkorchid', 'lightgreen'))
 ```
+
 ### Correlation between pairs of omics
 ```{r}
 cor(pls1$variates$X, pls1$variates$Y)

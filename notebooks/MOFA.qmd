@@ -41,18 +41,23 @@ design <- read_tsv('~/multiomics/results/design_files/design_multiomics_mofa.tsv
 proteindata <- read_tsv(file = '~/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
 prot <- proteindata %>% 
   medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
-protFeatures <- prot$Protein.Names
+prot$Unique.Ids <- make.names(names = prot$Protein.Names,unique = TRUE)
+protFeatures <- prot$Unique.Ids
 prot <- prot %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix
+rownames(prot) <- protFeatures
 
 phosphodata <- read_tsv(file = '~/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv')
 phospho <- phosphodata %>%
-  medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
-phosphoFeatures <- phospho$Protein.Names
+  medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id',cutoff = 0.75)
+phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
+phosphoFeatures <- phospho$Unique.Ids
 phospho <- phospho %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix
+rownames(phospho) <- phosphoFeatures
+
 
 genedata <- read_tsv(file = '~/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv')
 gene <- genedata %>% 
@@ -289,18 +294,22 @@ design <- read_tsv('~/multiomics/results/design_files/design_multiomics_mofa.tsv
 proteindata <- read_tsv(file = '~/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
 prot <- proteindata %>% 
   medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
-protFeatures <- prot$Protein.Names
+prot$Unique.Ids <- make.names(names = prot$Protein.Names,unique = TRUE)
+protFeatures <- prot$Unique.Ids
 prot <- prot %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix
+rownames(prot) <- protFeatures
 
 phosphodata <- read_tsv(file = '~/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv')
 phospho <- phosphodata %>%
-  medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
-phosphoFeatures <- phospho$Protein.Names
+  medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id',cutoff = 0.75)
+phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
+phosphoFeatures <- phospho$Unique.Ids
 phospho <- phospho %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix
+rownames(phospho) <- phosphoFeatures
 
 genedata <- read_tsv(file = '~/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv')
 gene <- genedata %>% 
@@ -510,18 +519,22 @@ design <- read_tsv('~/multiomics/results/design_files/design_multiomics_mofa.tsv
 proteindata <- read_tsv(file = '~/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
 prot <- proteindata %>% 
   medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
-protFeatures <- prot$Protein.Names
+prot$Unique.Ids <- make.names(names = prot$Protein.Names,unique = TRUE)
+protFeatures <- prot$Unique.Ids
 prot <- prot %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix
+rownames(prot) <- protFeatures
 
 phosphodata <- read_tsv(file = '~/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv')
 phospho <- phosphodata %>%
-  medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
-phosphoFeatures <- phospho$Protein.Names
+  medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id',cutoff = 0.75)
+phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
+phosphoFeatures <- phospho$Unique.Ids
 phospho <- phospho %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix
+rownames(phospho) <- phosphoFeatures
 
 genedata <- read_tsv(file = '~/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv')
 gene <- genedata %>% 
@@ -759,18 +772,22 @@ design <- read_tsv('~/multiomics/results/design_files/design_multiomics_mofa.tsv
 proteindata <- read_tsv(file = '~/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
 prot <- proteindata %>% 
   medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
-protFeatures <- prot$Protein.Names
+prot$Unique.Ids <- make.names(names = prot$Protein.Names,unique = TRUE)
+protFeatures <- prot$Unique.Ids
 prot <- prot %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix
+rownames(prot) <- protFeatures
 
 phosphodata <- read_tsv(file = '~/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv')
 phospho <- phosphodata %>%
-  medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
-phosphoFeatures <- phospho$Protein.Names
+  medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id',cutoff = 0.75)
+phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
+phosphoFeatures <- phospho$Unique.Ids
 phospho <- phospho %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix
+rownames(phospho) <- phosphoFeatures
 
 genedata <- read_tsv(file = '~/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv')
 gene <- genedata %>% 

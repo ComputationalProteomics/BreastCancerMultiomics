@@ -1,0 +1,17 @@
+# Ignore these directories
+data/*
+results/*
+work/*
+
+# Ignore temporary files
+*.tmp
+
+# Ignore log files
+*.log*
+
+# Ignore Nextflow
+.nextflow
+.nextflow*
+
+# Ignore html files
+*.html

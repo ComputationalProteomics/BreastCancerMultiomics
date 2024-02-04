@@ -20,6 +20,12 @@ engine: knitr
 library(tidyverse)
 library(mixOmics)
 library(tidymodels)
+library(future)
+library(furrr)
+library(BiocParallel)
+library(parallel)
+library(tictoc)
+library(future.callr)
 source(file = '~/multiomics/notebooks/medianFiltering.R',chdir = TRUE)
 ```
 
@@ -38,6 +44,7 @@ if(!dir.exists(paths = '~/multiomics/results/figures/DIABLO/DuctalvsLobular')) {
 
 ## Create training and test datasets
 ```{r}
+#| message: false
 set.seed(123)
 design <- read_tsv('~/multiomics/results/design_files/design_multiomics_mofa.tsv')
 dataSplit <- initial_split(data = design,prop = 0.7,strata = 'InvCa.type')
@@ -47,6 +54,7 @@ testData <- testing(dataSplit)
 
 ## Load data and create multiomics data matrix
 ```{r}
+#| message: false
 proteindata <- read_tsv(file = '~/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
   NAFiltering(design = design,sampleCol = 'sample_id') %>% 
   medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
@@ -99,7 +107,7 @@ dataTest <- list(proteomics=protTest,
                 transcriptomics=geneTest)
 
 varKeep <- c('dataTest','dataTrain','responseTrain','responseTest')
-# rm(list = setdiff(ls(),varKeep))
+rm(list = setdiff(ls(),varKeep))
 ```
 
 ## Setup
@@ -114,27 +122,6 @@ pls2 <- spls(dataTrain[["proteomics"]], dataTrain[["phosphoproteomics"]],
              keepX = list.keepX, keepY = list.keepY)
 pls3 <- spls(dataTrain[["phosphoproteomics"]], dataTrain[["transcriptomics"]], 
              keepX = list.keepX, keepY = list.keepY)
-
-# plot features of first PLS
-plotVar(pls1, cutoff = 0.5, title = "(a) proteomics vs transcriptomics", 
-        legend = c("proteomics", "transcriptomics"), 
-        var.names = FALSE, style = 'graphics', 
-        pch = c(16, 17), cex = c(2,2), 
-        col = c('darkorchid', 'lightgreen'))
-
-# plot features of second PLS
-plotVar(pls2, cutoff = 0.5, title = "(b) proteomics vs phosphoproteomics", 
-        legend = c("proteomics", "phosphoproteomics"), 
-        var.names = FALSE, style = 'graphics', 
-        pch = c(16, 17), cex = c(2,2), 
-        col = c('darkorchid', 'lightgreen'))
-
-# plot features of third PLS
-plotVar(pls3, cutoff = 0.5, title = "(c) phosphoproteomics vs transcriptomics", 
-        legend = c("phosphoproteomics", "transcriptomics"), 
-        var.names = FALSE, style = 'graphics', 
-        pch = c(16, 17), cex = c(2,2), 
-        col = c('darkorchid', 'lightgreen'))
 ```
 ### Correlation between pairs of omics
 ```{r}
@@ -144,27 +131,29 @@ cor(pls2$variates$X, pls2$variates$Y)
 
 cor(pls3$variates$X, pls3$variates$Y) 
 ```
+
+### Generate basic model
+### Evaluate optimal number of components
 ### Design matrix for DIABLO
 ```{r}
-# for square matrix filled with 0.1s
-design <- matrix(0.1, ncol = length(dataTrain), nrow = length(dataTrain), 
-                dimnames = list(names(dataTrain), names(dataTrain)))
-diag(design) = 0 # set diagonal to 0s
-
-design
-```
-### Generate basic model
-```{r}
-basic.diablo.model <- block.splsda(X = dataTrain, Y = responseTrain, ncomp = 15, design = design) 
-```
-
-### Evaluate optimal number of components
-```{r}
 # run component number tuning with repeated CV
-perf.diablo <-  perf(basic.diablo.model, validation = 'Mfold', 
-                   folds = 10, nrepeat = 10,progressBar = TRUE,auc = TRUE,cpus = (parallel::detectCores()-2)) 
-
-plot(perf.diablo) # plot output of tuning
+set.seed(123)
+plan(callr)
+tic()
+perf.diablo <- future(seed = TRUE,globals = TRUE,packages = c('mixOmics'),gc = TRUE,
+                      expr = {
+                        design <- matrix(0.1,
+                                         ncol = length(dataTrain), 
+                                         nrow = length(dataTrain),
+                                         dimnames = list(names(dataTrain),names(dataTrain)))
+                        diag(design) <- 0
+                        basic.diablo.model %<-% block.splsda(X = dataTrain, Y = responseTrain, ncomp = 15, design = design) 
+                        perf(basic.diablo.model, validation = 'Mfold',folds = 5, nrepeat = 3,auc = TRUE,cpus =parallel::detectCores()-2)
+                        }
+                      )
+perf.diablo <- value(perf.diablo)
+toc()
+plan(sequential)
 ```
 
 ```{r}
@@ -172,9 +161,60 @@ plot(perf.diablo) # plot output of tuning
 ncomp <-  perf.diablo$choice.ncomp$WeightedVote["Overall.BER", "centroids.dist"] 
 # show the optimal choice for ncomp for each dist metric
 perf.diablo$choice.ncomp$WeightedVote 
-ncomp
 ```
 ## Model Tuning
+```{r}
+# Set up parallel plan using future framework
+set.seed(123)
+tic()
+workers <- detectCores()-2
+plan(callr,workers=workers)
+
+# Define the parameter grid
+param_grid <- crossing(
+  ncomp = 1:15,
+  keepProt = seq(1,101,10),
+  keepPhospho = seq(1,101,10),
+  keepRNA = seq(1,101,10)
+)
+
+# Randomly sample parameter combinations
+sampled_params <- sample_n(param_grid, size = 10, replace = FALSE)
+
+# Function to fit tune.block.splsda model
+fit_model <- function(params, dataTrain, responseTrain, design_matrix) {
+  if (!all(c("ncomp", "keepProt", "keepPhospho","keepRNA") %in% names(params))) {
+    stop("Parameter names do not match expected values.")
+  }
+  
+  model.tune <- tune.block.splsda(X = dataTrain, Y = responseTrain,ncomp = params[["ncomp"]],
+                             test.keepX = list(proteomics=params[["keepProt"]],
+                                               phosphoproteomics=params[['keepPhospho']],
+                                               transcriptomics=params[['keepRNA']]),
+                             folds = 5,
+                             nrepeat = 5,
+                             dist = 'centroids.dist',
+                             design = design)
+  ncomp <- model.tune$choice.ncomp$ncomp
+  keepX <- model.tune$choice.keepX %>% purrr::map(~.x[1:ncomp])
+  model <- block.splsda(X = dataTrain,Y = responseTrain,ncomp = ncomp,keepX = keepX,design = design)
+  return(list(params = params, model = model,ncomp=ncomp,numFeatures=keepX))
+}
+
+# Parallelized tuning using future_map
+results <- future_map(.x = seq_len(nrow(sampled_params)),
+                      .f = ~fit_model(params = sampled_params[.x,],
+                                      dataTrain =  dataTrain,
+                                      responseTrain = responseTrain,
+                                      design_matrix = design),
+                      .options=furrr_options(seed = TRUE))
+
+# Combine results
+# combined_results <- bind_rows(results)
+toc()
+plan(sequential)
+```
+
 ```{r}
 # set grid of values for each component to test
 test.keepX <- list(proteomics = c(5:9, seq(10, 18, 2), seq(20,30,5)),
@@ -186,8 +226,7 @@ tune.diablo <- tune.block.splsda(X = dataTrain,Y = responseTrain,ncomp = ncomp,
                                  test.keepX = test.keepX,
                                  folds = 10,nrepeat = 1,validation = 'Mfold',
                                  dist = 'centroids.dist',
-                                 progressBar = TRUE, design = design,near.zero.var = TRUE,
-                                 BPPARAM = BiocParallel::MulticoreParam(workers = 5))
+                                 progressBar = TRUE, design = design)
 ```
 
 ### Optimal number of features to keep

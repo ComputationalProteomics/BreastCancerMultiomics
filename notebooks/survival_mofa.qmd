@@ -10,6 +10,10 @@ format:
     smooth-scroll: true
     message: false
 engine: knitr
+params:
+  outputdir: '~/multiomics/results/figures/survival_analysis/MOFA/DuctalvsLobular/'
+  model: '~/multiomics/results/MOFA/all_samples/infiltration/model.RDS'
+  factor: 3
 ---
 
 # Requires Packages:
@@ -22,59 +26,135 @@ library(survival)
 library(survminer)
 library(tidymodels)
 library(MOFA2)
-source(file = '~/multiomics/notebooks/medianFiltering.R',chdir = TRUE)
 ```
 
 # Survival Analysis
 ## MOFA Models
 ### All samples
+```{r}
+if(!dir.exists(paths = params$outputdir)) {
+  dir.create(path = params$outputdir,recursive = TRUE)
+}
+```
+
 #### Load MOFA Model
 ```{r}
-model <- readRDS(file = '~/multiomics/results/MOFA/all_samples/infiltration/model.RDS')
+model <- readRDS(file = params$model)
 factors <- get_factors(model)[[1]]
+factors <- tibble(sample=rownames(factors)) %>% bind_cols(.,factors)
 ```
 
 #### Fit Cox Model
+  This creates a survival object with distant recurrence free interval as time and DRFi_event (death) as the event.
+  A Cox Propotional Hazards model is fit with all factors as variables followed by evaluating the model with the scaled Schoenfeld test which tests the null hypothesis that the variable is stable over time, therefore respecting the Cox test assumptions. A graphical representation of the scaled Schoenfeld residuals can also be seen.
 ```{r}
+#| tbl-column: margin
 objSurv <- Surv(time = model@samples_metadata$DRFi_days,event = model@samples_metadata$DRFi_event)
-fit <- coxph(formula = objSurv~factors)
+variables <- factors %>% 
+  dplyr::select(dplyr::contains('Factor')) %>% 
+  colnames() 
+
+coxFormula <- reformulate(termlabels = variables,response = 'objSurv')
+
+fit <- coxph(formula = coxFormula,data = factors)
+summary(fit)
+```
+```{r}
+#| tbl-column: page
+#| tbl-colwidths: true
+fitcheck <- cox.zph(fit)
+fitcheck
+```
+```{r}
+pdf(file = paste0(params$outputdir,'zph_plot_factors.pdf'),width = 20,height = 20,onefile = TRUE)
+ggcoxzph(fitcheck)
+dev.off()
 ```
 
-### Plot Hazard Ratios
+#### Plot Hazard Ratios
 ```{r}
-s <- summary(fit)
-coef <- s[["coefficients"]]
+hrPlot <- ggforest(fit,data = factors)
+ggsave(filename = 'HR_plot_factors.pdf',plot = hrPlot,device = 'pdf',path = params$outputdir,width = 10,height = 10,dpi = 300)
+```
+#### Extract top features
+```{r}
+modelMeta <- model@samples_metadata
+features <- get_weights(object = model,views = 'all',factors = c(params$factor),as.data.frame = TRUE,scale = TRUE)
+featFactors <- features %>% 
+  dplyr::group_by(factor,view) %>% 
+  slice_max(order_by = abs(value),n = 3) %>% 
+  as_tibble
 
-df <- data.frame(
-  factor = factor(rownames(coef), levels = rev(rownames(coef))),
-  p      = coef[,"Pr(>|z|)"], 
-  coef   = coef[,"exp(coef)"], 
-  lower  = s[["conf.int"]][,"lower .95"], 
-  higher = s[["conf.int"]][,"upper .95"]
-)
+featList <- list(proteomics={featFactors %>%dplyr::filter(view=='proteomics',factor==paste0('Factor',params$factor)) %>% select(feature) %>% unlist %>% as.character %>% unique},
+              phosphoproteomics={featFactors %>% dplyr::filter(view=='phosphoproteomics',factor==paste0('Factor',params$factor)) %>% select(feature) %>% unlist %>% as.character %>% unique},
+              transcriptomics={featFactors %>% dplyr::filter(view=='transcriptomics',factor==paste0('Factor',params$factor)) %>% select(feature) %>% unlist %>% as.character %>% unique},
+              infiltration={featFactors %>% dplyr::filter(view=='infiltration',factor==paste0('Factor',params$factor)) %>% select(feature) %>% unlist %>% as.character %>% unique}) 
 
-ggplot(df, aes(x=factor, y=coef, ymin=lower, ymax=higher)) +
-  geom_pointrange( col='#619CFF') + 
-  coord_flip() +
-  scale_x_discrete() + 
-  labs(y="Hazard Ratio", x="") + 
-  geom_hline(aes(yintercept=1), linetype="dotted") +
-  theme_bw()
+protFeatures <- get_data(object = model,features = list(proteomics=featList$proteomics),as.data.frame = TRUE) %>% pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
+phosphoFeatures <- get_data(object = model,features = list(phosphoproteomics=featList$phosphoproteomics),as.data.frame = TRUE) %>% pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
+rnaFeatures <- get_data(object = model,features = list(transcriptomics=featList$transcriptomics),as.data.frame = TRUE) %>% pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
+immuneFeatures <- get_data(object = model,features = list(infiltration=featList$infiltration),as.data.frame = TRUE) %>% pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
+
+finalFeatures <- reduce(.x = list(protFeatures,phosphoFeatures,rnaFeatures,immuneFeatures),.f = ~left_join(x = .x,y = .y,by = 'sample'))
+colnames(finalFeatures) <- make.names(names = colnames(finalFeatures),unique = TRUE)
+finalFeatures <- modelMeta %>% select(sample,time=DRFi_days,event=DRFi_event) %>% left_join(finalFeatures)
 ```
 
-### Kaplan Meier plots
-```{r}
-df <- data.frame(
-  time = objSurv[,1], 
-  event = objSurv[,2], Factor3 = factors[,3],
-  Sample=rownames(factors)
-)
-df <- left_join(df,model@samples_metadata)
-cut <- surv_cutpoint(df, variables='Factor3')
-df$FactorCluster <- df$Factor3 > cut$cutpoint$cutpoint
-fit <- survfit(Surv(time, event) ~ df$NCN.PAM50, df)
 
-ggsurvplot(fit, data = df,
-  conf.int = TRUE, pval = TRUE)
+#### Fit Cox Model with same clinical data in factor of choice
+```{r}
+variables <- finalFeatures %>% 
+  dplyr::select(-c(sample,time,event)) %>% 
+  colnames()
+
+coxFormula <- reformulate(termlabels = variables,response = 'objSurv')
+
+fit2 <- coxph(formula = coxFormula,data = finalFeatures)
+
+fit2Test <- cox.zph(fit2)
+```
+
+##### Check fit
+```{r}
+pdf(file = paste0(params$outputdir,'plot_coxzph.pdf'),width = 20,height = 20,onefile = TRUE)
+ggcoxzph(fit2Test)
+dev.off()
+```
+
+##### Plot Hazard Ratios
+```{r}
+plotPH <- ggforest(model = fit2,data = finalFeatures)
+ggsave(filename = 'plot_forest_features.pdf',plot = plotPH,device = 'pdf',path = params$outputdir,dpi = 300,width = 20,height = 20)
+```
+
+##### Calculate cut points and fit model to high vs low
+```{r}
+featCut <- surv_cutpoint(data = finalFeatures,variables = variables)
+
+finalFeaturesFactors <- map(.x = variables,.f = function(x){(finalFeatures[[x]]>featCut[["cutpoint"]][x,1])})
+names(finalFeaturesFactors) <- variables
+finalFeaturesFactors <- as.data.frame(finalFeaturesFactors) %>% 
+  mutate(across(everything(),~if_else(condition = .x, true = 'High', false = 'Low', missing = NA_character_)))
+
+objSurv <- Surv(time = finalFeatures$time,event = finalFeatures$event)
+
+survFormula <- reformulate(termlabels = variables,response = 'objSurv')
+
+fitFeatures <- surv_fit(formula = survFormula,data = finalFeaturesFactors)
+```
+
+###### Kaplan-Meier plots
+```{r}
+#| warning: false
+kmPlots <- map(.x = variables,.f = function(x){
+  survFormula <- reformulate(termlabels = x,response = 'objSurv')
+  fit <- surv_fit(formula = survFormula,data = finalFeaturesFactors)
+  ggsurvplot(fit = fit,data = finalFeaturesFactors,conf.int = TRUE,pval = TRUE,pval.method = TRUE,surv.median.line = 'hv',risk.table = TRUE)
+  })
+```
+```{r}
+invisible(pdf(file = paste0(params$outputdir,'kaplan_meier.pdf'),width = 20,height = 10,onefile = TRUE))
+invisible(map(1:length(kmPlots),~print(kmPlots[[.x]])))
+invisible(dev.off())
 ```
 

@@ -28,7 +28,7 @@ library(furrr)
 
 # MultiOmics Factor Analysis - MOFA
 ```{r}
-workers <- availableCores(constraints = 'connections',which = 'min')
+workers <- availableCores(constraints = 'connections',which = 'min')-2
 plan(callr,workers=workers)
 on.exit(expr = {plan(sequential)})
 ```
@@ -129,7 +129,7 @@ model_opts <- get_default_model_options(MOFAobject)
 
 ```{r}
 train_opts <- get_default_training_options(MOFAobject)
-train_opts$convergence_mode <- "fast"
+train_opts$convergence_mode <- "slow"
 ```
 
 ### Model Training
@@ -140,7 +140,7 @@ MOFAobject <- prepare_mofa(MOFAobject,data_options = data_opts,model_options = m
 
 trainedModels <- future_map(
   .options = furrr_options(seed = TRUE,globals = TRUE),
-  .x = 1:50,
+  .x = 1:10,
   .f = function(x){
     MOFAobject@training_options$seed <- (123+x)
     run_mofa(MOFAobject)
@@ -384,7 +384,7 @@ MOFAobject <- prepare_mofa(MOFAobject,data_options = data_opts,model_options = m
 
 trainedModels <- future_map(
   .options = furrr_options(seed = TRUE,globals = TRUE),
-  .x = 1:50,
+  .x = 1:10,
   .f = function(x){
     MOFAobject@training_options$seed <- (123+x)
     run_mofa(MOFAobject)
@@ -621,7 +621,7 @@ MOFAobject <- prepare_mofa(MOFAobject,data_options = data_opts,model_options = m
 
 trainedModels <- future_map(
   .options = furrr_options(seed = TRUE,globals = TRUE),
-  .x = 1:50,
+  .x = 1:10,
   .f = function(x){
     MOFAobject@training_options$seed <- (123+x)
     run_mofa(MOFAobject)
@@ -876,7 +876,7 @@ MOFAobject <- prepare_mofa(MOFAobject,data_options = data_opts,model_options = m
 
 trainedModels <- future_map(
   .options = furrr_options(seed = TRUE,globals = TRUE),
-  .x = 1:50,
+  .x = 1:10,
   .f = function(x){
     MOFAobject@training_options$seed <- (123+x)
     run_mofa(MOFAobject)

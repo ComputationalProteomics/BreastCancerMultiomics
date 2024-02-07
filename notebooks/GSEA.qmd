@@ -29,19 +29,19 @@ source(file = '~/multiomics/notebooks/msigdb_gsea_function.R',chdir = TRUE)
 ## Ductal vs Lobular
 ### Full Proteome
 ```{r}
-data <- '~/multiomics/results/differentialexpression/DuctalvsLobular/fullproteome_protein/fullproteome_protein_stats.tsv'
+data <- '~/multiomics/results/differentialexpression/DuctalvsLobular/ductalvslobular_fullproteome_protein/ductalvslobular_fullproteome_protein_stats.tsv'
 gseaMsigProt <- gseaMsigDBProt(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
 ```
 
 ### Phosphoproteome
 ```{r}
-data <- '~/multiomics/results/differentialexpression/DuctalvsLobular/phosphoproteome_peptide/phosphoproteome_peptide_stats.tsv'
+data <- '~/multiomics/results/differentialexpression/DuctalvsLobular/ductalvslobular_phosphoproteome_peptide/ductalvslobular_phosphoproteome_peptide_stats.tsv'
 gseaMsigPhospho <- gseaMsigDBPhospho(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
 ```
 
 ### Transcriptome
 ```{r}
-data <- '~/multiomics/results/differentialexpression/DuctalvsLobular/transcriptomics_tpm_normalized/transcriptomics_tpm_normalized_stats.tsv'
+data <- '~/multiomics/results/differentialexpression/DuctalvsLobular/ductalvslobular_transcriptome/ductalvslobular_transcriptome_stats.tsv'
 gseaMsigRNA <- gseaMsigDBRNA(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H',genecol = 'Gene.ID')
 ```
 
@@ -88,19 +88,19 @@ ggsave(filename = 'GSEA_ductalvslobular.png',plot = p,device = 'png',path = '~/m
 ### Ductal
 #### Full Proteome
 ```{r}
-data <- '~/multiomics/results/differentialexpression/LNposvsLNneg/Ductal/fullproteome_protein/fullproteome_protein_stats.tsv'
+data <- '~/multiomics/results/differentialexpression/LNposvsLNneg/Ductal/LN_ductal_fullproteome_protein/LN_ductal_fullproteome_protein_stats.tsv'
 gseaMsigProt <- gseaMsigDBProt(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
 ```
 
 #### Phosphoproteome
 ```{r}
-data <- '~/multiomics/results/differentialexpression/LNposvsLNneg/Ductal/phosphoproteome_peptide/phosphoproteome_peptide_stats.tsv'
+data <- '~/multiomics/results/differentialexpression/LNposvsLNneg/Ductal/LN_ductal_phosphoproteome_peptide/LN_ductal_phosphoproteome_peptide_stats.tsv'
 gseaMsigPhospho <- gseaMsigDBPhospho(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
 ```
 
 #### Transcriptome
 ```{r}
-data <- '~/multiomics/results/differentialexpression/LNposvsLNneg/Ductal/transcriptomics_tpm_normalized/transcriptomics_tpm_normalized_stats.tsv'
+data <- '~/multiomics/results/differentialexpression/LNposvsLNneg/Ductal/LN_ductal_transcriptome/LN_ductal_transcriptome_stats.tsv'
 gseaMsigRNA <- gseaMsigDBRNA(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H',genecol = 'Gene.ID')
 ```
 
@@ -145,19 +145,19 @@ ggsave(filename = 'GSEA_LNposLNneg_ductal.png',plot = p,device = 'png',path = '~
 ### Lobular
 #### Full Proteome
 ```{r}
-data <- '~/multiomics/results/differentialexpression/LNposvsLNneg/Lobular/fullproteome_protein/fullproteome_protein_stats.tsv'
+data <- '~/multiomics/results/differentialexpression/LNposvsLNneg/Lobular/LN_lobular_fullproteome_protein/LN_lobular_fullproteome_protein_stats.tsv'
 gseaMsigProt <- gseaMsigDBProt(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
 ```
 
 #### Phosphoproteome
 ```{r}
-data <- '~/multiomics/results/differentialexpression/LNposvsLNneg/Lobular/phosphoproteome_peptide/phosphoproteome_peptide_stats.tsv'
+data <- '~/multiomics/results/differentialexpression/LNposvsLNneg/Lobular/LN_lobular_phosphoproteome_peptide/LN_lobular_phosphoproteome_peptide_stats.tsv'
 gseaMsigPhospho <- gseaMsigDBPhospho(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
 ```
 
 #### Transcriptome
 ```{r}
-data <- '~/multiomics/results/differentialexpression/LNposvsLNneg/Lobular/transcriptomics_tpm_normalized/transcriptomics_tpm_normalized_stats.tsv'
+data <- '~/multiomics/results/differentialexpression/LNposvsLNneg/Lobular/LN_lobular_transcriptome/LN_lobular_transcriptome_stats.tsv'
 gseaMsigRNA <- gseaMsigDBRNA(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H',genecol = 'Gene.ID')
 ```
 
@@ -202,19 +202,19 @@ ggsave(filename = 'GSEA_LNposLNneg_lobular.png',plot = p,device = 'png',path = '
 ## Group1 vs Group2
 ### Full Proteome
 ```{r}
-data <- '~/multiomics/results/differentialexpression/Group1vsGroup2/fullproteome_protein/fullproteome_protein_stats.tsv'
+data <- '~/multiomics/results/differentialexpression/Group1vsGroup2/G1G2_fullproteome_protein/G1G2_fullproteome_protein_stats.tsv'
 gseaMsigProt <- gseaMsigDBProt(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
 ```
 
 ### Phosphoproteome
 ```{r}
-data <- '~/multiomics/results/differentialexpression/Group1vsGroup2/phosphoproteome_peptide/phosphoproteome_peptide_stats.tsv'
+data <- '~/multiomics/results/differentialexpression/Group1vsGroup2/G1G2_phosphoproteome_peptide/G1G2_phosphoproteome_peptide_stats.tsv'
 gseaMsigPhospho <- gseaMsigDBPhospho(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
 ```
 
 ### Transcriptome
 ```{r}
-data <- '~/multiomics/results/differentialexpression/Group1vsGroup2/transcriptomics_tpm_normalized/transcriptomics_tpm_normalized_stats.tsv'
+data <- '~/multiomics/results/differentialexpression/Group1vsGroup2/G1G2_transcriptome/G1G2_transcriptome_stats.tsv'
 gseaMsigRNA <- gseaMsigDBRNA(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H',genecol = 'Gene.ID')
 ```
 
@@ -259,19 +259,19 @@ ggsave(filename = 'GSEA_Group1vsGroup2.png',plot = p,device = 'png',path = '~/mu
 ## Group3 vs Group4
 ### Full Proteome
 ```{r}
-data <- '~/multiomics/results/differentialexpression/Group3vsGroup4/fullproteome_protein/fullproteome_protein_stats.tsv'
+data <- '~/multiomics/results/differentialexpression/Group3vsGroup4/G3G4_fullproteome_protein/G3G4_fullproteome_protein_stats.tsv'
 gseaMsigProt <- gseaMsigDBProt(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
 ```
 
 ### Phosphoproteome
 ```{r}
-data <- '~/multiomics/results/differentialexpression/Group3vsGroup4/phosphoproteome_peptide/phosphoproteome_peptide_stats.tsv'
+data <- '~/multiomics/results/differentialexpression/Group3vsGroup4/G3G4_phosphoproteome_peptide/G3G4_phosphoproteome_peptide_stats.tsv'
 gseaMsigPhospho <- gseaMsigDBPhospho(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
 ```
 
 ### Transcriptome
 ```{r}
-data <- '~/multiomics/results/differentialexpression/Group3vsGroup4/transcriptomics_tpm_normalized/transcriptomics_tpm_normalized_stats.tsv'
+data <- '~/multiomics/results/differentialexpression/Group3vsGroup4/G3G4_transcriptome/G3G4_transcriptome_stats.tsv'
 gseaMsigRNA <- gseaMsigDBRNA(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H',genecol = 'Gene.ID')
 ```
 

@@ -148,7 +148,7 @@ legendCluster <- Legend(labels = levels(factor(design$CC.Prot)),
 allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster)
 
 set.seed(123)
-proteinHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,column_split = design$CC.Prot)})
+proteinHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
 ```
 
 ##### Functional enrichment per protein cluster
@@ -280,7 +280,7 @@ legendCluster <- Legend(labels = levels(factor(design$CC.Phospho)),
 allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster)
 
 set.seed(123)
-phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,column_split = design$CC.Phospho)})
+phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Phospho)})
 ```
 
 ##### Functional enrichment per protein cluster
@@ -410,7 +410,7 @@ legendCluster <- Legend(labels = levels(factor(design$CC.RNA)),
 allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster)
 
 set.seed(123)
-rnaHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Gene Expression',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,column_split = design$CC.RNA)})
+rnaHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Gene Expression',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.RNA)})
 ```
 
 ##### Functional enrichment per protein cluster
@@ -568,7 +568,7 @@ legendLN <- Legend(labels = levels(factor(design$LN)),
 allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster,legendLN)
 
 set.seed(123)
-proteinHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,column_split = design$CC.Prot)})
+proteinHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
 ```
 
 ###### Functional enrichment per protein cluster
@@ -707,7 +707,7 @@ legendLN <- Legend(labels = levels(factor(design$LN)),
 allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster,legendLN)
 
 set.seed(123)
-phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,column_split = design$CC.Phospho)})
+phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Phospho)})
 ```
 
 ###### Functional enrichment per protein cluster
@@ -845,7 +845,7 @@ legendLN <- Legend(labels = levels(factor(design$LN)),
 allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster,legendLN)
 
 set.seed(123)
-rnaHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Gene Expression',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,column_split = design$CC.RNA)})
+rnaHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Gene Expression',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.RNA)})
 ```
 
 ###### Functional enrichment per protein cluster
@@ -1002,7 +1002,7 @@ legendLN <- Legend(labels = levels(factor(design$LN)),
 allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster,legendLN)
 
 set.seed(123)
-proteinHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,column_split = design$CC.Prot)})
+proteinHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
 ```
 
 ###### Functional enrichment per protein cluster
@@ -1141,7 +1141,7 @@ legendLN <- Legend(labels = levels(factor(design$LN)),
 allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster,legendLN)
 
 set.seed(123)
-phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,column_split = design$CC.Phospho)})
+phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Phospho)})
 ```
 
 ###### Functional enrichment per protein cluster
@@ -1278,7 +1278,7 @@ legendLN <- Legend(labels = levels(factor(design$LN)),
 allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster,legendLN)
 
 set.seed(123)
-rnaHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Gene Expression',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,column_split = design$CC.RNA)})
+rnaHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Gene Expression',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.RNA)})
 ```
 
 ###### Functional enrichment per protein cluster
@@ -1428,7 +1428,7 @@ legendCluster <- Legend(labels = levels(factor(design$CC.Prot)),
 allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster)
 
 set.seed(123)
-proteinHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,column_split = design$CC.Prot)})
+proteinHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
 ```
 
 ##### Functional enrichment per protein cluster
@@ -1559,7 +1559,7 @@ legendCluster <- Legend(labels = levels(factor(design$CC.Phospho)),
 allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster)
 
 set.seed(123)
-phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,column_split = design$CC.Phospho)})
+phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Phospho)})
 ```
 
 ##### Functional enrichment per protein cluster
@@ -1689,7 +1689,7 @@ legendCluster <- Legend(labels = levels(factor(design$CC.RNA)),
 allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster)
 
 set.seed(123)
-rnaHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Gene Expression',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,column_split = design$CC.RNA)})
+rnaHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Gene Expression',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.RNA)})
 ```
 
 ##### Functional enrichment per protein cluster
@@ -1839,7 +1839,7 @@ legendCluster <- Legend(labels = levels(factor(design$CC.Prot)),
 allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster)
 
 set.seed(123)
-proteinHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,column_split = design$CC.Prot)})
+proteinHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
 ```
 
 ##### Functional enrichment per protein cluster
@@ -1970,7 +1970,7 @@ legendCluster <- Legend(labels = levels(factor(design$CC.Phospho)),
 allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster)
 
 set.seed(123)
-phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,column_split = design$CC.Phospho)})
+phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Phospho)})
 ```
 
 ##### Functional enrichment per protein cluster
@@ -2100,7 +2100,7 @@ legendCluster <- Legend(labels = levels(factor(design$CC.RNA)),
 allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster)
 
 set.seed(123)
-rnaHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Gene Expression',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,column_split = design$CC.RNA)})
+rnaHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Gene Expression',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.RNA)})
 ```
 
 ##### Functional enrichment per protein cluster

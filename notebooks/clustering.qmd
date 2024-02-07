@@ -297,7 +297,7 @@ phosphoDataFiltered$Phospho.Cluster[phosphoDataFiltered$Protein.Group %in% phosp
 enrichResults <- gprofilerEnrichment(data = phosphoDataFiltered,clusterCol = 'Phospho.Cluster',idCol = 'Protein.Group',sep = ';')
 enrichTerms <- enrichResults %>% 
   purrr::map(.f = function(x){pluck(x,'result')}) %>% 
-  purrr::map(.f = ~filter(.,source %in% c('GO:BP','GO:MF','REAC') & term_size<150)) %>% 
+  purrr::map(.f = ~filter(.,source %in% c('GO:BP','GO:MF','REAC') & term_size<600)) %>% 
   purrr::map(~slice_min(.,order_by = p_value,n = 5,with_ties = FALSE)) %>% 
   purrr::map(~dplyr::select(.,term_name)) %>% 
   purrr::map(unlist) %>% 
@@ -724,7 +724,7 @@ phosphoDataFiltered$Phospho.Cluster[phosphoDataFiltered$Protein.Group %in% phosp
 enrichResults <- gprofilerEnrichment(data = phosphoDataFiltered,clusterCol = 'Phospho.Cluster',idCol = 'Protein.Group',sep = ';')
 enrichTerms <- enrichResults %>% 
   purrr::map(.f = function(x){pluck(x,'result')}) %>% 
-  purrr::map(.f = ~filter(.,source %in% c('GO:BP','GO:MF','REAC') & term_size<150)) %>% 
+  purrr::map(.f = ~filter(.,source %in% c('GO:BP','GO:MF','REAC') & term_size<600)) %>% 
   purrr::map(~slice_min(.,order_by = p_value,n = 5,with_ties = FALSE)) %>% 
   purrr::map(~dplyr::select(.,term_name)) %>% 
   purrr::map(unlist) %>% 
@@ -1158,7 +1158,7 @@ phosphoDataFiltered$Phospho.Cluster[phosphoDataFiltered$Protein.Group %in% phosp
 enrichResults <- gprofilerEnrichment(data = phosphoDataFiltered,clusterCol = 'Phospho.Cluster',idCol = 'Protein.Group',sep = ';')
 enrichTerms <- enrichResults %>% 
   purrr::map(.f = function(x){pluck(x,'result')}) %>% 
-  purrr::map(.f = ~filter(.,source %in% c('GO:BP','GO:MF','REAC') & term_size<150)) %>% 
+  purrr::map(.f = ~filter(.,source %in% c('GO:BP','GO:MF','REAC') & term_size<600)) %>% 
   purrr::map(~slice_min(.,order_by = p_value,n = 5,with_ties = FALSE)) %>% 
   purrr::map(~dplyr::select(.,term_name)) %>% 
   purrr::map(unlist) %>% 

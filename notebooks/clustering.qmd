@@ -287,7 +287,7 @@ phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap
 ```{r}
 phosphoHeatmap <- draw(value(phosphoHeatmap))
 rowOrder <- row_order(phosphoHeatmap)
-phosphoGroups <- future_map(.x = seq_along(rowOrder),.f = ~(phosphoDataFiltered$Protein[rowOrder[[.x]]]))
+phosphoGroups <- future_map(.x = seq_along(rowOrder),.f = ~(phosphoDataFiltered$Protein.Group[rowOrder[[.x]]]))
 phosphoDataFiltered$Phospho.Cluster[phosphoDataFiltered$Protein.Group %in% phosphoGroups[[1]]] <- 'Cluster1'
 phosphoDataFiltered$Phospho.Cluster[phosphoDataFiltered$Protein.Group %in% phosphoGroups[[2]]] <- 'Cluster2'
 phosphoDataFiltered$Phospho.Cluster[phosphoDataFiltered$Protein.Group %in% phosphoGroups[[3]]] <- 'Cluster3'

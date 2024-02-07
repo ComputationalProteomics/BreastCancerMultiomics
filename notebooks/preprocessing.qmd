@@ -18,7 +18,17 @@ engine: knitr
 library(tidyverse)
 library(NormalyzerDE)
 library(data.table)
+library(future)
+library(future.callr)
+library(furrr)
 ```
+```{r}
+set.seed(123)
+workers <- availableCores(constraints = 'connections',which = 'min')
+plan(callr,workers=workers)
+on.exit(expr = {plan(sequential)})
+```
+
 
 # Data Pre-processing
 
@@ -93,7 +103,7 @@ dataP <- '~/multiomics/data/proteomics/full/report.pr_matrix_clean.tsv'
 designP <- '~/multiomics/results/design_files/mergedDesign_final.tsv'
 outputP <- '~/multiomics/results/normalization/fullproteome'
 
-normalyzer(jobName = jobName,designPath = designP,dataPath = dataP,outputDir = outputP,normalizeRetentionTime = FALSE,zeroToNA = TRUE,sampleColName = 'sample_id',groupColName = 'group',writeReportAsPngs = TRUE)
+proteomePepNorm <- future(seed = TRUE,globals = TRUE,gc = TRUE,expr = {normalyzer(jobName = jobName,designPath = designP,dataPath = dataP,outputDir = outputP,normalizeRetentionTime = FALSE,zeroToNA = TRUE,sampleColName = 'sample_id',groupColName = 'group',writeReportAsPngs = TRUE)})
 ```
 
 ### DIA-NN Protein Group Table
@@ -130,7 +140,7 @@ dataP <- '~/multiomics/data/proteomics/full/report.pg_matrix_clean.tsv'
 designP <- '~/multiomics/results/design_files/mergedDesign_final.tsv'
 outputP <- '~/multiomics/results/normalization/fullproteome'
 
-normalyzer(jobName = jobName,designPath = designP,dataPath = dataP,outputDir = outputP,normalizeRetentionTime = FALSE,zeroToNA = TRUE,sampleColName = 'sample_id',groupColName = 'group',writeReportAsPngs = TRUE)
+proteomeProtNorm <- future(seed = TRUE,globals = TRUE,gc = TRUE,expr = {normalyzer(jobName = jobName,designPath = designP,dataPath = dataP,outputDir = outputP,normalizeRetentionTime = FALSE,zeroToNA = TRUE,sampleColName = 'sample_id',groupColName = 'group',writeReportAsPngs = TRUE)})
 ```
 
 
@@ -148,7 +158,7 @@ data <- read_tsv(dataP) %>%
   filter(str_detect(Protein.Group,'^Cont\\_{1}[:alnum:]{6}(?!\\;)',negate = TRUE))
 
 newColNames <- data %>%
-  select(-c(1:10)) %>%
+  dplyr::select(-c(1:10)) %>%
   colnames()
 newColNames <- newColNames %>%
   str_extract(pattern = '(?<=\\\\)[:digit:]{6}\\_[:graph:]+(?=\\.mzML\\.dia)') %>%
@@ -157,9 +167,10 @@ newColNames <- c(colnames(data)[1:10],newColNames)
 colnames(data) <- newColNames
 
 newData <- data %>% 
-  select(mergedDesign$file_name)
+  dplyr::select(mergedDesign$file_name)
 colnames(newData) <- mergedDesign$sample_id
-newData <- bind_cols(data[,1:10],newData)
+newData <- bind_cols(data[,1:10],newData) %>% 
+  filter(str_detect(Modified.Sequence,'UniMod\\:21'))
 
 write_tsv(x = newData,file = '~/multiomics/data/proteomics/phospho/report.pr_matrix_clean.tsv')
 ```
@@ -171,5 +182,12 @@ dataP <- '~/multiomics/data/proteomics/phospho/report.pr_matrix_clean.tsv'
 designP <- '~/multiomics/results/design_files/mergedDesign_PHOSPHO_Filtered.tsv'
 outputP <- '~/multiomics/results/normalization/phosphoproteome'
 
-normalyzer(jobName = jobName,designPath = designP,dataPath = dataP,outputDir = outputP,normalizeRetentionTime = FALSE,zeroToNA = TRUE,sampleColName = 'sample_id',groupColName = 'group')
+phosphoPepNorm <- future(seed = TRUE,globals = TRUE,gc = TRUE,expr = {normalyzer(jobName = jobName,designPath = designP,dataPath = dataP,outputDir = outputP,normalizeRetentionTime = FALSE,zeroToNA = TRUE,sampleColName = 'sample_id',groupColName = 'group')})
 ```
+
+## Results Normalization
+```{r}
+results <- list(proteomePepNorm,proteomeProtNorm,phosphoPepNorm)
+future_map(.x = results,.f = value)
+```
+

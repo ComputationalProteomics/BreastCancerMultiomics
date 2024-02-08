@@ -55,12 +55,12 @@ sampleNames <- newGenes %>%
 
 colnames(newGenes) <- sampleNames
 newGenes <- newGenes %>% 
-  # mutate(across(everything(),~na_if(x=.x,y=0))) %>% 
-  mutate(across(everything(),function(x){log2(x+0.1)}))
+  mutate(across(everything(),~na_if(x=.x,y=0))) %>%
+  mutate(across(everything(),function(x){log2(x)}))
 
 # Running this step as data.table for memory efficiency
-newGenes <- as.data.table(newGenes)
-newGenes <- newGenes[, lapply(.SD, function(x) x - mean(x)), by = .I]
+# newGenes <- as.data.table(newGenes)
+# newGenes <- newGenes[, lapply(.SD, function(x) x - mean(x,na.rm=TRUE)), by = .I]
 
 # The row order between the annotation matrix and the gene matrix is the same, so one can just swap gene names
 newGenes <- bind_cols(geneNames,newGenes)

@@ -36,9 +36,9 @@ on.exit(expr = {plan(sequential)})
 ```{r Transcriptomics Data preprocessing}
 #| message: false
 # Data Downloaded from https://data.mendeley.com/datasets/yzxtxn4nmd
-load('~/multiomics/data/transcriptomics/Gene.ID.ann.Rdata')
-load('~/multiomics/data/transcriptomics/SCANB.9206.genematrix_noNeg.Rdata')
-design <- read_tsv('~/multiomics/results/design_files/mergedDesign_ref_mutation.tsv') %>% 
+load('/multiomics/data/transcriptomics/Gene.ID.ann.Rdata')
+load('/multiomics/data/transcriptomics/SCANB.9206.genematrix_noNeg.Rdata')
+design <- read_tsv('/multiomics/results/design_files/mergedDesign_ref_mutation.tsv') %>% 
   filter(!is.na(GEX.assay))
 
 geneNames <- rownames(SCANB.9206.genematrix_noNeg) %>% 
@@ -65,7 +65,7 @@ newGenes <- newGenes %>%
 # The row order between the annotation matrix and the gene matrix is the same, so one can just swap gene names
 newGenes <- bind_cols(geneNames,newGenes)
 
-write_tsv(x = newGenes,file =  '~/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv')
+write_tsv(x = newGenes,file =  '/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv')
 ```
 
 ## Proteomics Data
@@ -73,8 +73,8 @@ write_tsv(x = newGenes,file =  '~/multiomics/data/transcriptomics/genematrix_fil
 #### Data Clean-up
 ```{r peptide data cleanup}
 #| message: false
-mergedDesign <- read_tsv(file = '~/multiomics/results/design_files/mergedDesign_final.tsv')
-data <- read_tsv(file = '~/multiomics/data/proteomics/full/230814_report.pr_matrix.tsv') %>% 
+mergedDesign <- read_tsv(file = '/multiomics/results/design_files/mergedDesign_final.tsv')
+data <- read_tsv(file = '/multiomics/data/proteomics/full/230814_report.pr_matrix.tsv') %>% 
   mutate(across(where(is.double),~na_if(.,0.0))) %>% 
   mutate(across(where(is.double),~na_if(.,0))) %>% 
   dplyr::filter(str_detect(Protein.Group,'^Cont\\_{1}[:alnum:]{6}(?!\\;)',negate = TRUE)) #remove rows with contaminant as single ID
@@ -93,15 +93,15 @@ newData <- data %>%
 colnames(newData) <- mergedDesign$sample_id
 newData <- bind_cols(data[,1:10],newData)
 
-write_tsv(x = newData,file = '~/multiomics/data/proteomics/full/report.pr_matrix_clean.tsv')
+write_tsv(x = newData,file = '/multiomics/data/proteomics/full/report.pr_matrix_clean.tsv')
 ```
 
 #### Peptide-level Normalization
 ```{r peptide level normalization}
 jobName <- 'peptide_normalization'
-dataP <- '~/multiomics/data/proteomics/full/report.pr_matrix_clean.tsv'
-designP <- '~/multiomics/results/design_files/mergedDesign_final.tsv'
-outputP <- '~/multiomics/results/normalization/fullproteome'
+dataP <- '/multiomics/data/proteomics/full/report.pr_matrix_clean.tsv'
+designP <- '/multiomics/results/design_files/mergedDesign_final.tsv'
+outputP <- '/multiomics/results/normalization/fullproteome'
 
 proteomePepNorm <- future(seed = TRUE,globals = TRUE,gc = TRUE,expr = {normalyzer(jobName = jobName,designPath = designP,dataPath = dataP,outputDir = outputP,normalizeRetentionTime = FALSE,zeroToNA = TRUE,sampleColName = 'sample_id',groupColName = 'group',writeReportAsPngs = TRUE)})
 ```
@@ -109,11 +109,11 @@ proteomePepNorm <- future(seed = TRUE,globals = TRUE,gc = TRUE,expr = {normalyze
 ### DIA-NN Protein Group Table
 #### Data Clean-up
 ```{r protein data cleanup}
-data <- read_tsv(file = '~/multiomics/data/proteomics/full/230814_report.pg_matrix.tsv') %>% 
+data <- read_tsv(file = '/multiomics/data/proteomics/full/230814_report.pg_matrix.tsv') %>% 
   mutate(across(where(is.double),~na_if(.,0.0))) %>% 
   mutate(across(where(is.double),~na_if(.,0))) %>% 
   filter(str_detect(Protein.Group,'^Cont\\_{1}[:alnum:]{6}(?!\\;)',negate = TRUE))
-designP <- '~/multiomics/results/design_files/mergedDesign_final.tsv'
+designP <- '/multiomics/results/design_files/mergedDesign_final.tsv'
 design <- read_tsv(designP)
 
 newColNames <- data %>% 
@@ -130,15 +130,15 @@ newData <- data %>%
 colnames(newData) <- design$sample_id
 newData <- bind_cols(data[,1:5],newData)
 
-write_tsv(x = newData,file = '~/multiomics/data/proteomics/full/report.pg_matrix_clean.tsv')
+write_tsv(x = newData,file = '/multiomics/data/proteomics/full/report.pg_matrix_clean.tsv')
 ```
 
 #### Protein-level Normalization
 ```{r protein level normalization}
 jobName <- 'protein_normalization'
-dataP <- '~/multiomics/data/proteomics/full/report.pg_matrix_clean.tsv'
-designP <- '~/multiomics/results/design_files/mergedDesign_final.tsv'
-outputP <- '~/multiomics/results/normalization/fullproteome'
+dataP <- '/multiomics/data/proteomics/full/report.pg_matrix_clean.tsv'
+designP <- '/multiomics/results/design_files/mergedDesign_final.tsv'
+outputP <- '/multiomics/results/normalization/fullproteome'
 
 proteomeProtNorm <- future(seed = TRUE,globals = TRUE,gc = TRUE,expr = {normalyzer(jobName = jobName,designPath = designP,dataPath = dataP,outputDir = outputP,normalizeRetentionTime = FALSE,zeroToNA = TRUE,sampleColName = 'sample_id',groupColName = 'group',writeReportAsPngs = TRUE)})
 ```
@@ -148,10 +148,10 @@ proteomeProtNorm <- future(seed = TRUE,globals = TRUE,gc = TRUE,expr = {normalyz
 ### DIA-NN Peptide
 #### Data Clean-up
 ```{r}
-dataP <- '~/multiomics/data/proteomics/phospho/230815_report.pr_matrix.tsv'
+dataP <- '/multiomics/data/proteomics/phospho/230815_report.pr_matrix.tsv'
 
 # In the pdf report from DIA-NN, there are samples which have less than 10 000 precursors at 1% FDR. Therefore, before proceeding, these samples will be removed.
-mergedDesign <- read_tsv(file = '~/multiomics/results/design_files/mergedDesign_PHOSPHO_Filtered.tsv')
+mergedDesign <- read_tsv(file = '/multiomics/results/design_files/mergedDesign_PHOSPHO_Filtered.tsv')
 data <- read_tsv(dataP) %>% 
   mutate(across(where(is.double),~na_if(.,0.0))) %>% 
   mutate(across(where(is.double),~na_if(.,0))) %>% 
@@ -172,15 +172,15 @@ colnames(newData) <- mergedDesign$sample_id
 newData <- bind_cols(data[,1:10],newData) %>% 
   filter(str_detect(Modified.Sequence,'UniMod\\:21'))
 
-write_tsv(x = newData,file = '~/multiomics/data/proteomics/phospho/report.pr_matrix_clean.tsv')
+write_tsv(x = newData,file = '/multiomics/data/proteomics/phospho/report.pr_matrix_clean.tsv')
 ```
 
 #### Peptide-level Normalization
 ```{r}
 jobName <- 'peptide_normalization'
-dataP <- '~/multiomics/data/proteomics/phospho/report.pr_matrix_clean.tsv'
-designP <- '~/multiomics/results/design_files/mergedDesign_PHOSPHO_Filtered.tsv'
-outputP <- '~/multiomics/results/normalization/phosphoproteome'
+dataP <- '/multiomics/data/proteomics/phospho/report.pr_matrix_clean.tsv'
+designP <- '/multiomics/results/design_files/mergedDesign_PHOSPHO_Filtered.tsv'
+outputP <- '/multiomics/results/normalization/phosphoproteome'
 
 phosphoPepNorm <- future(seed = TRUE,globals = TRUE,gc = TRUE,expr = {normalyzer(jobName = jobName,designPath = designP,dataPath = dataP,outputDir = outputP,normalizeRetentionTime = FALSE,zeroToNA = TRUE,sampleColName = 'sample_id',groupColName = 'group')})
 ```
@@ -188,6 +188,10 @@ phosphoPepNorm <- future(seed = TRUE,globals = TRUE,gc = TRUE,expr = {normalyzer
 ## Results Normalization
 ```{r}
 results <- list(proteomePepNorm,proteomeProtNorm,phosphoPepNorm)
+varsKeep <- c('proteomePepNorm','proteomeProtNorm','phosphoPepNorm','results')
+rm(list = c(setdiff(x = ls(),y = varsKeep)))
+invisible(gc())
+
 future_map(.x = results,.f = value)
 ```
 

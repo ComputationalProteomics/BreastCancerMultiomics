@@ -12,7 +12,7 @@ gprofilerEnrichment <- function(data,clusterCol,idCol,sep){
                     exclude_iea = TRUE,
                     measure_underrepresentation = FALSE,
                     evcodes = TRUE,
-                    user_threshold = 0.05,
+                    user_threshold = 0.1,
                     correction_method = 'gSCS',
                     custom_bg = NULL,
                     numeric_ns = "",

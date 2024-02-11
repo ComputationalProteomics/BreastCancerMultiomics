@@ -19,7 +19,7 @@ engine: knitr
 #| warning: false
 library(tidyverse)
 library(MOFA2)
-source(file = '~/multiomics/notebooks/medianFiltering.R',chdir = TRUE)
+source(file = '/multiomics/notebooks/medianFiltering.R',chdir = TRUE)
 library(reticulate)
 library(future)
 library(future.callr)
@@ -35,19 +35,19 @@ on.exit(expr = {plan(sequential)})
 
 ## All samples with infiltration
 ```{r}
-if(!dir.exists(paths = '~/multiomics/results/figures/MOFA/all_samples/infiltration')) {
-  dir.create(path = '~/multiomics/results/figures/MOFA/all_samples/infiltration',recursive = TRUE)
+if(!dir.exists(paths = '/multiomics/results/figures/MOFA/all_samples/infiltration')) {
+  dir.create(path = '/multiomics/results/figures/MOFA/all_samples/infiltration',recursive = TRUE)
 }
 
-if(!dir.exists(paths = '~/multiomics/results/MOFA/all_samples/infiltration')) {
-  dir.create(path = '~/multiomics/results/MOFA/all_samples/infiltration',recursive = TRUE)
+if(!dir.exists(paths = '/multiomics/results/MOFA/all_samples/infiltration')) {
+  dir.create(path = '/multiomics/results/MOFA/all_samples/infiltration',recursive = TRUE)
 }
 ```
 
 ### Data preprocessing and multiomics dataframe creation
 ```{r}
-design <- read_tsv('~/multiomics/results/design_files/design_multiomics_mofa.tsv')
-proteindata <- read_tsv(file = '~/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
+design <- read_tsv('/multiomics/results/design_files/design_multiomics_mofa.tsv')
+proteindata <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
 prot <- proteindata %>% 
   medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 prot$Unique.Ids <- make.names(names = prot$Protein.Names,unique = TRUE)
@@ -57,7 +57,7 @@ prot <- prot %>%
   as.matrix
 rownames(prot) <- protFeatures
 
-phosphodata <- read_tsv(file = '~/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv')
+phosphodata <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv')
 phospho <- phosphodata %>%
   medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id',cutoff = 0.75)
 phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
@@ -68,7 +68,7 @@ phospho <- phospho %>%
 rownames(phospho) <- phosphoFeatures
 
 
-genedata <- read_tsv(file = '~/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv')
+genedata <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv')
 gene <- genedata %>% 
   medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
 geneFeatures <- gene$Gene.ID
@@ -76,7 +76,7 @@ gene <- gene %>%
   dplyr::select(design$sample_id) %>% 
   as.matrix
 
-immuneData <- read_tsv(file = '~/multiomics/data/Immune_infiltration/epic_gene.tsv')
+immuneData <- read_tsv(file = '/multiomics/data/Immune_infiltration/epic_gene.tsv')
 immuneFeatures <- immuneData$cell_type
 immune <- immuneData %>% 
   dplyr::select(design$sample_id) %>% 
@@ -143,7 +143,7 @@ trainedModels <- future_map(
   .x = 1:10,
   .f = function(x){
     MOFAobject@training_options$seed <- (123+x)
-    run_mofa(MOFAobject)
+    run_mofa(MOFAobject,use_basilisk = TRUE)
     }
   )
 
@@ -174,7 +174,7 @@ slotNames(bestModel)
 
 #### Save model
 ```{r}
-saveRDS(object = bestModel,file = '~/multiomics/results/MOFA/all_samples/infiltration/model.RDS',compress = 'gzip')
+saveRDS(object = bestModel,file = '/multiomics/results/MOFA/all_samples/infiltration/model.RDS',compress = 'gzip')
 ```
 
 #### Correlation between factors
@@ -182,14 +182,14 @@ saveRDS(object = bestModel,file = '~/multiomics/results/MOFA/all_samples/infiltr
 factor_corr_plot <- {plot_factor_cor(object = bestModel)
   grDevices::recordPlot()}
 
-ggsave(filename = 'factor_corr_plot.png',plot = grDevices::replayPlot(factor_corr_plot),device = 'png',path = '~/multiomics/results/figures/MOFA/all_samples/infiltration/')
+ggsave(filename = 'factor_corr_plot.png',plot = grDevices::replayPlot(factor_corr_plot),device = 'png',path = '/multiomics/results/figures/MOFA/all_samples/infiltration/')
 ```
 
 #### Variance decomposition
 ```{r}
 plotVariance <- plot_variance_explained(bestModel,max_r2 = 10)
 
-ggsave(filename = 'MOFA_variance_allgroups.pdf',plot = plotVariance,device = 'pdf',path = '~/multiomics/results/figures/MOFA/all_samples/infiltration/',dpi = 600,width = 10,height = 10,units = 'in')
+ggsave(filename = 'MOFA_variance_allgroups.pdf',plot = plotVariance,device = 'pdf',path = '/multiomics/results/figures/MOFA/all_samples/infiltration/',dpi = 600,width = 10,height = 10,units = 'in')
 ```
 
 #### Factor correlation
@@ -201,7 +201,7 @@ covariatePlot <- correlate_factors_with_covariates(bestModel,
   alpha = 0.05
 )
 
-ggsave(filename = 'covariance.pdf',plot = covariatePlot,device = 'pdf',path = '~/multiomics/results/figures/MOFA/all_samples/infiltration/',dpi = 600,width = 10,height = 10,units = 'in')
+ggsave(filename = 'covariance.pdf',plot = covariatePlot,device = 'pdf',path = '/multiomics/results/figures/MOFA/all_samples/infiltration/',dpi = 600,width = 10,height = 10,units = 'in')
 ```
 
 #### Plot feature weights
@@ -234,7 +234,7 @@ rna_weights <- plot_top_weights(bestModel,
 
 figPath <- c('prot_weights.png','phospho_weigths.png','rna_weights.png','immune_weights.png')
 weightPlots <- list(prot_weights,phospho_weigths,rna_weights,immune_weights)
-map2(.x = weightPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '~/multiomics/results/figures/MOFA/all_samples/infiltration/',dpi = 300,width = 15,height = 15,units = 'in'))
+map2(.x = weightPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '/multiomics/results/figures/MOFA/all_samples/infiltration/',dpi = 300,width = 15,height = 15,units = 'in'))
 ```
 
 #### Plot Heatmaps
@@ -285,24 +285,24 @@ immune_heatmap <- plot_data_heatmap(bestModel,
 
 figPath <- c('prot_heatmap.png','phospho_heatmap.png','rna_heatmap.png','immune_heatmap.png')
 heatmapPlots <- list(prot_heatmap,phospho_heatmap,rna_heatmap,immune_heatmap)
-map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '~/multiomics/results/figures/MOFA/all_samples/infiltration/',dpi = 300,width = 15,height = 15,units = 'in'))
+map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '/multiomics/results/figures/MOFA/all_samples/infiltration/',dpi = 300,width = 15,height = 15,units = 'in'))
 ```
 
 ## All samples without infiltration
 ```{r}
-if(!dir.exists(paths = '~/multiomics/results/figures/MOFA/all_samples/no_infiltration')) {
-  dir.create(path = '~/multiomics/results/figures/MOFA/all_samples/no_infiltration',recursive = TRUE)
+if(!dir.exists(paths = '/multiomics/results/figures/MOFA/all_samples/no_infiltration')) {
+  dir.create(path = '/multiomics/results/figures/MOFA/all_samples/no_infiltration',recursive = TRUE)
 }
 
-if(!dir.exists(paths = '~/multiomics/results/MOFA/all_samples/no_infiltration')) {
-  dir.create(path = '~/multiomics/results/MOFA/all_samples/no_infiltration',recursive = TRUE)
+if(!dir.exists(paths = '/multiomics/results/MOFA/all_samples/no_infiltration')) {
+  dir.create(path = '/multiomics/results/MOFA/all_samples/no_infiltration',recursive = TRUE)
 }
 ```
 
 ### Data preprocessing and multiomics dataframe creation
 ```{r}
-design <- read_tsv('~/multiomics/results/design_files/design_multiomics_mofa.tsv')
-proteindata <- read_tsv(file = '~/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
+design <- read_tsv('/multiomics/results/design_files/design_multiomics_mofa.tsv')
+proteindata <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
 prot <- proteindata %>% 
   medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 prot$Unique.Ids <- make.names(names = prot$Protein.Names,unique = TRUE)
@@ -312,7 +312,7 @@ prot <- prot %>%
   as.matrix
 rownames(prot) <- protFeatures
 
-phosphodata <- read_tsv(file = '~/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv')
+phosphodata <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv')
 phospho <- phosphodata %>%
   medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id',cutoff = 0.75)
 phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
@@ -322,7 +322,7 @@ phospho <- phospho %>%
   as.matrix
 rownames(phospho) <- phosphoFeatures
 
-genedata <- read_tsv(file = '~/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv')
+genedata <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv')
 gene <- genedata %>% 
   medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
 geneFeatures <- gene$Gene.ID
@@ -387,7 +387,7 @@ trainedModels <- future_map(
   .x = 1:10,
   .f = function(x){
     MOFAobject@training_options$seed <- (123+x)
-    run_mofa(MOFAobject)
+    run_mofa(MOFAobject,use_basilisk = TRUE)
     }
   )
 
@@ -417,7 +417,7 @@ slotNames(bestModel)
 
 #### Save model
 ```{r}
-saveRDS(object = bestModel,file = '~/multiomics/results/MOFA/all_samples/no_infiltration/model.RDS',compress = 'gzip')
+saveRDS(object = bestModel,file = '/multiomics/results/MOFA/all_samples/no_infiltration/model.RDS',compress = 'gzip')
 ```
 
 #### Correlation between factors
@@ -425,14 +425,14 @@ saveRDS(object = bestModel,file = '~/multiomics/results/MOFA/all_samples/no_infi
 factor_corr_plot <- {plot_factor_cor(bestModel)
   grDevices::recordPlot()}
 
-ggsave(filename = 'factor_corr_plot.png',plot = grDevices::replayPlot(factor_corr_plot),device = 'png',path = '~/multiomics/results/figures/MOFA/all_samples/no_infiltration/')
+ggsave(filename = 'factor_corr_plot.png',plot = grDevices::replayPlot(factor_corr_plot),device = 'png',path = '/multiomics/results/figures/MOFA/all_samples/no_infiltration/')
 ```
 
 #### Variance decomposition
 ```{r}
 plotVariance <- plot_variance_explained(bestModel,max_r2 = 10)
 
-ggsave(filename = 'MOFA_variance_allgroups.pdf',plot = plotVariance,device = 'pdf',path = '~/multiomics/results/figures/MOFA/all_samples/no_infiltration/',dpi = 600,width = 10,height = 10,units = 'in')
+ggsave(filename = 'MOFA_variance_allgroups.pdf',plot = plotVariance,device = 'pdf',path = '/multiomics/results/figures/MOFA/all_samples/no_infiltration/',dpi = 600,width = 10,height = 10,units = 'in')
 ```
 
 #### Factor correlation
@@ -444,7 +444,7 @@ covariatePlot <- correlate_factors_with_covariates(bestModel,
   alpha = 0.05
 )
 
-ggsave(filename = 'covariance.pdf',plot = covariatePlot,device = 'pdf',path = '~/multiomics/results/figures/MOFA/all_samples/no_infiltration/',dpi = 600,width = 10,height = 10,units = 'in')
+ggsave(filename = 'covariance.pdf',plot = covariatePlot,device = 'pdf',path = '/multiomics/results/figures/MOFA/all_samples/no_infiltration/',dpi = 600,width = 10,height = 10,units = 'in')
 ```
 
 #### Plot feature weights
@@ -471,7 +471,7 @@ rna_weights <- plot_top_weights(bestModel,
 
 figPath <- c('prot_weights.png','phospho_weigths.png','rna_weights.png')
 weightPlots <- list(prot_weights,phospho_weigths,rna_weights)
-map2(.x = weightPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '~/multiomics/results/figures/MOFA/all_samples/no_infiltration/',dpi = 300,width = 15,height = 15,units = 'in'))
+map2(.x = weightPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '/multiomics/results/figures/MOFA/all_samples/no_infiltration/',dpi = 300,width = 15,height = 15,units = 'in'))
 ```
 
 #### Plot Heatmaps
@@ -511,25 +511,25 @@ phospho_heatmap <- plot_data_heatmap(bestModel,
 
 figPath <- c('prot_heatmap.png','phospho_heatmap.png','rna_heatmap.png')
 heatmapPlots <- list(prot_heatmap,phospho_heatmap,rna_heatmap)
-map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '~/multiomics/results/figures/MOFA/all_samples/no_infiltration/',dpi = 300,width = 15,height = 15,units = 'in'))
+map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '/multiomics/results/figures/MOFA/all_samples/no_infiltration/',dpi = 300,width = 15,height = 15,units = 'in'))
 ```
 
 ## Group1 vs Group2
 ```{r}
-if(!dir.exists(paths = '~/multiomics/results/figures/MOFA/Group1vsGroup2/')) {
-  dir.create(path = '~/multiomics/results/figures/MOFA/Group1vsGroup2/',recursive = TRUE)
+if(!dir.exists(paths = '/multiomics/results/figures/MOFA/Group1vsGroup2/')) {
+  dir.create(path = '/multiomics/results/figures/MOFA/Group1vsGroup2/',recursive = TRUE)
 }
 
-if(!dir.exists(paths = '~/multiomics/results/MOFA/Group1vsGroup2/')) {
-  dir.create(path = '~/multiomics/results/MOFA/Group1vsGroup2/',recursive = TRUE)
+if(!dir.exists(paths = '/multiomics/results/MOFA/Group1vsGroup2/')) {
+  dir.create(path = '/multiomics/results/MOFA/Group1vsGroup2/',recursive = TRUE)
 }
 ```
 
 ### Data preprocessing and multiomics dataframe creation
 ```{r}
-design <- read_tsv('~/multiomics/results/design_files/design_multiomics_mofa.tsv') %>% 
+design <- read_tsv('/multiomics/results/design_files/design_multiomics_mofa.tsv') %>% 
     filter(str_detect(string = Group.Info,pattern = 'Group1|Group2'))
-proteindata <- read_tsv(file = '~/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
+proteindata <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
 prot <- proteindata %>% 
   medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 prot$Unique.Ids <- make.names(names = prot$Protein.Names,unique = TRUE)
@@ -539,7 +539,7 @@ prot <- prot %>%
   as.matrix
 rownames(prot) <- protFeatures
 
-phosphodata <- read_tsv(file = '~/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv')
+phosphodata <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv')
 phospho <- phosphodata %>%
   medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id',cutoff = 0.75)
 phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
@@ -549,7 +549,7 @@ phospho <- phospho %>%
   as.matrix
 rownames(phospho) <- phosphoFeatures
 
-genedata <- read_tsv(file = '~/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv')
+genedata <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv')
 gene <- genedata %>% 
   medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
 geneFeatures <- gene$Gene.ID
@@ -557,7 +557,7 @@ gene <- gene %>%
   dplyr::select(design$sample_id) %>% 
   as.matrix
 
-immuneData <- read_tsv(file = '~/multiomics/data/Immune_infiltration/epic_gene.tsv')
+immuneData <- read_tsv(file = '/multiomics/data/Immune_infiltration/epic_gene.tsv')
 immuneFeatures <- immuneData$cell_type
 immune <- immuneData %>% 
   dplyr::select(design$sample_id) %>% 
@@ -624,7 +624,7 @@ trainedModels <- future_map(
   .x = 1:10,
   .f = function(x){
     MOFAobject@training_options$seed <- (123+x)
-    run_mofa(MOFAobject)
+    run_mofa(MOFAobject,use_basilisk = TRUE)
     }
   )
 
@@ -655,7 +655,7 @@ slotNames(bestModel)
 
 #### Save model
 ```{r}
-saveRDS(object = bestModel,file = '~/multiomics/results/MOFA/Group1vsGroup2/model.RDS',compress = 'gzip')
+saveRDS(object = bestModel,file = '/multiomics/results/MOFA/Group1vsGroup2/model.RDS',compress = 'gzip')
 ```
 
 #### Correlation between factors
@@ -663,14 +663,14 @@ saveRDS(object = bestModel,file = '~/multiomics/results/MOFA/Group1vsGroup2/mode
 factor_corr_plot <- {plot_factor_cor(object = bestModel)
   grDevices::recordPlot()}
 
-ggsave(filename = 'factor_corr_plot.png',plot = grDevices::replayPlot(factor_corr_plot),device = 'png',path = '~/multiomics/results/figures/MOFA/Group1vsGroup2/')
+ggsave(filename = 'factor_corr_plot.png',plot = grDevices::replayPlot(factor_corr_plot),device = 'png',path = '/multiomics/results/figures/MOFA/Group1vsGroup2/')
 ```
 
 #### Variance decomposition
 ```{r}
 plotVariance <- plot_variance_explained(bestModel,max_r2 = 10)
 
-ggsave(filename = 'MOFA_variance_allgroups.pdf',plot = plotVariance,device = 'pdf',path = '~/multiomics/results/figures/MOFA/Group1vsGroup2/',dpi = 600,width = 10,height = 10,units = 'in')
+ggsave(filename = 'MOFA_variance_allgroups.pdf',plot = plotVariance,device = 'pdf',path = '/multiomics/results/figures/MOFA/Group1vsGroup2/',dpi = 600,width = 10,height = 10,units = 'in')
 ```
 
 #### Factor correlation
@@ -682,7 +682,7 @@ covariatePlot <- correlate_factors_with_covariates(bestModel,
   alpha = 0.05
 )
 
-ggsave(filename = 'covariance.pdf',plot = covariatePlot,device = 'pdf',path = '~/multiomics/results/figures/MOFA/Group1vsGroup2/',dpi = 600,width = 10,height = 10,units = 'in')
+ggsave(filename = 'covariance.pdf',plot = covariatePlot,device = 'pdf',path = '/multiomics/results/figures/MOFA/Group1vsGroup2/',dpi = 600,width = 10,height = 10,units = 'in')
 ```
 
 #### Plot feature weights
@@ -715,7 +715,7 @@ rna_weights <- plot_top_weights(bestModel,
 
 figPath <- c('prot_weights.png','phospho_weigths.png','rna_weights.png','immune_weights.png')
 weightPlots <- list(prot_weights,phospho_weigths,rna_weights,immune_weights)
-map2(.x = weightPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '~/multiomics/results/figures/MOFA/Group1vsGroup2/',dpi = 300,width = 15,height = 15,units = 'in'))
+map2(.x = weightPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '/multiomics/results/figures/MOFA/Group1vsGroup2/',dpi = 300,width = 15,height = 15,units = 'in'))
 ```
 
 #### Plot Heatmaps
@@ -766,25 +766,25 @@ immune_heatmap <- plot_data_heatmap(bestModel,
 
 figPath <- c('prot_heatmap.png','phospho_heatmap.png','rna_heatmap.png','immune_heatmap.png')
 heatmapPlots <- list(prot_heatmap,phospho_heatmap,rna_heatmap,immune_heatmap)
-map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '~/multiomics/results/figures/MOFA/Group1vsGroup2/',dpi = 300,width = 15,height = 15,units = 'in'))
+map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '/multiomics/results/figures/MOFA/Group1vsGroup2/',dpi = 300,width = 15,height = 15,units = 'in'))
 ```
 
 ## Group3 vs Group4
 ```{r}
-if(!dir.exists(paths = '~/multiomics/results/figures/MOFA/Group3vsGroup4/')) {
-  dir.create(path = '~/multiomics/results/figures/MOFA/Group3vsGroup4/',recursive = TRUE)
+if(!dir.exists(paths = '/multiomics/results/figures/MOFA/Group3vsGroup4/')) {
+  dir.create(path = '/multiomics/results/figures/MOFA/Group3vsGroup4/',recursive = TRUE)
 }
 
-if(!dir.exists(paths = '~/multiomics/results/MOFA/Group3vsGroup4/')) {
-  dir.create(path = '~/multiomics/results/MOFA/Group3vsGroup4/',recursive = TRUE)
+if(!dir.exists(paths = '/multiomics/results/MOFA/Group3vsGroup4/')) {
+  dir.create(path = '/multiomics/results/MOFA/Group3vsGroup4/',recursive = TRUE)
 }
 ```
 
 ### Data preprocessing and multiomics dataframe creation
 ```{r}
-design <- read_tsv('~/multiomics/results/design_files/design_multiomics_mofa.tsv') %>% 
+design <- read_tsv('/multiomics/results/design_files/design_multiomics_mofa.tsv') %>% 
     filter(str_detect(string = Group.Info,pattern = 'Group3|Group4'))
-proteindata <- read_tsv(file = '~/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
+proteindata <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
 prot <- proteindata %>% 
   medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 prot$Unique.Ids <- make.names(names = prot$Protein.Names,unique = TRUE)
@@ -794,7 +794,7 @@ prot <- prot %>%
   as.matrix
 rownames(prot) <- protFeatures
 
-phosphodata <- read_tsv(file = '~/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv')
+phosphodata <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv')
 phospho <- phosphodata %>%
   medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id',cutoff = 0.75)
 phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
@@ -804,7 +804,7 @@ phospho <- phospho %>%
   as.matrix
 rownames(phospho) <- phosphoFeatures
 
-genedata <- read_tsv(file = '~/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv')
+genedata <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv')
 gene <- genedata %>% 
   medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
 geneFeatures <- gene$Gene.ID
@@ -812,7 +812,7 @@ gene <- gene %>%
   dplyr::select(design$sample_id) %>% 
   as.matrix
 
-immuneData <- read_tsv(file = '~/multiomics/data/Immune_infiltration/epic_gene.tsv')
+immuneData <- read_tsv(file = '/multiomics/data/Immune_infiltration/epic_gene.tsv')
 immuneFeatures <- immuneData$cell_type
 immune <- immuneData %>% 
   dplyr::select(design$sample_id) %>% 
@@ -879,7 +879,7 @@ trainedModels <- future_map(
   .x = 1:10,
   .f = function(x){
     MOFAobject@training_options$seed <- (123+x)
-    run_mofa(MOFAobject)
+    run_mofa(MOFAobject,use_basilisk = TRUE)
     }
   )
 
@@ -910,7 +910,7 @@ slotNames(bestModel)
 
 #### Save model
 ```{r}
-saveRDS(object = bestModel,file = '~/multiomics/results/MOFA/Group3vsGroup4/model.RDS',compress = 'gzip')
+saveRDS(object = bestModel,file = '/multiomics/results/MOFA/Group3vsGroup4/model.RDS',compress = 'gzip')
 ```
 
 #### Correlation between factors
@@ -918,14 +918,14 @@ saveRDS(object = bestModel,file = '~/multiomics/results/MOFA/Group3vsGroup4/mode
 factor_corr_plot <- {plot_factor_cor(object = bestModel)
   grDevices::recordPlot()}
 
-ggsave(filename = 'factor_corr_plot.png',plot = grDevices::replayPlot(factor_corr_plot),device = 'png',path = '~/multiomics/results/figures/MOFA/Group3vsGroup4/')
+ggsave(filename = 'factor_corr_plot.png',plot = grDevices::replayPlot(factor_corr_plot),device = 'png',path = '/multiomics/results/figures/MOFA/Group3vsGroup4/')
 ```
 
 #### Variance decomposition
 ```{r}
 plotVariance <- plot_variance_explained(bestModel,max_r2 = 10)
 
-ggsave(filename = 'MOFA_variance_allgroups.pdf',plot = plotVariance,device = 'pdf',path = '~/multiomics/results/figures/MOFA/Group3vsGroup4/',dpi = 600,width = 10,height = 10,units = 'in')
+ggsave(filename = 'MOFA_variance_allgroups.pdf',plot = plotVariance,device = 'pdf',path = '/multiomics/results/figures/MOFA/Group3vsGroup4/',dpi = 600,width = 10,height = 10,units = 'in')
 ```
 
 #### Factor correlation
@@ -937,7 +937,7 @@ covariatePlot <- correlate_factors_with_covariates(bestModel,
   alpha = 0.05
 )
 
-ggsave(filename = 'covariance.pdf',plot = covariatePlot,device = 'pdf',path = '~/multiomics/results/figures/MOFA/Group3vsGroup4/',dpi = 600,width = 10,height = 10,units = 'in')
+ggsave(filename = 'covariance.pdf',plot = covariatePlot,device = 'pdf',path = '/multiomics/results/figures/MOFA/Group3vsGroup4/',dpi = 600,width = 10,height = 10,units = 'in')
 ```
 
 #### Plot feature weights
@@ -970,7 +970,7 @@ rna_weights <- plot_top_weights(bestModel,
 
 figPath <- c('prot_weights.png','phospho_weigths.png','rna_weights.png','immune_weights.png')
 weightPlots <- list(prot_weights,phospho_weigths,rna_weights,immune_weights)
-map2(.x = weightPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '~/multiomics/results/figures/MOFA/Group3vsGroup4/',dpi = 300,width = 15,height = 15,units = 'in'))
+map2(.x = weightPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '/multiomics/results/figures/MOFA/Group3vsGroup4/',dpi = 300,width = 15,height = 15,units = 'in'))
 ```
 
 #### Plot Heatmaps
@@ -1021,5 +1021,5 @@ immune_heatmap <- plot_data_heatmap(bestModel,
 
 figPath <- c('prot_heatmap.png','phospho_heatmap.png','rna_heatmap.png','immune_heatmap.png')
 heatmapPlots <- list(prot_heatmap,phospho_heatmap,rna_heatmap,immune_heatmap)
-map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '~/multiomics/results/figures/MOFA/Group3vsGroup4/',dpi = 300,width = 15,height = 15,units = 'in'))
+map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '/multiomics/results/figures/MOFA/Group3vsGroup4/',dpi = 300,width = 15,height = 15,units = 'in'))
 ```

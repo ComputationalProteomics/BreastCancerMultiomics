@@ -19,7 +19,7 @@ library(tidyverse)
 library(clusterProfiler)
 library(msigdbr)
 library(MOFA2)
-source(file = '~/multiomics/notebooks/msigdb_gsea_function.R',chdir = TRUE)
+source(file = '/multiomics/notebooks/msigdb_gsea_function.R',chdir = TRUE)
 ```
 
 # Gene Set Enrichment Analysis
@@ -28,7 +28,7 @@ source(file = '~/multiomics/notebooks/msigdb_gsea_function.R',chdir = TRUE)
 ### Model
 
 ```{r}
-model <- readRDS(file = '~/multiomics/results/MOFA/all_samples/infiltration/model.RDS')
+model <- readRDS(file = '/multiomics/results/MOFA/all_samples/infiltration/model.RDS')
 ```
 
 ### Rename Features
@@ -67,10 +67,10 @@ p <- ggplot(resultsAll, aes(Experiment, ID, fill= NES)) +
         legend.position = "right",
         legend.direction = "vertical")
 
-if(!dir.exists(paths = '~/multiomics/results/figures/MOFA/all_samples/infiltration/')) {
-  dir.create(path = '~/multiomics/results/figures/MOFA/all_samples/infiltration/',recursive = TRUE)
+if(!dir.exists(paths = '/multiomics/results/figures/MOFA/all_samples/infiltration/')) {
+  dir.create(path = '/multiomics/results/figures/MOFA/all_samples/infiltration/',recursive = TRUE)
 }
-ggsave(filename = 'GSEA_allsamples_infiltration.png',plot = p,device = 'png',path = '~/multiomics/results/figures/MOFA/all_samples/infiltration/',units = 'in',width = 10,height = 12,dpi = 600)
+ggsave(filename = 'GSEA_allsamples_infiltration.png',plot = p,device = 'png',path = '/multiomics/results/figures/MOFA/all_samples/infiltration/',units = 'in',width = 10,height = 12,dpi = 600)
 
 ```
 
@@ -79,7 +79,7 @@ ggsave(filename = 'GSEA_allsamples_infiltration.png',plot = p,device = 'png',pat
 ### Model
 
 ```{r}
-model <- readRDS(file = '~/multiomics/results/MOFA/Group1vsGroup2/model.RDS')
+model <- readRDS(file = '/multiomics/results/MOFA/Group1vsGroup2/model.RDS')
 ```
 
 ### Rename Features
@@ -118,17 +118,17 @@ p <- ggplot(resultsAll, aes(Experiment, ID, fill= NES)) +
         legend.position = "right",
         legend.direction = "vertical")
 
-if(!dir.exists(paths = '~/multiomics/results/figures/MOFA/Group1vsGroup2/')) {
-  dir.create(path = '~/multiomics/results/figures/MOFA/Group1vsGroup2/',recursive = TRUE)
+if(!dir.exists(paths = '/multiomics/results/figures/MOFA/Group1vsGroup2/')) {
+  dir.create(path = '/multiomics/results/figures/MOFA/Group1vsGroup2/',recursive = TRUE)
 }
-ggsave(filename = 'GSEA_Group1vsGroup2.png',plot = p,device = 'png',path = '~/multiomics/results/figures/MOFA/Group1vsGroup2/',units = 'in',width = 10,height = 12,dpi = 600)
+ggsave(filename = 'GSEA_Group1vsGroup2.png',plot = p,device = 'png',path = '/multiomics/results/figures/MOFA/Group1vsGroup2/',units = 'in',width = 10,height = 12,dpi = 600)
 
 ```
 ## Group3 vs Group4
 ### Model
 
 ```{r}
-model <- readRDS(file = '~/multiomics/results/MOFA/Group3vsGroup4/model.RDS')
+model <- readRDS(file = '/multiomics/results/MOFA/Group3vsGroup4/model.RDS')
 ```
 
 ### Rename Features
@@ -167,9 +167,9 @@ p <- ggplot(resultsAll, aes(Experiment, ID, fill= NES)) +
         legend.position = "right",
         legend.direction = "vertical")
 
-if(!dir.exists(paths = '~/multiomics/results/figures/MOFA/Group3vsGroup4/')) {
-  dir.create(path = '~/multiomics/results/figures/MOFA/Group3vsGroup4/',recursive = TRUE)
+if(!dir.exists(paths = '/multiomics/results/figures/MOFA/Group3vsGroup4/')) {
+  dir.create(path = '/multiomics/results/figures/MOFA/Group3vsGroup4/',recursive = TRUE)
 }
-ggsave(filename = 'GSEA_Group3vsGroup4.png',plot = p,device = 'png',path = '~/multiomics/results/figures/MOFA/Group3vsGroup4/',units = 'in',width = 10,height = 12,dpi = 600)
+ggsave(filename = 'GSEA_Group3vsGroup4.png',plot = p,device = 'png',path = '/multiomics/results/figures/MOFA/Group3vsGroup4/',units = 'in',width = 10,height = 12,dpi = 600)
 
 ```

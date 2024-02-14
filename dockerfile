@@ -15,6 +15,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
+# Install Java and nextflow
+ENV JAVA_HOME=/opt/java/openjdk
+COPY --from=eclipse-temurin:latest $JAVA_HOME $JAVA_HOME
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
+RUN curl -s https://get.nextflow.io | bash
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
 # Install Python and quarto
 RUN /rocker_scripts/install_python.sh
 RUN /rocker_scripts/install_quarto.sh

@@ -1,5 +1,5 @@
 ---
-title: "DIABLO Ductal LN+ vs LN-"
+title: "DIABLO - Lymph Node Positive vs Negative Ductal"
 author: "Sergio Mosquim Junior"
 format:
   html:
@@ -20,7 +20,18 @@ engine: knitr
 library(tidyverse)
 library(mixOmics)
 library(tidymodels)
-source(file = '~/multiomics/notebooks/medianFiltering.R',chdir = TRUE)
+library(future)
+library(furrr)
+library(BiocParallel)
+library(parallel)
+library(tictoc)
+library(future.callr)
+source(file = '~/multiomics/notebooks/filtering.R',chdir = TRUE)
+```
+```{r}
+workers <- availableCores(constraints = 'connections',which = 'min')
+plan(callr,workers=workers)
+on.exit(expr = {plan(sequential)})
 ```
 
 
@@ -38,9 +49,10 @@ if(!dir.exists(paths = '~/multiomics/results/figures/DIABLO/LNposvsLNneg/Ductal'
 
 ## Create training and test datasets
 ```{r}
+#| message: false
 set.seed(123)
 design <- read_tsv('~/multiomics/results/design_files/design_multiomics_mofa.tsv') %>% 
-  filter(str_detect(InvCa.type,'Ductal'))
+  dplyr::filter(InvCa.type=='Ductal')
 dataSplit <- initial_split(data = design,prop = 0.7,strata = 'LN')
 trainData <- training(dataSplit)
 testData <- testing(dataSplit)
@@ -48,9 +60,10 @@ testData <- testing(dataSplit)
 
 ## Load data and create multiomics data matrix
 ```{r}
+#| message: false
 proteindata <- read_tsv(file = '~/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
   NAFiltering(design = design,sampleCol = 'sample_id') %>% 
-  medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
+  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 protTrain <- proteindata %>% 
   dplyr::select(trainData$sample_id) %>% 
   t()
@@ -63,7 +76,7 @@ colnames(protTest) <-make.names(names = proteindata$Protein.Names,unique = TRUE)
 
 phosphodata <- read_tsv(file = '~/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv') %>% 
   NAFiltering(design = design,sampleCol = 'sample_id') %>% 
-  medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein.Group',cutoff = 0.75)
+  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein.Group',cutoff = 0.75)
 phosphoTrain <- phosphodata %>% 
   dplyr::select(trainData$sample_id) %>% 
   t()
@@ -76,7 +89,7 @@ colnames(phosphoTest) <- make.names(names = phosphodata$Protein.Names,unique = T
 
 genedata <- read_tsv(file = '~/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv') %>% 
   NAFiltering(design = design,sampleCol = 'sample_id') %>% 
-  medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
+  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
 geneTrain <- genedata %>% 
   dplyr::select(trainData$sample_id) %>% 
   t()
@@ -99,9 +112,6 @@ dataTest <- list(proteomics=protTest,
                 phosphoproteomics=phosphoTest,
                 transcriptomics=geneTest)
 
-finalData <- list(trainData=dataTrain,responseTrain=responseTrain,testData=dataTest,responseTest=responseTest)
-save(finalData,file = '~/multiomics/results/DIABLO/LNposvsLNneg/Ductal/modelData.gzip',compress = 'gzip')
-
 varKeep <- c('dataTest','dataTrain','responseTrain','responseTest')
 rm(list = setdiff(ls(),varKeep))
 ```
@@ -118,27 +128,6 @@ pls2 <- spls(dataTrain[["proteomics"]], dataTrain[["phosphoproteomics"]],
              keepX = list.keepX, keepY = list.keepY)
 pls3 <- spls(dataTrain[["phosphoproteomics"]], dataTrain[["transcriptomics"]], 
              keepX = list.keepX, keepY = list.keepY)
-
-# plot features of first PLS
-plotVar(pls1, cutoff = 0.5, title = "(a) proteomics vs transcriptomics", 
-        legend = c("proteomics", "transcriptomics"), 
-        var.names = FALSE, style = 'graphics', 
-        pch = c(16, 17), cex = c(2,2), 
-        col = c('darkorchid', 'lightgreen'))
-
-# plot features of second PLS
-plotVar(pls2, cutoff = 0.5, title = "(b) proteomics vs phosphoproteomics", 
-        legend = c("proteomics", "phosphoproteomics"), 
-        var.names = FALSE, style = 'graphics', 
-        pch = c(16, 17), cex = c(2,2), 
-        col = c('darkorchid', 'lightgreen'))
-
-# plot features of third PLS
-plotVar(pls3, cutoff = 0.5, title = "(c) phosphoproteomics vs transcriptomics", 
-        legend = c("phosphoproteomics", "transcriptomics"), 
-        var.names = FALSE, style = 'graphics', 
-        pch = c(16, 17), cex = c(2,2), 
-        col = c('darkorchid', 'lightgreen'))
 ```
 ### Correlation between pairs of omics
 ```{r}
@@ -148,38 +137,86 @@ cor(pls2$variates$X, pls2$variates$Y)
 
 cor(pls3$variates$X, pls3$variates$Y) 
 ```
+
+### Generate basic model
+### Evaluate optimal number of components
 ### Design matrix for DIABLO
 ```{r}
-# for square matrix filled with 0.1s
-design <- matrix(0.1, ncol = length(dataTrain), nrow = length(dataTrain), 
-                dimnames = list(names(dataTrain), names(dataTrain)))
-diag(design) = 0 # set diagonal to 0s
-
-design
-```
-### Generate basic model
-```{r}
-set.seed(123)
-basic.diablo.model <- block.splsda(X = dataTrain, Y = responseTrain, ncomp = 15, design = design) 
-```
-
-### Evaluate optimal number of components
-```{r}
 # run component number tuning with repeated CV
-perf.diablo <-  perf(basic.diablo.model, validation = 'Mfold', 
-                   folds = 10, nrepeat = 10,signif.threshold = 0.05,progressBar = TRUE,auc = TRUE,cpus = (parallel::detectCores()-2)) 
-
-plot(perf.diablo) # plot output of tuning
+set.seed(123)
+tic()
+perf.diablo <- future(seed = TRUE,globals = TRUE,packages = c('mixOmics'),gc = TRUE,
+                      expr = {
+                        design <- matrix(0.1,
+                                         ncol = length(dataTrain), 
+                                         nrow = length(dataTrain),
+                                         dimnames = list(names(dataTrain),names(dataTrain)))
+                        diag(design) <- 0
+                        basic.diablo.model %<-% block.splsda(X = dataTrain, Y = responseTrain, ncomp = 15, design = design) 
+                        perf(basic.diablo.model, validation = 'Mfold',folds = 10, nrepeat = 10,auc = TRUE)
+                        }
+                      )
+perf.diablo <- value(perf.diablo)
+toc()
 ```
 
 ```{r}
 # set the optimal ncomp value
-ncomp <-  perf.diablo$choice.ncomp$WeightedVote["Overall.BER", "mahalanobis.dist"] 
+ncomp <-  perf.diablo$choice.ncomp$WeightedVote["Overall.BER", "centroids.dist"] 
 # show the optimal choice for ncomp for each dist metric
 perf.diablo$choice.ncomp$WeightedVote 
-ncomp
 ```
 ## Model Tuning
+```{r}
+# Set up parallel plan using future framework
+set.seed(123)
+tic()
+
+# Define the parameter grid
+param_grid <- crossing(
+  ncomp = 1:15,
+  keepProt = seq(1,101,10),
+  keepPhospho = seq(1,101,10),
+  keepRNA = seq(1,101,10)
+)
+
+# Randomly sample parameter combinations
+sampled_params <- sample_n(param_grid, size = 10, replace = FALSE)
+
+# Function to fit tune.block.splsda model
+fit_model <- function(params, dataTrain, responseTrain, design_matrix) {
+  if (!all(c("ncomp", "keepProt", "keepPhospho","keepRNA") %in% names(params))) {
+    stop("Parameter names do not match expected values.")
+  }
+  
+  model.tune <- tune.block.splsda(X = dataTrain, Y = responseTrain,ncomp = params[["ncomp"]],
+                             test.keepX = list(proteomics=params[["keepProt"]],
+                                               phosphoproteomics=params[['keepPhospho']],
+                                               transcriptomics=params[['keepRNA']]),
+                             folds = 5,
+                             nrepeat = 5,
+                             dist = 'centroids.dist',
+                             design = design)
+  ncomp <- model.tune$choice.ncomp$ncomp
+  keepX <- model.tune$choice.keepX %>% purrr::map(~.x[1:ncomp])
+  model <- block.splsda(X = dataTrain,Y = responseTrain,ncomp = ncomp,keepX = keepX,design = design)
+  return(list(params = params, model = model,ncomp=ncomp,numFeatures=keepX))
+}
+
+# Parallelized tuning using future_map
+results <- future_map(.x = seq_len(nrow(sampled_params)),
+                      .f = ~fit_model(params = sampled_params[.x,],
+                                      dataTrain =  dataTrain,
+                                      responseTrain = responseTrain,
+                                      design_matrix = design),
+                      .options=furrr_options(seed = TRUE))
+
+# Combine results
+# combined_results <- bind_rows(results)
+toc()
+plan(sequential)
+```
+
 ```{r}
 # set grid of values for each component to test
 test.keepX <- list(proteomics = c(5:9, seq(10, 18, 2), seq(20,30,5)),
@@ -190,9 +227,8 @@ test.keepX <- list(proteomics = c(5:9, seq(10, 18, 2), seq(20,30,5)),
 tune.diablo <- tune.block.splsda(X = dataTrain,Y = responseTrain,ncomp = ncomp,
                                  test.keepX = test.keepX,
                                  folds = 10,nrepeat = 1,validation = 'Mfold',
-                                 dist = 'mahalanobis.dist',
-                                 progressBar = TRUE, design = design,
-                                 BPPARAM = BiocParallel::MulticoreParam(workers = parallel::detectCores()-2))
+                                 dist = 'centroids.dist',
+                                 progressBar = TRUE, design = design)
 ```
 
 ### Optimal number of features to keep
@@ -204,33 +240,33 @@ list.keepX <- tune.diablo$choice.keepX # set the optimal values of features to k
 ```{r}
 final.diablo.model <- block.splsda(X = dataTrain, Y = responseTrain, ncomp = ncomp, 
                           keepX = list.keepX, design = design)
-saveRDS(object = final.diablo.model,file = '~/multiomics/results/DIABLO/LNposvsLNneg/Ductal/model.gzip',compress = 'gzip')
+saveRDS(object = final.diablo.model,file = '~/multiomics/results/DIABLO/DuctalvsLobular/model.gzip',compress = 'gzip')
 ```
 
 ## Table of selected variables
 ```{r}
-ncomp <- final.diablo.model$ncomp[['Y']]
-modelVar <- map(.x = 1:ncomp,.f = function(x){selectVar(final.diablo.model,comp=x)})
-names(modelVar) <- paste0('Comp',1:ncomp)
+ncomp <- 5
+modelVar <- map(.x = 1:ncomp,.f = ~selectVar(final.diablo.model,comp=.x))
+names(modelVar) <- paste0('Comp',1:5)
 modelVar <- map(1:ncomp,function(x){
   proteomics <- pluck(modelVar,x,'proteomics','name')
   phosphoproteomics <- pluck(modelVar,x,'phosphoproteomics','name')
   transcriptomics <- pluck(modelVar,x,'transcriptomics','name')
   list(proteomics=proteomics,phosphoproteomics=phosphoproteomics,transcriptomics=transcriptomics)
 })
-names(modelVar) <- paste0('Comp',1:ncomp)
+names(modelVar) <- paste0('Comp',1:5)
 modelVar <- modelVar %>% 
   map_depth(.,2,~data.frame(ID=.x)) %>% 
   map_depth(.,1,~list_rbind(.x,names_to = 'Omics')) %>% 
   list_rbind(names_to = 'Comp')
 
-write_tsv(x = modelVar,file = '~/multiomics/results/DIABLO/LNposvsLNneg/Ductal/model_variables.tsv')
+write_tsv(x = modelVar,file = '~/multiomics/results/DIABLO/DuctalvsLobular/model_variables.tsv')
 ```
 
 ## Figures
 ### Market Plot
 ```{r,message=FALSE}
-pdf(file = '~/multiomics/results/figures/DIABLO/LNposvsLNneg/Ductal/marker_plot.pdf',width = 30,height = 10,onefile = TRUE)
+pdf(file = '~/multiomics/results/figures/DIABLO/DuctalvsLobular/marker_plot.pdf',width = 30,height = 10,onefile = TRUE)
 map(1:ncomp,~plotMarkers(object = final.diablo.model,block = 'proteomics',comp = .x))
 map(1:ncomp,~plotMarkers(object = final.diablo.model,block = 'phosphoproteomics',comp = .x))
 map(1:ncomp,~plotMarkers(object = final.diablo.model,block = 'transcriptomics',comp = .x))
@@ -240,7 +276,7 @@ dev.off()
 
 ### DIABLO Plot
 ```{r}
-pdf(file = '~/multiomics/results/figures/DIABLO/LNposvsLNneg/Ductal/corrplot.pdf',width = 10,height = 10,onefile = TRUE)
+pdf(file = '~/multiomics/results/figures/DIABLO/DuctalvsLobular/corrplot.pdf',width = 10,height = 10,onefile = TRUE)
 map(1:ncomp,~plotDiablo(final.diablo.model,ncomp = .x,legend = TRUE))
 dev.off
 ```
@@ -248,14 +284,14 @@ dev.off
 ### Sample Plot
 ```{r}
 combinations <- combn(x = ncomp,m = 2,simplify = FALSE)
-pdf(file = '~/multiomics/results/figures/DIABLO/LNposvsLNneg/Ductal/indiv_plot.pdf',width = 10,height = 10,onefile = TRUE)
-samplePlot <- map(.x = combinations,~plotIndiv(final.diablo.model,comp = .x, ind.names = FALSE, legend = TRUE,ellipse = TRUE,ellipse.level = 0.95,title = 'DIABLO Sample Plots'))
+pdf(file = '~/multiomics/results/figures/DIABLO/DuctalvsLobular/indiv_plot.pdf',width = 10,height = 10,onefile = TRUE)
+map(.x = combinations,~plotIndiv(final.diablo.model,comp = .x, ind.names = FALSE, legend = TRUE,ellipse = TRUE,ellipse.level = 0.95,title = 'DIABLO Sample Plots'))
 dev.off()
 ```
 
 ### Circos Plot
 ```{r}
-pdf(file = '~/multiomics/results/figures/DIABLO/LNposvsLNneg/Ductal/circos_plot.pdf',onefile = TRUE,width = 8.5)
+pdf(file = '~/multiomics/results/figures/DIABLO/DuctalvsLobular/circos_plot.pdf',onefile = TRUE,width = 8.5)
 circosPlot(final.diablo.model, cutoff = 0.9, line = TRUE,
            color.blocks= c('darkorchid', 'brown1', 'lightgreen'),
            color.cor = c("chocolate3","grey20"),
@@ -267,7 +303,7 @@ dev.off()
 
 ### Network Plot
 ```{r}
-pdf(file = '~/multiomics/results/figures/DIABLO/LNposvsLNneg/Ductal/network_plot.pdf',onefile = TRUE,width = 20,height = 20)
+pdf(file = '~/multiomics/results/figures/DIABLO/DuctalvsLobular/network_plot.pdf',onefile = TRUE,width = 20,height = 20)
 network(final.diablo.model,
         blocks = c('proteomics','phosphoproteomics','transcriptomics'),
         color.node = c('proteomics'='darkorchid', 'phosphoproteomics'='brown1', 'transcriptomics'='lightgreen'),
@@ -279,7 +315,7 @@ dev.off()
 
 ### Loadings Plot
 ```{r}
-pdf(file = '~/multiomics/results/figures/DIABLO/LNposvsLNneg/Ductal/loadings_plot.pdf',onefile = TRUE,width = 20,height = 20)
+pdf(file = '~/multiomics/results/figures/DIABLO/DuctalvsLobular/loadings_plot.pdf',onefile = TRUE,width = 20,height = 20)
 modelContributions <- map(1:ncomp,~plotLoadings(final.diablo.model,comp = .x, contrib = 'max', method = 'median'))
 dev.off()
 ```
@@ -287,14 +323,14 @@ dev.off()
 
 ### Heatmap
 ```{r}
-pdf(file = '~/multiomics/results/figures/DIABLO/LNposvsLNneg/Ductal/heatmap.pdf',onefile = TRUE,width = 10,height = 10)
+pdf(file = '~/multiomics/results/figures/DIABLO/DuctalvsLobular/heatmap.pdf',onefile = TRUE,width = 10,height = 10)
 diabloHeatmap <- map(1:ncomp,~cimDiablo(final.diablo.model,transpose = TRUE,comp = .x,margins = c(5,25),legend.position = 'topright',size.legend = 1))
 dev.off()
 ```
 
 ### Plot AUC
 ```{r}
-pdf(file = '~/multiomics/results/figures/DIABLO/LNposvsLNneg/Ductal/roc_curve.pdf',onefile = TRUE,width = 10,height = 10)
+pdf(file = '~/multiomics/results/figures/DIABLO/DuctalvsLobular/roc_curve.pdf',onefile = TRUE,width = 10,height = 10)
 auc.splsda = auroc(final.diablo.model,roc.block = c('proteomics','phosphoproteomics','transcriptomics'),newdata = dataTest,outcome.test = responseTest, print = FALSE)
 dev.off()
 ```
@@ -302,7 +338,8 @@ dev.off()
 ## Model Evaluation
 ```{r}
 # run repeated CV performance evaluation
-perf.diablo <- perf(final.diablo.model, validation = 'Mfold',folds = 10,nrepeat = 10,auc = TRUE,signif.threshold = 0.05,
+perf.diablo <- perf(final.diablo.model, validation = 'Mfold', 
+                   M = 10, nrepeat = 10, 
                    dist = 'centroids.dist',cpus = parallel::detectCores()-2) 
 
 perf.diablo$MajorityVote.error.rate

@@ -1,0 +1,133 @@
+---
+title: "Correlation"
+author: "Sergio Mosquim Junior"
+format:
+  html:
+    toc: true
+    code-fold: true
+    embed-resources: true
+    toc-location: left
+    smooth-scroll: true
+engine: knitr
+---
+# Required packages
+```{r}
+library(psych)
+library(tidyverse)
+```
+
+# Function
+```{r}
+correlation_datasets <- function(data1,data2,...){
+  require(psych)
+  data1 <- t(data1)
+  data2 <- t(data2)
+  spearman_correlation <- purrr::map(.x = 1:ncol(data1),.f = function(i) corr.test(data1[,i],data2[,i],method='spearman',ci=FALSE,adjust = 'none'))
+  pearson_correlation <- purrr::map(.x = 1:ncol(data1),.f = function(i) corr.test(data1[,i],data2[,i],method='pearson',ci=FALSE,adjust = 'none'))
+  spearman_r <- purrr::map(spearman_correlation,~pluck(.x,'r')) %>% unlist(.)
+  spearman_p <- purrr::map(spearman_correlation,~pluck(.x,'p')) %>% unlist(.)
+  pearson_r <- purrr::map(pearson_correlation,~pluck(.x,'r')) %>% unlist(.)
+  pearson_p <- purrr::map(pearson_correlation,~pluck(.x,'p')) %>% unlist(.)
+  results <- tibble(Spearman_Score = spearman_r,p.value.spearman = spearman_p,Pearson_Score = pearson_r,p.value.pearson = pearson_p)
+  return(results)
+}
+```
+
+# Full proteome vs transcriptome
+```{r}
+#| message: false
+#| warning: false
+diaP <- '~/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv'
+designP <- '~/multiomics/results/design_files/design_multiomics_mofa.tsv'
+rnaDIA <- '~/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv' %>% 
+  read_tsv
+
+design <- read_tsv(designP)
+dataDIA <- read_tsv(diaP) %>% 
+  dplyr::select(1:3,Gene=Genes,design$sample_id)
+
+mergedData <- inner_join(dataDIA,rnaDIA,by = c('Gene'='Gene.Name'),suffix = c('.DIA','.RNA'))
+
+diaDataReduced <- mergedData %>% 
+  dplyr::select(paste0(design$sample_id,'.DIA'))
+rnaDataReduced <- mergedData %>% 
+  dplyr::select(paste0(design$sample_id,'.RNA'))
+
+correlationRnaDIANN <- correlation_datasets(data1 = diaDataReduced,data2 = rnaDataReduced) %>% 
+  mutate(.,Protein = mergedData$Protein, Gene=mergedData$Gene, P.Perason.Adj=p.adjust(p.value.pearson,method = 'fdr'),P.Spearman.Adj=p.adjust(p.value.spearman,method = 'fdr'))
+
+ggplot(correlationRnaDIANN)+geom_histogram(mapping = aes(x=Spearman_Score,fill=P.Spearman.Adj<=0.05))+geom_vline(xintercept = median(x =correlationRnaDIANN$Spearman_Score,na.rm = TRUE))
+```
+
+# Full proteome vs phosphoproteome
+```{r}
+#| message: false
+#| warning: false
+
+diaP <- '~/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv'
+designP <- '~/multiomics/results/design_files/design_multiomics_mofa.tsv'
+phosphoDIA <- '~/multiomics/results/rollup/phosphoproteome/cycloess_Rollup_Genes.tsv' %>% 
+  read_tsv
+
+design <- read_tsv(designP)
+dataDIA <- read_tsv(diaP) %>% 
+  dplyr::select(1:3,Genes,design$sample_id)
+
+mergedData <- inner_join(dataDIA,phosphoDIA,by = 'Genes',suffix = c('.full','.phospho'))
+
+diaDataReduced <- mergedData %>% 
+  dplyr::select(paste0(design$sample_id,'.full'))
+phosphoDataReduced <- mergedData %>% 
+  dplyr::select(paste0(design$sample_id,'.phospho'))
+
+correlationFullPhospho <- correlation_datasets(data1 = diaDataReduced,data2 = phosphoDataReduced) %>% 
+  mutate(.,Protein = mergedData$Protein.Names.full, Gene=mergedData$Genes, P.Perason.Adj=p.adjust(p.value.pearson,method = 'fdr'),P.Spearman.Adj=p.adjust(p.value.spearman,method = 'fdr'))
+
+ggplot(correlationFullPhospho)+geom_histogram(mapping = aes(x=Spearman_Score,fill=P.Spearman.Adj<=0.05))+geom_vline(xintercept = median(x =correlationFullPhospho$Spearman_Score,na.rm = TRUE))
+```
+
+# Phosphoproteome vs transcriptome
+```{r}
+#| message: false
+#| warning: false
+
+diaP <- '~/multiomics/results/rollup/phosphoproteome/cycloess_Rollup_Genes.tsv'
+designP <- '~/multiomics/results/design_files/design_multiomics_mofa.tsv'
+rnaDIA <- '~/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv' %>% 
+  read_tsv
+
+design <- read_tsv(designP)
+dataDIA <- read_tsv(diaP) %>% 
+  dplyr::select(1:3,Gene=Genes,design$sample_id)
+
+mergedData <- inner_join(dataDIA,rnaDIA,by = c('Gene'='Gene.Name'),suffix = c('.phospho','.RNA'))
+
+diaDataReduced <- mergedData %>% 
+  dplyr::select(paste0(design$sample_id,'.phospho'))
+rnaDataReduced <- mergedData %>% 
+  dplyr::select(paste0(design$sample_id,'.RNA'))
+
+correlationPhosphoRNA <- correlation_datasets(data1 = diaDataReduced,data2 = rnaDataReduced) %>% 
+  mutate(.,Protein = mergedData$Protein, Gene=mergedData$Gene, P.Perason.Adj=p.adjust(p.value.pearson,method = 'fdr'),P.Spearman.Adj=p.adjust(p.value.spearman,method = 'fdr'))
+
+ggplot(correlationPhosphoRNA)+geom_histogram(mapping = aes(x=Spearman_Score,fill=P.Spearman.Adj<=0.05))+geom_vline(xintercept = median(x =correlationPhosphoRNA$Spearman_Score,na.rm = TRUE))
+```
+
+```{r}
+corrSummary <- function(data, ...){
+  correlationSummary <- data %>% 
+    summarise(.,Pairs=nrow(x = .[,5]),Proteins.FDR.Spearman = length(which(P.Spearman.Adj<0.05)),Median.Spearman.Score=median(Spearman_Score,na.rm = T),Proteins.FDR.Pearson = length(which(P.Perason.Adj<0.05)),Median.Pearson.Score=median(Pearson_Score,na.rm = T))
+}
+```
+
+```{r}
+#| message: false
+#| warning: false
+corrData <- list(Proteome.Transcriptome = correlationRnaDIANN,Proteome.Phospho = correlationFullPhospho, Phospho.Transcriptome = correlationPhosphoRNA)
+
+summaryResults <- map_df(.x = corrData,.f = corrSummary) %>% 
+  mutate(.,Correlation = names(corrData),.before='Pairs')
+
+summaryResults
+```
+

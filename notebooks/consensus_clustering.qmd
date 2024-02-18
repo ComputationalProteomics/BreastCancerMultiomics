@@ -16,7 +16,7 @@ engine: knitr
 library(ConsensusClusterPlus)
 library(tidyverse)
 library(ComplexHeatmap)
-source(file = '/multiomics/notebooks/medianFiltering.R',chdir = TRUE)
+source(file = '/multiomics/notebooks/filtering.R',chdir = TRUE)
 ```
 
 # Consensus Clustering
@@ -37,7 +37,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_Full_noPool.t
 
 #### Preprocessing
 ```{r}
-proteinDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Genes',cutoff = 0.75)
+proteinDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Genes',cutoff = 0.75)
 
 proteinDataFiltered <- proteinDataFiltered %>% 
   dplyr::select(Protein,design$sample_id)
@@ -110,7 +110,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_noPoo
 ```
 #### Preprocessing
 ```{r}
-phosphoDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Genes')
+phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Genes')
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
   dplyr::select(Protein,design$sample_id)
@@ -134,14 +134,14 @@ results <-  ConsensusClusterPlus(d = phosphoDataReduced,
 ### Transcriptome
 #### Load Data
 ```{r}
-data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv') %>% 
+data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
   drop_na
 design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_noPool.tsv')
 ```
 
 #### Preprocessing
 ```{r}
-rnaDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID')
+rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID')
 
 rnaDataFiltered <- rnaDataFiltered %>% 
   dplyr::select(Gene.ID,design$sample_id)
@@ -180,7 +180,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_full_ductal.t
 
 ##### Preprocessing
 ```{r}
-proteinDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Genes',cutoff = 0.75)
+proteinDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Genes',cutoff = 0.75)
 
 proteinDataFiltered <- proteinDataFiltered %>% 
   dplyr::select(Protein,design$sample_id)
@@ -210,7 +210,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_ducta
 ```
 ##### Preprocessing
 ```{r}
-phosphoDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Genes')
+phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Genes')
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
   dplyr::select(Protein,design$sample_id)
@@ -234,14 +234,14 @@ results <-  ConsensusClusterPlus(d = phosphoDataReduced,
 #### Transcriptome
 ##### Load Data
 ```{r}
-data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv') %>% 
+data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
   drop_na
 design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_ductal.tsv')
 ```
 
 ##### Preprocessing
 ```{r}
-rnaDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID')
+rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID')
 
 rnaDataFiltered <- rnaDataFiltered %>% 
   dplyr::select(Gene.ID,design$sample_id)
@@ -279,7 +279,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_full_lobular.
 
 ##### Preprocessing
 ```{r}
-proteinDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Genes',cutoff = 0.75)
+proteinDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Genes',cutoff = 0.75)
 
 proteinDataFiltered <- proteinDataFiltered %>% 
   dplyr::select(Protein,design$sample_id)
@@ -309,7 +309,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_lobul
 ```
 ##### Preprocessing
 ```{r}
-phosphoDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Genes')
+phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Genes')
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
   dplyr::select(Protein,design$sample_id)
@@ -333,14 +333,14 @@ results <-  ConsensusClusterPlus(d = phosphoDataReduced,
 #### Transcriptome
 ##### Load Data
 ```{r}
-data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv') %>% 
+data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
   drop_na
 design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_lobular.tsv')
 ```
 
 ##### Preprocessing
 ```{r}
-rnaDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID')
+rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID')
 
 rnaDataFiltered <- rnaDataFiltered %>% 
   dplyr::select(Gene.ID,design$sample_id)
@@ -378,7 +378,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_full_g1g2.tsv
 
 #### Preprocessing
 ```{r}
-proteinDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Genes',cutoff = 0.75)
+proteinDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Genes',cutoff = 0.75)
 
 proteinDataFiltered <- proteinDataFiltered %>% 
   dplyr::select(Protein,design$sample_id)
@@ -408,7 +408,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_g1g2.
 ```
 #### Preprocessing
 ```{r}
-phosphoDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Genes')
+phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Genes')
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
   dplyr::select(Protein,design$sample_id)
@@ -432,14 +432,14 @@ results <-  ConsensusClusterPlus(d = phosphoDataReduced,
 ### Transcriptome
 #### Load Data
 ```{r}
-data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv') %>% 
+data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
   drop_na
 design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_g1g2.tsv')
 ```
 
 #### Preprocessing
 ```{r}
-rnaDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID')
+rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID')
 
 rnaDataFiltered <- rnaDataFiltered %>% 
   dplyr::select(Gene.ID,design$sample_id)
@@ -477,7 +477,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_full_g3g4.tsv
 
 #### Preprocessing
 ```{r}
-proteinDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Genes',cutoff = 0.75)
+proteinDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Genes',cutoff = 0.75)
 
 proteinDataFiltered <- proteinDataFiltered %>% 
   dplyr::select(Protein,design$sample_id)
@@ -507,7 +507,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_g3g4.
 ```
 #### Preprocessing
 ```{r}
-phosphoDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Genes')
+phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Genes')
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
   dplyr::select(Protein,design$sample_id)
@@ -531,14 +531,14 @@ results <-  ConsensusClusterPlus(d = phosphoDataReduced,
 ### Transcriptome
 #### Load Data
 ```{r}
-data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv') %>% 
+data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
   drop_na
 design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_g3g4.tsv')
 ```
 
 #### Preprocessing
 ```{r}
-rnaDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID')
+rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID')
 
 rnaDataFiltered <- rnaDataFiltered %>% 
   dplyr::select(Gene.ID,design$sample_id)

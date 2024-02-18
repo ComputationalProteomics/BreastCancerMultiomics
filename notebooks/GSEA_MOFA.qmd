@@ -173,3 +173,103 @@ if(!dir.exists(paths = '/multiomics/results/figures/MOFA/Group3vsGroup4/')) {
 ggsave(filename = 'GSEA_Group3vsGroup4.png',plot = p,device = 'png',path = '/multiomics/results/figures/MOFA/Group3vsGroup4/',units = 'in',width = 10,height = 12,dpi = 600)
 
 ```
+
+## Lymphnode Positive vs Negative - Ductal
+### Model
+
+```{r}
+model <- readRDS(file = '/multiomics/results/MOFA/LNposvsLNneg/Ductal/model.RDS')
+```
+
+### Rename Features
+
+```{r}
+features_names(model)[["proteomics"]] <- features_names(model)[["proteomics"]] %>% str_split_i(.,pattern='\\_',i=1)
+features_names(model)[["phosphoproteomics"]] <- features_names(model)[["phosphoproteomics"]] %>% str_split_i(.,pattern='\\_',i=1)
+features_names(model)[["transcriptomics"]] <- features_names(model)[["transcriptomics"]] %>% str_split_i(.,pattern='\\.',i=1)
+```
+
+### GSEA
+```{r}
+gsea <- gseaMsigMOFA(model = model,factor = 3,qvaluecutoff = 0.25)
+```
+
+### Plotting
+```{r}
+geneSetName <- msigdbr(species = 'Homo sapiens',category = 'H') %>% dplyr::select(gs_name) %>% unique(x = .)
+resultsAll <- map(.x = names(gsea),.f = ~pluck(.x = gsea,.x,'result')) %>% 
+  map(.f = ~left_join(x = geneSetName,y = .x,by = c('gs_name'='ID'))) %>% 
+  map2(.y = c('Proteome','Phosphoproteome','Transcriptome'),.f = ~dplyr::mutate(.data=.x,Experiment=.y)) %>% 
+  map(.f = ~dplyr::rename(.data=.x,ID=gs_name)) %>% 
+  purrr::reduce(.f = dplyr::full_join)
+
+resultsAll$ID <- resultsAll$ID %>% 
+  str_remove(string = .,pattern = 'HALLMARK\\_') %>% 
+  str_replace_all(.,'\\_',' ')
+
+p <- ggplot(resultsAll, aes(Experiment, ID, fill= NES)) + 
+  coord_fixed()+
+  geom_tile(color='black',lwd=0.1,linetype=1) +
+  scale_fill_gradient2(low="blue", high="red",na.value = 'white',mid = '#FFFFCC') + 
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 30,hjust = 1),
+        panel.grid.major = element_blank(),
+        legend.position = "right",
+        legend.direction = "vertical")
+
+if(!dir.exists(paths = '/multiomics/results/figures/MOFA/LNposvsLNneg/Ductal/')) {
+  dir.create(path = '/multiomics/results/figures/MOFA/LNposvsLNneg/Ductal/',recursive = TRUE)
+}
+ggsave(filename = 'GSEA_Group3vsGroup4.png',plot = p,device = 'png',path = '/multiomics/results/figures/MOFA/LNposvsLNneg/Ductal/',units = 'in',width = 10,height = 12,dpi = 600)
+
+```
+
+## Lymphnode Positive vs Negative - Lobular
+### Model
+
+```{r}
+model <- readRDS(file = '/multiomics/results/MOFA/LNposvsLNneg/Lobular/model.RDS')
+```
+
+### Rename Features
+
+```{r}
+features_names(model)[["proteomics"]] <- features_names(model)[["proteomics"]] %>% str_split_i(.,pattern='\\_',i=1)
+features_names(model)[["phosphoproteomics"]] <- features_names(model)[["phosphoproteomics"]] %>% str_split_i(.,pattern='\\_',i=1)
+features_names(model)[["transcriptomics"]] <- features_names(model)[["transcriptomics"]] %>% str_split_i(.,pattern='\\.',i=1)
+```
+
+### GSEA
+```{r}
+gsea <- gseaMsigMOFA(model = model,factor = 3,qvaluecutoff = 0.25)
+```
+
+### Plotting
+```{r}
+geneSetName <- msigdbr(species = 'Homo sapiens',category = 'H') %>% dplyr::select(gs_name) %>% unique(x = .)
+resultsAll <- map(.x = names(gsea),.f = ~pluck(.x = gsea,.x,'result')) %>% 
+  map(.f = ~left_join(x = geneSetName,y = .x,by = c('gs_name'='ID'))) %>% 
+  map2(.y = c('Proteome','Phosphoproteome','Transcriptome'),.f = ~dplyr::mutate(.data=.x,Experiment=.y)) %>% 
+  map(.f = ~dplyr::rename(.data=.x,ID=gs_name)) %>% 
+  purrr::reduce(.f = dplyr::full_join)
+
+resultsAll$ID <- resultsAll$ID %>% 
+  str_remove(string = .,pattern = 'HALLMARK\\_') %>% 
+  str_replace_all(.,'\\_',' ')
+
+p <- ggplot(resultsAll, aes(Experiment, ID, fill= NES)) + 
+  coord_fixed()+
+  geom_tile(color='black',lwd=0.1,linetype=1) +
+  scale_fill_gradient2(low="blue", high="red",na.value = 'white',mid = '#FFFFCC') + 
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 30,hjust = 1),
+        panel.grid.major = element_blank(),
+        legend.position = "right",
+        legend.direction = "vertical")
+
+if(!dir.exists(paths = '/multiomics/results/figures/MOFA/LNposvsLNneg/Lobular/')) {
+  dir.create(path = '/multiomics/results/figures/MOFA/LNposvsLNneg/Lobular/',recursive = TRUE)
+}
+ggsave(filename = 'GSEA_Group3vsGroup4.png',plot = p,device = 'png',path = '/multiomics/results/figures/MOFA/LNposvsLNneg/Lobular/',units = 'in',width = 10,height = 12,dpi = 600)
+
+```

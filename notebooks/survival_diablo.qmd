@@ -1,0 +1,112 @@
+---
+title: "Survival Analysis - DIABLO"
+author: "Sergio Mosquim Junior"
+format:
+  html:
+    toc: true
+    code-fold: true
+    embed-resources: true
+    toc-location: left
+    smooth-scroll: true
+    message: false
+engine: knitr
+params:
+  outputdir: '~/multiomics/results/figures/survival_analysis/DIABLO/LNposvsLNneg/Lobular/'
+  model: '~/multiomics/results/DIABLO/LNposvsLNneg/Lobular/lobular.tune2.gzip'
+  design: '~/multiomics/results/design_files/design_multiomics_mofa.tsv'
+  comp: 1
+---
+
+# Requires Packages:
+
+```{r required packages}
+#| message: false
+#| warning: false
+pkgCheck <- function(pkg)
+if(!require(package=pkg,quietly = TRUE,character.only = TRUE)){
+  install.packages(pkgs = pkg,dependencies = TRUE,clean = TRUE,quiet = TRUE)
+}
+packages <- c('survival','survminer')
+lapply(X = packages,FUN = pkgCheck)
+
+library(survival)
+library(survminer)
+library(tidyverse)
+library(tidymodels)
+library(mixOmics)
+```
+
+# Survival Analysis
+## DIABLO Models
+### Ductal - LN positive vs negative
+```{r}
+if(!dir.exists(paths = params$outputdir)) {
+  dir.create(path = params$outputdir,recursive = TRUE)
+}
+```
+
+#### Load DIABLO Model
+```{r}
+model <- readRDS(file = params$model)
+omics <- c('proteomics','phosphoproteomics','transcriptomics')
+topFeat <- purrr::map(.x = omics,.f = function(x){
+  model[["loadings"]][[x]] %>% 
+    as.data.frame() %>% 
+    arrange(desc(abs(.[[paste0('comp',params$comp)]]))) %>% 
+    rownames(.) %>% 
+    .[c(1:model[["keepX"]][[x]][params$comp])]
+})
+names(topFeat) <- omics
+
+# factors <- model[["X"]][[params$omics]] %>% 
+#   as.data.frame() %>% 
+#   mutate(sample_id=rownames(.)) %>% 
+#   dplyr::select(sample_id,topFeat)
+
+factors <- purrr::map(.x = omics,.f = function(x){
+  model[["X"]][[x]] %>% 
+    as.data.frame() %>% 
+    mutate(sample_id=rownames(.)) %>% 
+    dplyr::select(sample_id,topFeat[[x]])
+})
+names(factors) <- omics
+
+finalFeatures <- reduce(.x = factors,.f = ~left_join(x = .x,y = .y,by = 'sample_id'))
+
+# teste <- finalFeatures %>% pivot_longer(cols = -any_of('sample_id'),names_to = 'Feature',values_to = 'value') %>% pivot_wider(id_cols = Feature,names_from = sample_id,values_from = value) 
+# teste$Feature <- teste$Feature %>% str_split_i(pattern = '\\.',i = 1)
+# teste2 <- teste %>% group_by(Feature) %>% summarise(across(everything(),~median(.x,na.rm=TRUE))) %>% pivot_longer(cols = -any_of('Feature'),names_to = 'sample_id') %>% pivot_wider(id_cols = sample_id,names_from = Feature)
+
+design <- read_tsv(params$design) %>% 
+  dplyr::filter(sample_id %in% finalFeatures[["sample_id"]]) %>% 
+  dplyr::select(sample_id,ROR=NCN.ROR.binary.risk.cat,time=DRFi_days,event=DRFi_event) %>% 
+  left_join(finalFeatures)
+```
+
+##### Calculate cut points and fit model to high vs low
+```{r}
+variables <- design %>% 
+  dplyr::select(-c(sample_id,ROR,time,event)) %>% 
+  colnames()
+
+featCut <- surv_cutpoint(data = design,variables = variables)
+
+finalFeaturesFactors <- surv_categorize(x = featCut,variables = variables,labels = c('Low','High')) %>% cbind(.,ROR=design$ROR)
+```
+
+###### Kaplan-Meier plots
+```{r}
+#| warning: false
+kmPlots <- purrr::map(.x = variables,.f = function(x){
+  objSurv <- Surv(time = finalFeaturesFactors[['time']],event = finalFeaturesFactors[['event']])
+  survFormula <- reformulate(termlabels = x,response = 'objSurv')
+  fit <- surv_fit(formula = survFormula,data = finalFeaturesFactors)
+  ggsurvplot(fit = fit,data = finalFeaturesFactors,conf.int = TRUE,pval = TRUE,pval.method = TRUE,surv.median.line = 'hv',risk.table = TRUE)
+  })
+```
+```{r}
+invisible(pdf(file = paste0(params$outputdir,'kaplan_meier.pdf'),width = 20,height = 10,onefile = TRUE))
+invisible(purrr::map(1:length(kmPlots),~print(kmPlots[[.x]])))
+invisible(dev.off())
+```
+

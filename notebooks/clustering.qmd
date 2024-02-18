@@ -28,7 +28,7 @@ library(colorspace)
 library(future)
 library(future.callr)
 library(furrr)
-source(file = '/multiomics/notebooks/medianFiltering.R',chdir = TRUE)
+source(file = '/multiomics/notebooks/filtering.R',chdir = TRUE)
 source(file = '/multiomics/notebooks/gprofiler_enrichment.R',chdir = TRUE)
 ```
 ```{r}
@@ -49,7 +49,7 @@ if(!dir.exists(paths = '/multiomics/results/figures/clustering/DuctalvsLobular')
 ```{r}
 ccProt %<-% read_csv(file = '/multiomics/results/consensus_clustering/DuctalvsLobular/proteome/proteome.k=6.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
 ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/DuctalvsLobular/phosphoproteome/phosphoproteome.k=4.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
-ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/DuctalvsLobular/transcriptome/transcriptome.k=7.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
+ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/DuctalvsLobular/transcriptome/transcriptome.k=5.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
 
 ccAll <- full_join(ccProt,ccPhospho) %>% full_join(.,ccRNA)
 ```
@@ -65,7 +65,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_Full_noPool.t
 
 #### Preprocessing
 ```{r}
-proteinDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
+proteinDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 
 proteinDataFiltered <- proteinDataFiltered %>% 
   dplyr::select(Protein,design$sample_id)
@@ -185,7 +185,7 @@ proteinHeatmapDraw <- grid.grabExpr(draw(prothp,annotation_legend_list = allLege
 
 ggsave2(filename = 'kmeans_proteome.pdf',plot = proteinHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/DuctalvsLobular',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
-varKeep <- c('medianFiltering','NAFiltering','gprofilerEnrichment','ccAll','calZScore','varKeep')
+varKeep <- c('varianceFiltering','NAFiltering','gprofilerEnrichment','ccAll','calZScore','varKeep')
 rm(list = setdiff(ls(),varKeep))
 invisible(gc())
 ```
@@ -200,7 +200,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_noPoo
 ```
 #### Preprocessing
 ```{r}
-phosphoDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id',cutoff = 0.25)
+phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id',cutoff = 0.25)
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
   dplyr::select(Protein.Group,design$sample_id)
@@ -324,14 +324,14 @@ invisible(gc())
 ### Transcriptome
 #### Load Data
 ```{r}
-data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv') %>% 
+data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
   drop_na
 design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_noPool.tsv') %>% 
   left_join(.,ccAll)
 ```
 #### Preprocessing
 ```{r}
-rnaDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
+rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
 
 rnaDataFiltered <- rnaDataFiltered %>% 
   dplyr::select(Gene.ID,design$sample_id)
@@ -351,7 +351,7 @@ colnames(rnadataNorm) <- NULL
 groupCol <- colorspace::divergex_hcl(n = 6) %>% setNames(nm = paste0('Group',1:6))
 nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
 dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
-clusterCol <- colorspace::sequential_hcl(n = 7,palette = 'Purple-Yellow') %>% setNames(nm = c(1:7))
+clusterCol <- colorspace::sequential_hcl(n = 5,palette = 'Purple-Yellow') %>% setNames(nm = c(1:5))
 ```
 
 ```{r}
@@ -468,7 +468,7 @@ if(!dir.exists(paths = '/multiomics/results/figures/clustering/LNposvsLNneg/Duct
 ```{r}
 ccProt %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/proteome/proteome.k=6.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
 ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/phosphoproteome/phosphoproteome.k=4.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
-ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/transcriptome/transcriptome.k=5.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
+ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/transcriptome/transcriptome.k=4.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
 
 ccAll <- full_join(ccProt,ccPhospho) %>% full_join(.,ccRNA)
 ```
@@ -483,7 +483,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_full_ductal.t
 ```
 ##### Preprocessing
 ```{r}
-proteinDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
+proteinDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 
 proteinDataFiltered <- proteinDataFiltered %>% 
   dplyr::select(Protein,design$sample_id)
@@ -608,7 +608,7 @@ proteinHeatmapDraw <- grid.grabExpr(draw(prothp,annotation_legend_list = allLege
 
 ggsave2(filename = 'kmeans_proteome.pdf',plot = proteinHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/LNposvsLNneg/Ductal/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
-varKeep <- c('medianFiltering','NAFiltering','gprofilerEnrichment','ccAll','calZScore','varKeep')
+varKeep <- c('varianceFiltering','NAFiltering','gprofilerEnrichment','ccAll','calZScore','varKeep')
 rm(list = setdiff(ls(),varKeep))
 invisible(gc())
 ```
@@ -623,7 +623,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_ducta
 ```
 ##### Preprocessing
 ```{r}
-phosphoDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id',cutoff = 0.25)
+phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id',cutoff = 0.25)
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
   dplyr::select(Protein.Group,design$sample_id)
@@ -754,7 +754,7 @@ invisible(gc())
 #### Transcriptome
 ##### Load Data
 ```{r}
-data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv') %>% 
+data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
   drop_na
 design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_ductal.tsv') %>% 
   left_join(.,ccAll)
@@ -762,7 +762,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_ductal.ts
 
 ##### Preprocessing
 ```{r}
-rnaDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
+rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
 
 rnaDataFiltered <- rnaDataFiltered %>% 
   dplyr::select(Gene.ID,design$sample_id)
@@ -782,7 +782,7 @@ colnames(rnadataNorm) <- NULL
 groupCol <- colorspace::divergex_hcl(n = 4) %>% setNames(nm = paste0('Group',1:4))
 nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
 dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
-clusterCol <- colorspace::sequential_hcl(n = 5,palette = 'Purple-Yellow') %>% setNames(nm = c(1:5))
+clusterCol <- colorspace::sequential_hcl(n = 4,palette = 'Purple-Yellow') %>% setNames(nm = c(1:4))
 ```
 
 ```{r}
@@ -905,7 +905,7 @@ if(!dir.exists(paths = '/multiomics/results/figures/clustering/LNposvsLNneg/Lobu
 ```{r}
 ccProt %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/proteome/proteome.k=4.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
 ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/phosphoproteome/phosphoproteome.k=5.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
-ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/transcriptome/transcriptome.k=6.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
+ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/transcriptome/transcriptome.k=5.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
 
 ccAll <- full_join(ccProt,ccPhospho) %>% full_join(.,ccRNA)
 ```
@@ -920,7 +920,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_full_lobular.
 ```
 ##### Preprocessing
 ```{r}
-proteinDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
+proteinDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 
 proteinDataFiltered <- proteinDataFiltered %>% 
   dplyr::select(Protein,design$sample_id)
@@ -1045,7 +1045,7 @@ proteinHeatmapDraw <- grid.grabExpr(draw(prothp,annotation_legend_list = allLege
 
 ggsave2(filename = 'kmeans_proteome.pdf',plot = proteinHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/LNposvsLNneg/Lobular/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
-varKeep <- c('medianFiltering','NAFiltering','gprofilerEnrichment','ccAll','calZScore','varKeep')
+varKeep <- c('varianceFiltering','NAFiltering','gprofilerEnrichment','ccAll','calZScore','varKeep')
 rm(list = setdiff(ls(),varKeep))
 invisible(gc())
 ```
@@ -1060,7 +1060,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_lobul
 ```
 ##### Preprocessing
 ```{r}
-phosphoDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id',cutoff = 0.25)
+phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id',cutoff = 0.25)
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
   dplyr::select(Protein.Group,design$sample_id)
@@ -1191,14 +1191,14 @@ invisible(gc())
 #### Transcriptome
 ##### Load Data
 ```{r}
-data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv') %>% 
+data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
   drop_na
 design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_lobular.tsv') %>% 
   left_join(.,ccAll)
 ```
 ##### Preprocessing
 ```{r}
-rnaDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
+rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
 
 rnaDataFiltered <- rnaDataFiltered %>% 
   dplyr::select(Gene.ID,design$sample_id)
@@ -1218,7 +1218,7 @@ colnames(rnadataNorm) <- NULL
 groupCol <- colorspace::divergex_hcl(n = 2) %>% setNames(nm = paste0('Group',5:6))
 nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
 dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
-clusterCol <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6))
+clusterCol <- colorspace::sequential_hcl(n = 5,palette = 'Purple-Yellow') %>% setNames(nm = c(1:5))
 ```
 
 ```{r}
@@ -1354,7 +1354,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_full_g1g2.tsv
 ```
 #### Preprocessing
 ```{r}
-proteinDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
+proteinDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 
 proteinDataFiltered <- proteinDataFiltered %>% 
   dplyr::select(Protein,design$sample_id)
@@ -1488,7 +1488,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_g1g2.
 ```
 #### Preprocessing
 ```{r}
-phosphoDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id',cutoff = 0.25)
+phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id',cutoff = 0.25)
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
   dplyr::select(Protein.Group,design$sample_id)
@@ -1612,14 +1612,14 @@ invisible(gc())
 ### Transcriptome
 #### Load Data
 ```{r}
-data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv') %>% 
+data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
   drop_na
 design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_g1g2.tsv') %>% 
   left_join(.,ccAll)
 ```
 #### Preprocessing
 ```{r}
-rnaDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
+rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
 
 rnaDataFiltered <- rnaDataFiltered %>% 
   dplyr::select(Gene.ID,design$sample_id)
@@ -1768,7 +1768,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_full_g3g4.tsv
 ```
 #### Preprocessing
 ```{r}
-proteinDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
+proteinDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 
 proteinDataFiltered <- proteinDataFiltered %>% 
   dplyr::select(Protein,design$sample_id)
@@ -1902,7 +1902,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_g3g4.
 ```
 #### Preprocessing
 ```{r}
-phosphoDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id',cutoff = 0.25)
+phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id',cutoff = 0.25)
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
   dplyr::select(Protein.Group,design$sample_id)
@@ -2026,14 +2026,14 @@ invisible(gc())
 ### Transcriptome
 #### Load Data
 ```{r}
-data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv') %>% 
+data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
   drop_na
 design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_g3g4.tsv') %>% 
   left_join(.,ccAll)
 ```
 #### Preprocessing
 ```{r}
-rnaDataFiltered <- medianFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
+rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
 
 rnaDataFiltered <- rnaDataFiltered %>% 
   dplyr::select(Gene.ID,design$sample_id)

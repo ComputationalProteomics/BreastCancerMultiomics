@@ -1,0 +1,77 @@
+---
+title: "Pre-processing Immuneinfiltration data"
+author: "Sergio Mosquim Junior"
+format:
+  html:
+    toc: true
+    code-fold: true
+    embed-resources: true
+    toc-location: left
+    smooth-scroll: true
+engine: knitr
+---
+
+# Requires Packages:
+```{r required packages}
+#| message: false
+#| warning: false
+library(tidyverse)
+```
+
+# Immuneinfiltration data
+## General variables and functions
+```{r}
+dirP <- '/multiomics/data/Immune_infiltration/'
+calZScore <- function(data){
+  zScore <- function(x){
+    (x-mean(c_across(starts_with('S0'))))/sd(c_across(starts_with('S0')))
+    }
+  data <- data %>% rowwise() %>% mutate(across(starts_with('S0'),zScore))
+  return(data)
+}
+```
+
+## EPIC
+```{r}
+epicfiles <- list.files(path = dirP,pattern = 'epic*')
+dataEpic <- purrr::map(.x = paste0(dirP,epicfiles),.f = read_tsv)
+names(dataEpic) <- str_split_i(string = epicfiles,pattern = '\\_|\\.',i = 2)
+
+epicdata <- purrr::map(dataEpic,calZScore) %>% 
+  purrr::map2(.y = names(.),.f = function(x,y){
+    dplyr::mutate(x,cell_type=paste(cell_type,y,sep = '_'))}) %>% 
+  list_rbind() %>% 
+  dplyr::mutate(across(starts_with('S0'),~na_if(.x,NaN)))
+
+write_tsv(x = epicdata,file = paste0(dirP,'epic_aggregated.tsv'))
+```
+
+## CIBERSORTX
+```{r}
+cibersortFiles <- list.files(path = dirP,pattern = 'cibersort')
+dataCibersort <- purrr::map(.x = paste0(dirP,cibersortFiles),.f = read_tsv)
+names(dataCibersort) <- str_split_i(string = cibersortFiles,pattern = '\\_',i = 2)
+
+ciberData <- purrr::map(dataCibersort,calZScore) %>% 
+  purrr::map2(.y = names(.),.f = function(x,y){
+    dplyr::mutate(x,cell_type=paste(cell_type,y,sep = '_'))}) %>% 
+  list_rbind() %>% 
+  dplyr::mutate(across(starts_with('S0'),~na_if(.x,NaN)))
+
+write_tsv(x = ciberData,file = paste0(dirP,'cibersortx_aggregated.tsv'))
+```
+
+## HisScore
+```{r}
+hisFile <- list.files(path = dirP,pattern = 'HisScore.*tsv')
+hisscore <- read_tsv(file = paste0(dirP,hisFile))
+hisscore <- hisscore %>% mutate(across(-c(1:3),function(x){(x-mean(x))/sd(x)}))
+score <- colnames(hisscore)[-c(1:3)]
+sampleName <- hisscore[["Name"]]
+hisscore <- hisscore %>% select(-c(1:3)) %>% t %>% as_tibble() %>% mutate(.,score=score,.before = 1)
+colnames(hisscore) <- c('score',sampleName)
+
+write_tsv(x = hisscore,file = paste0(dirP,'hisscore_zscore.tsv'))
+```
+
+

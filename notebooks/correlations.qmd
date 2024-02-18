@@ -39,7 +39,7 @@ correlation_datasets <- function(data1,data2,...){
 #| warning: false
 diaP <- '~/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv'
 designP <- '~/multiomics/results/design_files/design_multiomics_mofa.tsv'
-rnaDIA <- '~/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv' %>% 
+rnaDIA <- '~/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv' %>% 
   read_tsv
 
 design <- read_tsv(designP)
@@ -93,7 +93,7 @@ ggplot(correlationFullPhospho)+geom_histogram(mapping = aes(x=Spearman_Score,fil
 
 diaP <- '~/multiomics/results/rollup/phosphoproteome/cycloess_Rollup_Genes.tsv'
 designP <- '~/multiomics/results/design_files/design_multiomics_mofa.tsv'
-rnaDIA <- '~/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv' %>% 
+rnaDIA <- '~/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv' %>% 
   read_tsv
 
 design <- read_tsv(designP)

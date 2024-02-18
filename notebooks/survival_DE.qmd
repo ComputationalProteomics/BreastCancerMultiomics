@@ -12,8 +12,9 @@ format:
 engine: knitr
 params:
   outputdir: '~/multiomics/results/figures/survival_analysis/DE/DuctalvsLobular/proteome/'
-  dataPath: '~/multiomics/results/differentialexpression/DuctalvsLobular/fullproteome_protein/fullproteome_protein_stats.tsv'
+  dataPath: '~/multiomics/results/differentialexpression/DuctalvsLobular/ductalvslobular_fullproteome_protein/ductalvslobular_fullproteome_protein_stats.tsv'
   designPath: '~/multiomics/results/design_files/design_Full_noPool.tsv'
+  condCol: 'InvCa.type'
   idCol: 'Protein.Names'
   topnum: 10
 ---
@@ -89,23 +90,17 @@ ggsave(filename = 'HR_plot_factors.pdf',plot = hrPlot,device = 'pdf',path = para
 
 ### Calculate cut points and fit model to high vs low
 ```{r}
-dataKM <- design %>% select(sample_id,time=DRFi_days,event=DRFi_event,InvCa.type) %>% left_join(.,dataFit)
+dataKM <- design %>% select(sample_id,time=DRFi_days,event=DRFi_event,params$condCol) %>% left_join(.,dataFit)
 
 featCut <- surv_cutpoint(data = dataKM,variables = variables)
 
-finalFeatures <- map(.x = variables,.f = function(x){(dataKM[[x]]>featCut[["cutpoint"]][x,1])})
-names(finalFeatures) <- variables
-finalFeatures <- as.data.frame(finalFeatures) %>% 
-  mutate(across(everything(),~if_else(condition = .x, true = 'High', false = 'Low', missing = NA_character_))) %>% 
-  mutate(InvCa.type=design$InvCa.type)
+finalFeatures <- surv_categorize(x = featCut) %>% 
+  as_tibble() %>% 
+  dplyr::mutate('{params$condCol}' := dataKM[[params$condCol]])
 
-variables <- c(variables,'InvCa.type')
+variables <- c(variables,params$condCol)
 
-objSurv <- Surv(time = dataKM$time,event = dataKM$event)
-
-survFormula <- reformulate(termlabels = variables,response = 'objSurv')
-
-fitFeatures <- surv_fit(formula = survFormula,data = finalFeatures)
+objSurv <- Surv(time = finalFeatures$time,event = finalFeatures$event)
 ```
 
 ###### Kaplan-Meier plots

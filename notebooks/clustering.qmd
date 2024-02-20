@@ -331,7 +331,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_noPool.ts
 ```
 #### Preprocessing
 ```{r}
-rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
+rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.85)
 
 rnaDataFiltered <- rnaDataFiltered %>% 
   dplyr::select(Gene.ID,design$sample_id)
@@ -762,7 +762,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_ductal.ts
 
 ##### Preprocessing
 ```{r}
-rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
+rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.85)
 
 rnaDataFiltered <- rnaDataFiltered %>% 
   dplyr::select(Gene.ID,design$sample_id)
@@ -1198,7 +1198,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_lobular.t
 ```
 ##### Preprocessing
 ```{r}
-rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
+rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.85)
 
 rnaDataFiltered <- rnaDataFiltered %>% 
   dplyr::select(Gene.ID,design$sample_id)
@@ -1619,7 +1619,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_g1g2.tsv'
 ```
 #### Preprocessing
 ```{r}
-rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
+rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.85)
 
 rnaDataFiltered <- rnaDataFiltered %>% 
   dplyr::select(Gene.ID,design$sample_id)
@@ -2033,7 +2033,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_g3g4.tsv'
 ```
 #### Preprocessing
 ```{r}
-rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
+rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.85)
 
 rnaDataFiltered <- rnaDataFiltered %>% 
   dplyr::select(Gene.ID,design$sample_id)

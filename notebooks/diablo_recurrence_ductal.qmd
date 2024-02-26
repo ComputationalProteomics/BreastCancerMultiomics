@@ -38,12 +38,12 @@ on.exit(expr = {plan(sequential)})
 # DIABLO model
 
 ```{r, Setting results directory}
-if(!dir.exists(paths = '/Users/analysis/Desktop/Sergio/multiomics/results/DIABLO/LNposvsLNneg/Ductal')) {
-  dir.create(path = '/Users/analysis/Desktop/Sergio/multiomics/results/DIABLO/LNposvsLNneg/Ductal',recursive = TRUE)
+if(!dir.exists(paths = '/Users/analysis/Desktop/Sergio/multiomics/results/DIABLO/recurrence/Ductal')) {
+  dir.create(path = '/Users/analysis/Desktop/Sergio/multiomics/results/DIABLO/recurrence/Ductal',recursive = TRUE)
 }
 
-if(!dir.exists(paths = '/Users/analysis/Desktop/Sergio/multiomics/results/figures/DIABLO/LNposvsLNneg/Ductal')) {
-  dir.create(path = '/Users/analysis/Desktop/Sergio/multiomics/results/figures/DIABLO/LNposvsLNneg/Ductal',recursive = TRUE)
+if(!dir.exists(paths = '/Users/analysis/Desktop/Sergio/multiomics/results/figures/DIABLO/recurrence/Ductal')) {
+  dir.create(path = '/Users/analysis/Desktop/Sergio/multiomics/results/figures/DIABLO/recurrence/Ductal',recursive = TRUE)
 }
 ```
 
@@ -53,7 +53,7 @@ if(!dir.exists(paths = '/Users/analysis/Desktop/Sergio/multiomics/results/figure
 set.seed(123)
 design <- read_tsv('/Users/analysis/Desktop/Sergio/multiomics/results/design_files/design_multiomics_mofa.tsv') %>% 
   dplyr::filter(InvCa.type=='Ductal')
-dataSplit <- initial_split(data = design,prop = 0.7,strata = 'LN')
+dataSplit <- initial_split(data = design,prop = 0.7,strata = 'DRFi_event')
 trainData <- training(dataSplit)
 testData <- testing(dataSplit)
 ```
@@ -87,7 +87,7 @@ phosphoTest <- phosphodata %>%
 colnames(phosphoTest) <- make.names(names = phosphodata$Protein.Names,unique = TRUE)
 
 
-genedata <- read_tsv(file = '/Users/analysis/Desktop/Sergio/multiomics/data/transcriptomics/genematrix_filtered_adjusted_centered.tsv') %>% 
+genedata <- read_tsv(file = '/Users/analysis/Desktop/Sergio/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
   NAFiltering(design = design,sampleCol = 'sample_id',cutoff = 0.5) %>% 
   medianFiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
 geneTrain <- genedata %>% 
@@ -101,8 +101,8 @@ colnames(geneTest) <- make.names(names = genedata$Gene.Name,unique = TRUE)
 
 
 
-responseTrain <- factor(trainData$LN)
-responseTest <- factor(testData$LN)
+responseTrain <- factor(trainData$DRFi_event)
+responseTest <- factor(testData$DRFi_event)
 
 dataTrain <- list(proteomics=protTrain,
                 phosphoproteomics=phosphoTrain,
@@ -152,7 +152,7 @@ perf.diablo <- future(seed = TRUE,globals = TRUE,packages = c('mixOmics'),gc = T
                                          nrow = length(dataTrain),
                                          dimnames = list(names(dataTrain),names(dataTrain)))
                         diag(design) <- 0
-                        basic.diablo.model %<-% block.splsda(X = dataTrain, Y = responseTrain, ncomp = 15, design = design) 
+                        basic.diablo.model %<-% block.splsda(X = dataTrain, Y = responseTrain, ncomp = 20, design = design) 
                         perf(basic.diablo.model, validation = 'Mfold',folds = 10, nrepeat = 100,auc = TRUE,cpus=60)
                         }
                       )
@@ -163,59 +163,102 @@ toc()
 ```{r}
 plot(perf.diablo)
 # set the optimal ncomp value
-ncomp <-  perf.diablo$choice.ncomp$WeightedVote["Overall.BER", "max.dist"] 
+ncomp <-  perf.diablo$choice.ncomp$WeightedVote["Overall.BER", "mahalanobis.dist"] 
 # show the optimal choice for ncomp for each dist metric
 perf.diablo$choice.ncomp$WeightedVote 
 ```
 ## Model Tuning
 ```{r}
-BPPARAM = BiocParallel::SnowParam(RNGseed = 123,workers = 70)
+BPPARAM = BiocParallel::SnowParam(RNGseed = 123,workers = 70,progressbar = TRUE)
 design <- matrix(0.1,ncol = length(dataTrain),nrow = length(dataTrain),dimnames = list(names(dataTrain),names(dataTrain)))
 diag(design) <- 0
 # set grid of values for each component to test
-test.keepX <- list(proteomics = c(seq(10,100,10)),
-                   phosphoproteomics = c(seq(10,100,10)),
-                   transcriptomics = c(seq(10,100,10)))
+test.keepX <- list(proteomics = c(seq(1,301,20)),
+                   phosphoproteomics = c(seq(1,301,20)),
+                   transcriptomics = c(seq(1,301,20)))
 
 # run the feature selection tuning
 tune.diablo <- tune.block.splsda(X = dataTrain,Y = responseTrain,ncomp = ncomp,
                                  test.keepX = test.keepX,
-                                 folds = 5,nrepeat = 100,validation = 'Mfold',
-                                 dist = 'max.dist',
+                                 folds = 10,nrepeat = 100,validation = 'Mfold',
+                                 dist = 'mahalanobis.dist',
                                  progressBar = TRUE, design = design,BPPARAM = BPPARAM)
 
 ```
 ### Optimal number of features to keep
 ```{r}
 list.keepX <- tune.diablo$choice.keepX # set the optimal values of features to keep
-ncomp <- tune.diablo$choice.ncomp$ncomp
 ```
 ### Second round of tuning
+  Here, the list.keepX gives 301 variables for some components, but no more than 51 for the rest, so I will limit to around 51 features and fine tune around there.
 ```{r}
-test.keepX <- list(proteomics = c(1:4,seq(5,20,5),seq(30,150,35)),
-                   phosphoproteomics = c(1:4,seq(5,30,5)),
-                   transcriptomics = c(1:4,seq(5,20,5),seq(30,150,35)))
+test.keepX <- list(proteomics = c(1:10),
+                   phosphoproteomics = c(seq(1,10,2),seq(60,100,10)),
+                   transcriptomics = c(seq(1,10,2),seq(280,320,10)))
 
 # run the feature selection tuning
 tune.diablo2 <- tune.block.splsda(X = dataTrain,Y = responseTrain,ncomp = ncomp,
                                  test.keepX = test.keepX,
-                                 folds = 5,nrepeat = 100,validation = 'Mfold',
-                                 dist = 'max.dist',
+                                 folds = 10,nrepeat = 100,validation = 'Mfold',
+                                 dist = 'mahalanobis.dist',
+                                 progressBar = TRUE, design = design,BPPARAM = BPPARAM)
+
+```
+### Third round of tuning
+  Here, the list.keepX gives 1-81 variables for some components
+```{r}
+list.keepX <- tune.diablo2$choice.keepX # set the optimal values of features to keep
+
+test.keepX <- list(proteomics = c(1:10),
+                   phosphoproteomics = c(1:5,seq(90,110,5)),
+                   transcriptomics = c(seq(290,310,5)))
+
+# run the feature selection tuning
+tune.diablo3 <- tune.block.splsda(X = dataTrain,Y = responseTrain,ncomp = ncomp,
+                                 test.keepX = test.keepX,
+                                 folds = 10,nrepeat = 100,validation = 'Mfold',
+                                 dist = 'mahalanobis.dist',
+                                 progressBar = TRUE, design = design,BPPARAM = BPPARAM)
+
+```
+
+### Fourth round of tuning
+
+```{r}
+list.keepX <- tune.diablo3$choice.keepX # set the optimal values of features to keep
+
+test.keepX <- list(proteomics = c(1:10),
+                   phosphoproteomics = c(1:5,seq(90,100,1)),
+                   transcriptomics = c(seq(295,305,1)))
+
+# run the feature selection tuning
+tune.diablo4 <- tune.block.splsda(X = dataTrain,Y = responseTrain,ncomp = ncomp,
+                                 test.keepX = test.keepX,
+                                 folds = 10,nrepeat = 100,validation = 'Mfold',
+                                 dist = 'mahalanobis.dist',
                                  progressBar = TRUE, design = design,BPPARAM = BPPARAM)
 
 ```
 
 ### Final model
 ```{r}
-final.diablo.tune1 <- block.splsda(X = dataTrain, Y = responseTrain, ncomp = 4, 
+final.diablo.tune1 <- block.splsda(X = dataTrain, Y = responseTrain, ncomp = 2, 
                           keepX = tune.diablo$choice.keepX, design = design)
 final.diablo.tune2 <- block.splsda(X = dataTrain, Y = responseTrain, ncomp = 2, 
                           keepX = tune.diablo2$choice.keepX, design = design)
+final.diablo.tune3 <- block.splsda(X = dataTrain, Y = responseTrain, ncomp = 2, 
+                          keepX = tune.diablo3$choice.keepX, design = design)
+final.diablo.tune4 <- block.splsda(X = dataTrain, Y = responseTrain, ncomp = 2, 
+                          keepX = tune.diablo4$choice.keepX, design = design)
+
+# Based on the perf function, the BER for component 2 increases, which might suggest the only one component is necessary. In that case, I will create a 4th model with only one component and based on the keepX of the third round of tuning, as it gave the lowest overall BER on LOOCV and 100 repeats.
+final.diablo.tune5 <- block.splsda(X = dataTrain, Y = responseTrain, ncomp = 1, 
+                          keepX = lapply(tune.diablo4$choice.keepX,function(x)x[1]), design = design)
 
 
-models <- list(final.diablo.tune1,final.diablo.tune2)
-purrr::map2(.x = models,.y = c('ductal.tune1','ductal.tune2'),function(model,name){
-  saveRDS(object = model,file = paste0('/Users/analysis/Desktop/Sergio/multiomics/results/DIABLO/LNposvsLNneg/Ductal/',name,'.gzip'),compress = 'gzip')
+models <- list(final.diablo.tune1,final.diablo.tune2,final.diablo.tune3,final.diablo.tune4,final.diablo.tune5)
+purrr::map2(.x = models,.y = c('ductal.tune1','ductal.tune2','ductal.tune3','ductal.tune4','ductal.tune5'),function(model,name){
+  saveRDS(object = model,file = paste0('/Users/analysis/Desktop/Sergio/multiomics/results/DIABLO/recurrence/Ductal/',name,'.gzip'),compress = 'gzip')
 })
 ```
 
@@ -239,8 +282,8 @@ modelVar <- purrr::map(.x = models,function(model){
   return(modelVar)
   })
 
-purrr::map2(.x = modelVar,.y = c('ductal.tune1','ductal.tune2'),function(model,name){
-  write_tsv(x = model,paste0('/Users/analysis/Desktop/Sergio/multiomics/results/DIABLO/LNposvsLNneg/Ductal/',name,'_variables','.tsv'))
+purrr::map2(.x = modelVar,.y = c('ductal.tune1','ductal.tune2','ductal.tune3','ductal.tune4','ductal.tune5'),function(model,name){
+  write_tsv(x = model,paste0('/Users/analysis/Desktop/Sergio/multiomics/results/DIABLO/recurrence/Ductal/',name,'_variables','.tsv'))
   })
 ```
 
@@ -252,10 +295,10 @@ purrr::map2(.x = modelVar,.y = c('ductal.tune1','ductal.tune2'),function(model,n
 
 # This gives an error whenever a model has a single variable in a component
 purrr::map2(.x = models,
-            .y = c('ductal.tune1','ductal.tune2'),
+            .y = c('ductal.tune1','ductal.tune2','ductal.tune3','ductal.tune4','ductal.tune5'),
             function(model,name){
               ncomp <- model[['ncomp']][['Y']]
-              pdf(file = paste0('/Users/analysis/Desktop/Sergio/multiomics/results/figures/DIABLO/LNposvsLNneg/Ductal/',name,'_markerPlot','.pdf'),width =30,height = 10,onefile = TRUE)
+              pdf(file = paste0('/Users/analysis/Desktop/Sergio/multiomics/results/figures/DIABLO/recurrence/Ductal/',name,'_markerPlot','.pdf'),width =30,height = 10,onefile = TRUE)
               purrr::map(1:ncomp,~plotMarkers(object = model,block = 'proteomics',comp = .x))
               purrr::map(1:ncomp,~plotMarkers(object = model,block = 'phosphoproteomics',comp = .x))
               purrr::map(1:ncomp,~plotMarkers(object = model,block = 'transcriptomics',comp = .x))
@@ -268,10 +311,10 @@ purrr::map2(.x = models,
 ### DIABLO Plot
 ```{r}
 purrr::map2(.x = models,
-            .y = c('ductal.tune1','ductal.tune2'),
+            .y = c('ductal.tune1','ductal.tune2','ductal.tune3','ductal.tune4','ductal.tune5'),
             function(model,name){
               ncomp <- model[['ncomp']][['Y']]
-              pdf(file = paste0('/Users/analysis/Desktop/Sergio/multiomics/results/figures/DIABLO/LNposvsLNneg/Ductal/',name,'_corrPlot','.pdf'),width = 10,height = 10,onefile = TRUE)
+              pdf(file = paste0('/Users/analysis/Desktop/Sergio/multiomics/results/figures/DIABLO/recurrence/Ductal/',name,'_corrPlot','.pdf'),width = 10,height = 10,onefile = TRUE)
               purrr::map(1:ncomp,~plotDiablo(model,ncomp = .x,legend = TRUE))
               dev.off()
               }
@@ -283,10 +326,10 @@ purrr::map2(.x = models,
 #| message: false
 #| warning: false
 purrr::map2(.x = models,
-            .y = c('ductal.tune1','ductal.tune2'),
+            .y = c('ductal.tune1','ductal.tune2','ductal.tune3','ductal.tune4','ductal.tune5'),
             function(model,name){
-              pdf(file = paste0('/Users/analysis/Desktop/Sergio/multiomics/results/figures/DIABLO/LNposvsLNneg/Ductal/',name,'_circosPlot','.pdf'),onefile = TRUE)
-              circosPlot(model, cutoff = 0.85, line = TRUE,
+              pdf(file = paste0('/Users/analysis/Desktop/Sergio/multiomics/results/figures/DIABLO/recurrence/Ductal/',name,'_circosPlot','.pdf'),onefile = TRUE)
+              circosPlot(model, cutoff = 0.8, line = TRUE,
                          color.blocks= c('darkorchid', 'brown1', 'lightgreen'),
                          block.labels.adj=-0.5,size.variables=0.2,var.adj=0.75,
                          color.cor = c("chocolate3","grey20"),
@@ -301,19 +344,19 @@ purrr::map2(.x = models,
 #| message: false
 #| warning: false
 
-# library(igraph)
+library(igraph)
 purrr::map2(.x = models,
-            .y = c('ductal.tune1','ductal.tune2'),
+            .y = c('ductal.tune1','ductal.tune2','ductal.tune3','ductal.tune4','ductal.tune5'),
             function(model,name){
-              pdf(file = paste0('/Users/analysis/Desktop/Sergio/multiomics/results/figures/DIABLO/LNposvsLNneg/Ductal/',name,'_networkPlot','.pdf'),width = 30,height = 30,compress = TRUE)
+              pdf(file = paste0('/Users/analysis/Desktop/Sergio/multiomics/results/figures/DIABLO/recurrence/Ductal/',name,'_networkPlot','.pdf'),width = 30,height = 30,compress = TRUE)
               networkResult <- network(model,
                       blocks = c('proteomics','phosphoproteomics','transcriptomics'),
                       color.node = c('proteomics'='darkorchid', 'phosphoproteomics'='brown1', 'transcriptomics'='lightgreen'),
-                      cutoff = abs(0.82),
+                      cutoff = abs(0.7),
                       size.node = 0.001,
                       graph.scale = 1)
               dev.off()
-              write_graph(graph = networkResult$gR,file = paste0('/Users/analysis/Desktop/Sergio/multiomics/results/figures/DIABLO/LNposvsLNneg/Ductal/',name,'_networkPlot','.gml'),format = 'gml')
+              write_graph(graph = networkResult$gR,file = paste0('/Users/analysis/Desktop/Sergio/multiomics/results/figures/DIABLO/recurrence/Ductal/',name,'_networkPlot','.gml'),format = 'gml')
             }
 )
 ```
@@ -323,10 +366,10 @@ purrr::map2(.x = models,
 #| message: false
 #| warning: false
 purrr::map2(.x = models,
-            .y = c('ductal.tune1','ductal.tune2'),
+            .y = c('ductal.tune1','ductal.tune2','ductal.tune3','ductal.tune4','ductal.tune5'),
             function(model,name){
               ncomp <- model[['ncomp']][['Y']]
-              pdf(file = paste0('/Users/analysis/Desktop/Sergio/multiomics/results/figures/DIABLO/LNposvsLNneg/Ductal/',name,'_LoadingsPlot','.pdf'),onefile = TRUE,width = 20,height = 20)
+              pdf(file = paste0('/Users/analysis/Desktop/Sergio/multiomics/results/figures/DIABLO/recurrence/Ductal/',name,'_LoadingsPlot','.pdf'),onefile = TRUE,width = 20,height = 20)
               modelContributions <- purrr::map(1:ncomp,~plotLoadings(model,comp = .x, contrib = 'max', method = 'median'))
               dev.off()
             }
@@ -339,10 +382,10 @@ purrr::map2(.x = models,
 #| message: false
 #| warning: false
 purrr::map2(.x = models,
-            .y = c('ductal.tune1','ductal.tune2'),
+            .y = c('ductal.tune1','ductal.tune2','ductal.tune3','ductal.tune4','ductal.tune5'),
             function(model,name){
               ncomp <- model[['ncomp']][['Y']]
-              pdf(file = paste0('/Users/analysis/Desktop/Sergio/multiomics/results/figures/DIABLO/LNposvsLNneg/Ductal/',name,'_heatmap','.pdf'),onefile = TRUE,width = 10,height = 10)
+              pdf(file = paste0('/Users/analysis/Desktop/Sergio/multiomics/results/figures/DIABLO/recurrence/Ductal/',name,'_heatmap','.pdf'),onefile = TRUE,width = 10,height = 10)
               diabloHeatmap <- purrr::map(1:ncomp,~cimDiablo(model,transpose = TRUE,comp = .x,margins = c(5,25),legend.position = 'topright',size.legend = 1))
               dev.off()
             }
@@ -354,9 +397,9 @@ purrr::map2(.x = models,
 #| message: false
 #| warning: false
 purrr::map2(.x = models,
-            .y = c('ductal.tune1','ductal.tune2'),
+            .y = c('ductal.tune1','ductal.tune2','ductal.tune3','ductal.tune4','ductal.tune5'),
             function(model,name){
-              pdf(file = paste0('/Users/analysis/Desktop/Sergio/multiomics/results/figures/DIABLO/LNposvsLNneg/Ductal/',name,'_AUC','.pdf'),onefile = TRUE,width = 10,height = 10)
+              pdf(file = paste0('/Users/analysis/Desktop/Sergio/multiomics/results/figures/DIABLO/recurrence/Ductal/',name,'_AUC','.pdf'),onefile = TRUE,width = 10,height = 10)
               auc.splsda = auroc(object = model,newdata=dataTest,outcome.test=responseTest,roc.block = c('proteomics','phosphoproteomics','transcriptomics'))
               dev.off()
             }
@@ -366,8 +409,7 @@ purrr::map2(.x = models,
 ## Model Evaluation
 ```{r}
 # run repeated CV performance evaluation
-perf.diablo <- perf(final.diablo.tune2, validation = 'Mfold', 
-                   M = 10, nrepeat = 10,auc = TRUE,
+perf.diablo <- perf(teste, validation = 'loo', nrepeat = 10,auc = TRUE,
                    cpus = 70) 
 
 perf.diablo$MajorityVote.error.rate
@@ -378,10 +420,10 @@ perf.diablo$MajorityVote.error.rate
 #| warning: false
 set.seed(123)
 purrr::map2(.x = models,
-            .y = c('ductal.tune1','ductal.tune2'),
+            .y = c('ductal.tune1','ductal.tune2','ductal.tune3','ductal.tune4','ductal.tune5'),
             function(model,name){
-              perf.diablo <- perf(model, validation = 'Mfold',M = 5, nrepeat = 10,cpus = 60)
-              pdf(file = paste0('/Users/analysis/Desktop/Sergio/multiomics/results/figures/DIABLO/LNposvsLNneg/Ductal/',name,'_performance','.pdf'))
+              perf.diablo <- perf(model, validation = 'loo', nrepeat = 100,cpus = 50)
+              pdf(file = paste0('/Users/analysis/Desktop/Sergio/multiomics/results/figures/DIABLO/recurrence/Ductal/',name,'_performance','.pdf'))
               plot(perf.diablo)
               dev.off()
             }
@@ -390,9 +432,9 @@ purrr::map2(.x = models,
 ```
 ## Model Prediction on Test data
 ```{r}
-predict.diablo = predict(final.diablo.tune1, newdata = dataTest)
+predict.diablo = predict(final.diablo.tune5, newdata = dataTest)
 confusion.mat = get.confusion_matrix(truth = responseTest,
-                     predicted = predict.diablo$MajorityVote$max.dist[,2])
+                     predicted = predict.diablo$MajorityVote$mahalanobis.dist)
 confusion.mat
 ```
 

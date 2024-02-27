@@ -52,6 +52,7 @@ ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/Ductalv
 ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/DuctalvsLobular/transcriptome/transcriptome.k=5.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
 
 ccAll <- full_join(ccProt,ccPhospho) %>% full_join(.,ccRNA)
+write_tsv(x = ccAll,file = '/multiomics/results/design_files/ductalvslobular_consensus_clustering.tsv')
 ```
 
 ### Proteome
@@ -193,14 +194,14 @@ invisible(gc())
 ### Phosphoproteome
 #### Load Data
 ```{r}
-data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
   drop_na
 design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_noPool.tsv') %>% 
   left_join(.,ccAll)
 ```
 #### Preprocessing
 ```{r}
-phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id',cutoff = 0.25)
+phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.25)
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
   dplyr::select(Protein.Group,design$sample_id)
@@ -471,6 +472,7 @@ ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvs
 ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/transcriptome/transcriptome.k=4.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
 
 ccAll <- full_join(ccProt,ccPhospho) %>% full_join(.,ccRNA)
+write_tsv(x = ccAll,file = '/multiomics/results/design_files/lnposvslnneg_ductal_consensus_clustering.tsv')
 ```
 
 #### Proteome
@@ -616,14 +618,14 @@ invisible(gc())
 #### Phosphoproteome
 ##### Load Data
 ```{r}
-data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
   drop_na
 design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_ductal.tsv') %>% 
   left_join(.,ccAll)
 ```
 ##### Preprocessing
 ```{r}
-phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id',cutoff = 0.25)
+phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.25)
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
   dplyr::select(Protein.Group,design$sample_id)
@@ -904,10 +906,11 @@ if(!dir.exists(paths = '/multiomics/results/figures/clustering/LNposvsLNneg/Lobu
 #### Consensus Clustering Info
 ```{r}
 ccProt %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/proteome/proteome.k=4.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
-ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/phosphoproteome/phosphoproteome.k=5.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
+ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/phosphoproteome/phosphoproteome.k=6.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
 ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/transcriptome/transcriptome.k=5.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
 
 ccAll <- full_join(ccProt,ccPhospho) %>% full_join(.,ccRNA)
+write_tsv(x = ccAll,file = '/multiomics/results/design_files/lnposvslnneg_lobular_consensus_clustering.tsv')
 ```
 
 #### Proteome
@@ -1053,14 +1056,14 @@ invisible(gc())
 #### Phosphoproteome
 ##### Load Data
 ```{r}
-data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
   drop_na
 design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_lobular.tsv') %>% 
   left_join(.,ccAll)
 ```
 ##### Preprocessing
 ```{r}
-phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id',cutoff = 0.25)
+phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.25)
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
   dplyr::select(Protein.Group,design$sample_id)
@@ -1338,10 +1341,11 @@ if(!dir.exists(paths = '/multiomics/results/figures/clustering/Group1vsGroup2'))
 ### Consensus Clustering Info
 ```{r}
 ccProt %<-% read_csv(file = '/multiomics/results/consensus_clustering/Group1vsGroup2/proteome/proteome.k=5.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
-ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/Group1vsGroup2/phosphoproteome/phosphoproteome.k=5.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
+ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/Group1vsGroup2/phosphoproteome/phosphoproteome.k=4.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
 ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/Group1vsGroup2/transcriptome/transcriptome.k=4.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
 
 ccAll <- full_join(ccProt,ccPhospho) %>% full_join(.,ccRNA)
+write_tsv(x = ccAll,file = '/multiomics/results/design_files/g1vsg2_consensus_clustering.tsv')
 ```
 
 ### Proteome
@@ -1481,14 +1485,14 @@ invisible(gc())
 ### Phosphoproteome
 #### Load Data
 ```{r}
-data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
   drop_na
 design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_g1g2.tsv') %>% 
   left_join(.,ccAll)
 ```
 #### Preprocessing
 ```{r}
-phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id',cutoff = 0.25)
+phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.25)
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
   dplyr::select(Protein.Group,design$sample_id)
@@ -1508,7 +1512,7 @@ colnames(phosphodataNorm) <- NULL
 groupCol <- colorspace::divergex_hcl(n = 2) %>% setNames(nm = paste0('Group',1:2))
 nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
 dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
-clusterCol <- colorspace::sequential_hcl(n = 5,palette = 'Purple-Yellow') %>% setNames(nm = c(1:5))
+clusterCol <- colorspace::sequential_hcl(n = 4,palette = 'Purple-Yellow') %>% setNames(nm = c(1:4))
 ```
 
 ```{r}
@@ -1756,6 +1760,7 @@ ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/Group3v
 ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/Group3vsGroup4/transcriptome/transcriptome.k=5.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
 
 ccAll <- full_join(ccProt,ccPhospho) %>% full_join(.,ccRNA)
+write_tsv(x = ccAll,file = '/multiomics/results/design_files/g3vsg4_consensus_clustering.tsv')
 ```
 
 ### Proteome
@@ -1895,14 +1900,14 @@ invisible(gc())
 ### Phosphoproteome
 #### Load Data
 ```{r}
-data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
   drop_na
 design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_g3g4.tsv') %>% 
   left_join(.,ccAll)
 ```
 #### Preprocessing
 ```{r}
-phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id',cutoff = 0.25)
+phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.25)
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
   dplyr::select(Protein.Group,design$sample_id)

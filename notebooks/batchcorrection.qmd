@@ -77,6 +77,26 @@ if(!dir.exists(paths = '/multiomics/results/batchcorrection/phosphoproteome/')) 
 write_tsv(x = newData,file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv')
 ```
 
+#### Charge Aggregation
+```{r}
+data <- read_tsv(file = '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphopeptides_flanking.tsv')
+design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_noPool.tsv')
+
+dataReduced <- data %>% 
+  dplyr::select(design$sample_id)
+
+dataBatchRemoved <- removeBatchEffect(x = dataReduced,batch = design$group,batch2 = design$batch,design = design,group = design$Group.Info)
+newData <- data %>% 
+  select(1:10) %>% 
+  bind_cols(.,dataBatchRemoved)
+
+if(!dir.exists(paths = '/multiomics/results/batchcorrection/phosphoproteome/')) {
+  dir.create(path = '/multiomics/results/batchcorrection/phosphoproteome/',recursive = TRUE)
+}
+write_tsv(x = newData,file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv')
+```
+
+
 ### Protein level
 ```{r}
 data <- read_tsv(file = '/multiomics/results/rollup/phosphoproteome/cycloess_Rollup_Genes.tsv')

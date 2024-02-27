@@ -104,16 +104,16 @@ results <-  ConsensusClusterPlus(d = proteinDataReduced,
 ### Phosphoproteome
 #### Load Data
 ```{r}
-data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
   drop_na
 design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_noPool.tsv')
 ```
 #### Preprocessing
 ```{r}
-phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id')
+phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence')
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
-  dplyr::select(Protein,design$sample_id)
+  dplyr::select(Protein.Group,design$sample_id)
 
 phosphoDataReduced <- phosphoDataFiltered %>% 
   dplyr::select(design$sample_id) %>% 
@@ -204,16 +204,16 @@ results <-  ConsensusClusterPlus(d = proteinDataReduced,
 #### Phosphoproteome
 ##### Load Data
 ```{r}
-data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
   drop_na
 design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_ductal.tsv')
 ```
 ##### Preprocessing
 ```{r}
-phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id')
+phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence')
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
-  dplyr::select(Protein,design$sample_id)
+  dplyr::select(Protein.Group,design$sample_id)
 
 phosphoDataReduced <- phosphoDataFiltered %>% 
   dplyr::select(design$sample_id) %>% 
@@ -303,16 +303,16 @@ results <-  ConsensusClusterPlus(d = proteinDataReduced,
 #### Phosphoproteome
 ##### Load Data
 ```{r}
-data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
   drop_na
 design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_lobular.tsv')
 ```
 ##### Preprocessing
 ```{r}
-phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id')
+phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence')
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
-  dplyr::select(Protein,design$sample_id)
+  dplyr::select(Protein.Group,design$sample_id)
 
 phosphoDataReduced <- phosphoDataFiltered %>% 
   dplyr::select(design$sample_id) %>% 
@@ -402,16 +402,16 @@ results <-  ConsensusClusterPlus(d = proteinDataReduced,
 ### Phosphoproteome
 #### Load Data
 ```{r}
-data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
   drop_na
 design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_g1g2.tsv')
 ```
 #### Preprocessing
 ```{r}
-phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id')
+phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence')
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
-  dplyr::select(Protein,design$sample_id)
+  dplyr::select(Protein.Group,design$sample_id)
 
 phosphoDataReduced <- phosphoDataFiltered %>% 
   dplyr::select(design$sample_id) %>% 
@@ -501,16 +501,16 @@ results <-  ConsensusClusterPlus(d = proteinDataReduced,
 ### Phosphoproteome
 #### Load Data
 ```{r}
-data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
   drop_na
 design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_g3g4.tsv')
 ```
 #### Preprocessing
 ```{r}
-phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id')
+phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence')
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
-  dplyr::select(Protein,design$sample_id)
+  dplyr::select(Protein.Group,design$sample_id)
 
 phosphoDataReduced <- phosphoDataFiltered %>% 
   dplyr::select(design$sample_id) %>% 

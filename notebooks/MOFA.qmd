@@ -57,9 +57,9 @@ prot <- prot %>%
   as.matrix
 rownames(prot) <- protFeatures
 
-phosphodata <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv')
+phosphodata <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv')
 phospho <- phosphodata %>%
-  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id',cutoff = 0.75)
+  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.75)
 phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
 phosphoFeatures <- phospho$Unique.Ids
 phospho <- phospho %>% 
@@ -339,9 +339,9 @@ prot <- prot %>%
   as.matrix
 rownames(prot) <- protFeatures
 
-phosphodata <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv')
+phosphodata <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv')
 phospho <- phosphodata %>%
-  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id',cutoff = 0.75)
+  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.75)
 phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
 phosphoFeatures <- phospho$Unique.Ids
 phospho <- phospho %>% 
@@ -570,9 +570,9 @@ prot <- prot %>%
   as.matrix
 rownames(prot) <- protFeatures
 
-phosphodata <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv')
+phosphodata <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv')
 phospho <- phosphodata %>%
-  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id',cutoff = 0.75)
+  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.75)
 phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
 phosphoFeatures <- phospho$Unique.Ids
 phospho <- phospho %>% 
@@ -852,9 +852,9 @@ prot <- prot %>%
   as.matrix
 rownames(prot) <- protFeatures
 
-phosphodata <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv')
+phosphodata <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv')
 phospho <- phosphodata %>%
-  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id',cutoff = 0.75)
+  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.75)
 phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
 phosphoFeatures <- phospho$Unique.Ids
 phospho <- phospho %>% 
@@ -1134,9 +1134,9 @@ prot <- prot %>%
   as.matrix
 rownames(prot) <- protFeatures
 
-phosphodata <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv')
+phosphodata <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv')
 phospho <- phosphodata %>%
-  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id',cutoff = 0.75)
+  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.75)
 phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
 phosphoFeatures <- phospho$Unique.Ids
 phospho <- phospho %>% 
@@ -1416,9 +1416,9 @@ prot <- prot %>%
   as.matrix
 rownames(prot) <- protFeatures
 
-phosphodata <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv')
+phosphodata <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv')
 phospho <- phosphodata %>%
-  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Precursor.Id',cutoff = 0.75)
+  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.75)
 phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
 phosphoFeatures <- phospho$Unique.Ids
 phospho <- phospho %>% 

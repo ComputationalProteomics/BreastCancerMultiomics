@@ -113,7 +113,10 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
                                       Proteome.Cluster=anno_simple(x = design$CC.Prot,
-                                                                   col = clusterCol))
+                                                                   col = clusterCol,na_col = 'red'),
+                                      Phospho.Cluster=anno_simple(x=design$CC.Phospho,
+                                                                  col=clusterCol,na_col='red'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -245,8 +248,11 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
-                                      Phophoproteome.Cluster=anno_simple(x = design$CC.Phospho,
-                                                                   col = clusterCol))
+                                      Proteome.Cluster=anno_simple(x = design$CC.Prot,
+                                                                   col = clusterCol,na_col = 'red'),
+                                      Phospho.Cluster=anno_simple(x=design$CC.Phospho,
+                                                                  col=clusterCol,na_col='red'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -376,8 +382,11 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
-                                      Proteome.Cluster=anno_simple(x = design$CC.RNA,
-                                                                   col = clusterCol))
+                                      Proteome.Cluster=anno_simple(x = design$CC.Prot,
+                                                                   col = clusterCol,na_col = 'red'),
+                                      Phospho.Cluster=anno_simple(x=design$CC.Phospho,
+                                                                  col=clusterCol,na_col='red'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -529,11 +538,14 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
-                                      Proteome.Cluster=anno_simple(x = design$CC.Prot,
-                                                                   col = clusterCol),
                                       LN=anno_simple(x = design$LN,
                                                      col = dfrCol,
-                                                     na_col = 'white'))
+                                                     na_col = 'white'),
+                                      Proteome.Cluster=anno_simple(x = design$CC.Prot,
+                                                                   col = clusterCol,na_col = 'red'),
+                                      Phospho.Cluster=anno_simple(x=design$CC.Phospho,
+                                                                  col=clusterCol,na_col='red'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -669,11 +681,14 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
-                                      Phophoproteome.Cluster=anno_simple(x = design$CC.Phospho,
-                                                                   col = clusterCol),
                                       LN=anno_simple(x = design$LN,
                                                      col = dfrCol,
-                                                     na_col = 'white'))
+                                                     na_col = 'white'),
+                                      Proteome.Cluster=anno_simple(x = design$CC.Prot,
+                                                                   col = clusterCol,na_col = 'red'),
+                                      Phospho.Cluster=anno_simple(x=design$CC.Phospho,
+                                                                  col=clusterCol,na_col='red'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -808,11 +823,14 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
-                                      Transcriptome.Cluster=anno_simple(x = design$CC.RNA,
-                                                                   col = clusterCol),
                                       LN=anno_simple(x = design$LN,
                                                      col = dfrCol,
-                                                     na_col = 'white'))
+                                                     na_col = 'white'),
+                                      Proteome.Cluster=anno_simple(x = design$CC.Prot,
+                                                                   col = clusterCol,na_col = 'red'),
+                                      Phospho.Cluster=anno_simple(x=design$CC.Phospho,
+                                                                  col=clusterCol,na_col='red'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -967,11 +985,14 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
-                                      Proteome.Cluster=anno_simple(x = design$CC.Prot,
-                                                                   col = clusterCol),
                                       LN=anno_simple(x = design$LN,
                                                      col = dfrCol,
-                                                     na_col = 'white'))
+                                                     na_col = 'white'),
+                                      Proteome.Cluster=anno_simple(x = design$CC.Prot,
+                                                                   col = clusterCol,na_col = 'red'),
+                                      Phospho.Cluster=anno_simple(x=design$CC.Phospho,
+                                                                  col=clusterCol,na_col='red'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -1107,11 +1128,14 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
-                                      Phophoproteome.Cluster=anno_simple(x = design$CC.Phospho,
-                                                                   col = clusterCol),
                                       LN=anno_simple(x = design$LN,
                                                      col = dfrCol,
-                                                     na_col = 'white'))
+                                                     na_col = 'white'),
+                                      Proteome.Cluster=anno_simple(x = design$CC.Prot,
+                                                                   col = clusterCol,na_col = 'red'),
+                                      Phospho.Cluster=anno_simple(x=design$CC.Phospho,
+                                                                  col=clusterCol,na_col='red'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -1245,11 +1269,14 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
-                                      Transcriptome.Cluster=anno_simple(x = design$CC.RNA,
-                                                                   col = clusterCol),
                                       LN=anno_simple(x = design$LN,
                                                      col = dfrCol,
-                                                     na_col = 'white'))
+                                                     na_col = 'white'),
+                                      Proteome.Cluster=anno_simple(x = design$CC.Prot,
+                                                                   col = clusterCol,na_col = 'red'),
+                                      Phospho.Cluster=anno_simple(x=design$CC.Phospho,
+                                                                  col=clusterCol,na_col='red'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -1405,7 +1432,10 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
                                       Proteome.Cluster=anno_simple(x = design$CC.Prot,
-                                                                   col = clusterCol))
+                                                                   col = clusterCol,na_col = 'red'),
+                                      Phospho.Cluster=anno_simple(x=design$CC.Phospho,
+                                                                  col=clusterCol,na_col='red'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -1536,8 +1566,11 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
-                                      Phophoproteome.Cluster=anno_simple(x = design$CC.Phospho,
-                                                                   col = clusterCol))
+                                      Proteome.Cluster=anno_simple(x = design$CC.Prot,
+                                                                   col = clusterCol,na_col = 'red'),
+                                      Phospho.Cluster=anno_simple(x=design$CC.Phospho,
+                                                                  col=clusterCol,na_col='red'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -1667,8 +1700,11 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
-                                      Proteome.Cluster=anno_simple(x = design$CC.RNA,
-                                                                   col = clusterCol))
+                                      Proteome.Cluster=anno_simple(x = design$CC.Prot,
+                                                                   col = clusterCol,na_col = 'red'),
+                                      Phospho.Cluster=anno_simple(x=design$CC.Phospho,
+                                                                  col=clusterCol,na_col='red'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -1820,7 +1856,10 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
                                       Proteome.Cluster=anno_simple(x = design$CC.Prot,
-                                                                   col = clusterCol))
+                                                                   col = clusterCol,na_col = 'red'),
+                                      Phospho.Cluster=anno_simple(x=design$CC.Phospho,
+                                                                  col=clusterCol,na_col='red'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -1951,8 +1990,11 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
-                                      Phophoproteome.Cluster=anno_simple(x = design$CC.Phospho,
-                                                                   col = clusterCol))
+                                      Proteome.Cluster=anno_simple(x = design$CC.Prot,
+                                                                   col = clusterCol,na_col = 'red'),
+                                      Phospho.Cluster=anno_simple(x=design$CC.Phospho,
+                                                                  col=clusterCol,na_col='red'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -2082,8 +2124,11 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
-                                      Proteome.Cluster=anno_simple(x = design$CC.RNA,
-                                                                   col = clusterCol))
+                                      Proteome.Cluster=anno_simple(x = design$CC.Prot,
+                                                                   col = clusterCol,na_col = 'red'),
+                                      Phospho.Cluster=anno_simple(x=design$CC.Phospho,
+                                                                  col=clusterCol,na_col='red'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',

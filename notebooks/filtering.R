@@ -6,10 +6,24 @@ varianceFiltering <- function(data,design,sampleCol,cutoff=0.5,...){
     apply(MARGIN = 1,FUN = varianceNA,simplify = TRUE) %>% 
     mutate(data,variance=.)
 
-  lowVarData <- varianceData %>% 
+  highVarData <- varianceData %>% 
     filter(variance > quantile(variance,cutoff,na.rm = TRUE))
   
-  return(lowVarData)
+  return(highVarData)
+}
+
+madFiltering <- function(data,design,sampleCol,cutoff=0.5,...){
+  madNA <- function(data) mad(data,na.rm=TRUE)
+  
+  madData <- data %>%
+    dplyr::select(design[[sampleCol]]) %>% 
+    apply(MARGIN = 1,FUN = madNA,simplify = TRUE) %>% 
+    mutate(data,MAD=.)
+  
+  highMadData <- madData %>% 
+    filter(MAD > quantile(MAD,cutoff,na.rm = TRUE))
+  
+  return(highMadData)
 }
 
 

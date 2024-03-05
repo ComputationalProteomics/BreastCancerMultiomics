@@ -25,9 +25,15 @@ params:
   proteome_noPool: '/multiomics/results/design_files/design_Full_noPool.tsv'
   phospho_noPool: '/multiomics/results/design_files/design_phospho_noPool.tsv'
   transcriptome_noPool: '/multiomics/results/design_files/design_RNA_noPool.tsv'
+  proteome_noPool_noG2: '/multiomics/results/design_files/design_Full_noPool_noG2.tsv'
+  phospho_noPool_noG2: '/multiomics/results/design_files/design_phospho_noPool_noG2.tsv'
+  transcriptome_noPool_noG2: '/multiomics/results/design_files/design_RNA_noPool_noG2.tsv'
   proteome_ductal: '/multiomics/results/design_files/design_full_ductal.tsv'
   phospho_ductal: '/multiomics/results/design_files/design_phospho_ductal.tsv'
   transcriptome_ductal: '/multiomics/results/design_files/design_RNA_ductal.tsv'
+  proteome_ductal_noG2: '/multiomics/results/design_files/design_full_ductal_noG2.tsv'
+  phospho_ductal_noG2: '/multiomics/results/design_files/design_phospho_ductal_noG2.tsv'
+  transcriptome_ductal_noG2: '/multiomics/results/design_files/design_RNA_ductal_noG2.tsv'
   proteome_lobular: '/multiomics/results/design_files/design_full_lobular.tsv'
   phospho_lobular: '/multiomics/results/design_files/design_phospho_lobular.tsv'
   transcriptome_lobular: '/multiomics/results/design_files/design_RNA_lobular.tsv'
@@ -45,6 +51,11 @@ params:
 #| message: false
 #| warning: false
 library(tidyverse)
+```
+```{r}
+if(!dir.exists(paths = '/multiomics/results/design_files/')) {
+  dir.create(path = '/multiomics/results/design_files/',recursive = TRUE)
+}
 ```
 
 # Base Design Files
@@ -144,6 +155,35 @@ newDesign <- read_tsv(file = params$proteome_out) %>%
 write_tsv(x = newDesign,file = params$transcriptome_noPool)
 ```
 
+# Design Files without Pool samples - Group 2 Excluded
+## Proteome
+```{r}
+newDesign <- read_tsv(file = params$proteome_out_filtered) %>% 
+  filter(str_detect(string = sample_id, pattern = 'Pool', negate = TRUE)) %>% 
+  filter(str_detect(string = Group.Info, pattern = 'Group2', negate = TRUE))
+
+write_tsv(x = newDesign,file = params$proteome_noPool_noG2)
+```
+
+## Phosphoproteome
+```{r}
+newDesign <- read_tsv(file = params$phospho_out_filtered) %>% 
+  filter(str_detect(string = sample_id, pattern = 'POOL', negate = TRUE)) %>% 
+  filter(str_detect(string = Group.Info, pattern = 'Group2', negate = TRUE))
+
+write_tsv(x = newDesign,file = params$phospho_noPool_noG2)
+```
+
+## Transcriptome
+```{r}
+newDesign <- read_tsv(file = params$proteome_out) %>% 
+  filter(str_detect(string = sample_id, pattern = 'Pool', negate = TRUE)) %>% 
+  filter(str_detect(string = Group.Info, pattern = 'Group2', negate = TRUE))
+
+write_tsv(x = newDesign,file = params$transcriptome_noPool_noG2)
+```
+
+
 # Design Files only Ductal (no Pool)
 ## Proteome
 ```{r}
@@ -169,6 +209,33 @@ newDesign <- read_tsv(file = params$transcriptome_noPool) %>%
 write_tsv(x = newDesign,file = params$transcriptome_ductal)
 ```
 
+# Design Files only Ductal (no Pool) - Group2 Excluded
+## Proteome
+```{r}
+newDesign <- read_tsv(file = params$proteome_noPool) %>% 
+  filter(str_detect(string = InvCa.type, pattern = 'Ductal')) %>% 
+  filter(str_detect(string = Group.Info, pattern = 'Group2', negate = TRUE))
+
+write_tsv(x = newDesign,file = params$proteome_ductal_noG2)
+```
+
+## Phosphoproteome
+```{r}
+newDesign <- read_tsv(file = params$phospho_noPool) %>% 
+  filter(str_detect(string = InvCa.type, pattern = 'Ductal')) %>% 
+  filter(str_detect(string = Group.Info, pattern = 'Group2', negate = TRUE))
+
+write_tsv(x = newDesign,file = params$phospho_ductal_noG2)
+```
+
+## Transcriptome
+```{r}
+newDesign <- read_tsv(file = params$transcriptome_noPool) %>% 
+  filter(str_detect(string = InvCa.type, pattern = 'Ductal')) %>% 
+  filter(str_detect(string = Group.Info, pattern = 'Group2', negate = TRUE))
+
+write_tsv(x = newDesign,file = params$transcriptome_ductal_noG2)
+```
 # Design Files only Lobular (no Pool)
 ## Proteome
 ```{r}

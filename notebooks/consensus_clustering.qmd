@@ -52,9 +52,9 @@ proteinDataReduced <- proteinDataFiltered %>%
 setwd('/multiomics/results/consensus_clustering/DuctalvsLobular/')
 results <-  ConsensusClusterPlus(d = proteinDataReduced,
                                  maxK = 12,
-                                 clusterAlg = 'km', distance = 'spearman',
+                                 clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
                                  title = 'proteome')
 ```
 
@@ -82,9 +82,9 @@ phosphoDataReduced <- phosphoDataFiltered %>%
 setwd('/multiomics/results/consensus_clustering/DuctalvsLobular/')
 results <-  ConsensusClusterPlus(d = phosphoDataReduced,
                                  maxK = 12,
-                                 clusterAlg = 'km', distance = 'spearman',
+                                 clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
                                  title = 'phosphoproteome')
 ```
 
@@ -113,9 +113,109 @@ rnaDataReduced <- rnaDataFiltered %>%
 setwd('/multiomics/results/consensus_clustering/DuctalvsLobular/')
 results <-  ConsensusClusterPlus(d = rnaDataReduced,
                                  maxK = 12,
-                                 clusterAlg = 'km', distance = 'spearman',
+                                 clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
+                                 title = 'transcriptome')
+```
+
+
+## All samples - Group2 Excluded
+```{r}
+if(!dir.exists(paths = '/multiomics/results/consensus_clustering/AllSamples_noG2/')) {
+  dir.create(path = '/multiomics/results/consensus_clustering/AllSamples_noG2/',recursive = TRUE)
+}
+```
+
+### Proteome
+#### Load Data
+```{r}
+data <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
+  drop_na()
+design <- read_tsv(file = '/multiomics/results/design_files/design_Full_noPool_noG2.tsv')
+```
+
+#### Preprocessing
+```{r}
+proteinDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
+
+proteinDataFiltered <- proteinDataFiltered %>% 
+  dplyr::select(Protein,design$sample_id)
+
+proteinDataReduced <- proteinDataFiltered %>% 
+  dplyr::select(design$sample_id) %>% 
+  as.matrix
+```
+
+#### Plotting
+```{r}
+setwd('/multiomics/results/consensus_clustering/AllSamples_noG2/')
+results <-  ConsensusClusterPlus(d = proteinDataReduced,
+                                 maxK = 12,
+                                 clusterAlg = 'pam', distance = 'pearson',
+                                 seed = 123,
+                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
+                                 title = 'proteome')
+```
+
+### Phosphoproteome
+#### Load Data
+```{r}
+data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
+  drop_na
+design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_noPool_noG2.tsv')
+```
+#### Preprocessing
+```{r}
+phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.5)
+
+phosphoDataFiltered <- phosphoDataFiltered %>% 
+  dplyr::select(Protein.Group,design$sample_id)
+
+phosphoDataReduced <- phosphoDataFiltered %>% 
+  dplyr::select(design$sample_id) %>% 
+  as.matrix()
+```
+
+#### Plotting
+```{r}
+setwd('/multiomics/results/consensus_clustering/AllSamples_noG2/')
+results <-  ConsensusClusterPlus(d = phosphoDataReduced,
+                                 maxK = 12,
+                                 clusterAlg = 'pam', distance = 'pearson',
+                                 seed = 123,
+                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
+                                 title = 'phosphoproteome')
+```
+
+### Transcriptome
+#### Load Data
+```{r}
+data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
+  drop_na
+design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_noPool_noG2.tsv')
+```
+
+#### Preprocessing
+```{r}
+rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
+
+rnaDataFiltered <- rnaDataFiltered %>% 
+  dplyr::select(Gene.ID,design$sample_id)
+
+rnaDataReduced <- rnaDataFiltered %>% 
+  dplyr::select(design$sample_id) %>% 
+  as.matrix()
+```
+
+#### Plotting
+```{r}
+setwd('/multiomics/results/consensus_clustering/AllSamples_noG2/')
+results <-  ConsensusClusterPlus(d = rnaDataReduced,
+                                 maxK = 12,
+                                 clusterAlg = 'pam', distance = 'pearson',
+                                 seed = 123,
+                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
                                  title = 'transcriptome')
 ```
 
@@ -152,9 +252,9 @@ proteinDataReduced <- proteinDataFiltered %>%
 setwd('/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/')
 results <-  ConsensusClusterPlus(d = proteinDataReduced,
                                  maxK = 12,
-                                 clusterAlg = 'km', distance = 'spearman',
+                                 clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
                                  title = 'proteome')
 ```
 
@@ -182,9 +282,9 @@ phosphoDataReduced <- phosphoDataFiltered %>%
 setwd('/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/')
 results <-  ConsensusClusterPlus(d = phosphoDataReduced,
                                  maxK = 12,
-                                 clusterAlg = 'km', distance = 'spearman',
+                                 clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
                                  title = 'phosphoproteome')
 ```
 
@@ -213,9 +313,109 @@ rnaDataReduced <- rnaDataFiltered %>%
 setwd('/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/')
 results <-  ConsensusClusterPlus(d = rnaDataReduced,
                                  maxK = 12,
-                                 clusterAlg = 'km', distance = 'spearman',
+                                 clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
+                                 title = 'transcriptome')
+```
+
+
+### Ductal - Group2 Excluded
+```{r}
+if(!dir.exists(paths = '/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal_noG2/')) {
+  dir.create(path = '/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal_noG2/',recursive = TRUE)
+}
+```
+
+#### Proteome
+##### Load Data
+```{r}
+data <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
+  drop_na()
+design <- read_tsv(file = '/multiomics/results/design_files/design_full_ductal_noG2.tsv')
+```
+
+##### Preprocessing
+```{r}
+proteinDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
+
+proteinDataFiltered <- proteinDataFiltered %>% 
+  dplyr::select(Protein,design$sample_id)
+
+proteinDataReduced <- proteinDataFiltered %>% 
+  dplyr::select(design$sample_id) %>% 
+  as.matrix
+```
+
+##### Plotting
+```{r}
+setwd('/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal_noG2/')
+results <-  ConsensusClusterPlus(d = proteinDataReduced,
+                                 maxK = 12,
+                                 clusterAlg = 'pam', distance = 'pearson',
+                                 seed = 123,
+                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
+                                 title = 'proteome')
+```
+
+#### Phosphoproteome
+##### Load Data
+```{r}
+data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
+  drop_na
+design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_ductal_noG2.tsv')
+```
+##### Preprocessing
+```{r}
+phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.5)
+
+phosphoDataFiltered <- phosphoDataFiltered %>% 
+  dplyr::select(Protein.Group,design$sample_id)
+
+phosphoDataReduced <- phosphoDataFiltered %>% 
+  dplyr::select(design$sample_id) %>% 
+  as.matrix()
+```
+
+##### Plotting
+```{r}
+setwd('/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal_noG2/')
+results <-  ConsensusClusterPlus(d = phosphoDataReduced,
+                                 maxK = 12,
+                                 clusterAlg = 'pam', distance = 'pearson',
+                                 seed = 123,
+                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
+                                 title = 'phosphoproteome')
+```
+
+#### Transcriptome
+##### Load Data
+```{r}
+data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
+  drop_na
+design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_ductal_noG2.tsv')
+```
+
+##### Preprocessing
+```{r}
+rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
+
+rnaDataFiltered <- rnaDataFiltered %>% 
+  dplyr::select(Gene.ID,design$sample_id)
+
+rnaDataReduced <- rnaDataFiltered %>% 
+  dplyr::select(design$sample_id) %>% 
+  as.matrix()
+```
+
+##### Plotting
+```{r}
+setwd('/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal_noG2/')
+results <-  ConsensusClusterPlus(d = rnaDataReduced,
+                                 maxK = 12,
+                                 clusterAlg = 'pam', distance = 'pearson',
+                                 seed = 123,
+                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
                                  title = 'transcriptome')
 ```
 
@@ -251,9 +451,9 @@ proteinDataReduced <- proteinDataFiltered %>%
 setwd('/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/')
 results <-  ConsensusClusterPlus(d = proteinDataReduced,
                                  maxK = 12,
-                                 clusterAlg = 'km', distance = 'spearman',
+                                 clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
                                  title = 'proteome')
 ```
 
@@ -281,9 +481,9 @@ phosphoDataReduced <- phosphoDataFiltered %>%
 setwd('/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/')
 results <-  ConsensusClusterPlus(d = phosphoDataReduced,
                                  maxK = 12,
-                                 clusterAlg = 'km', distance = 'spearman',
+                                 clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
                                  title = 'phosphoproteome')
 ```
 
@@ -312,9 +512,9 @@ rnaDataReduced <- rnaDataFiltered %>%
 setwd('/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/')
 results <-  ConsensusClusterPlus(d = rnaDataReduced,
                                  maxK = 12,
-                                 clusterAlg = 'km', distance = 'spearman',
+                                 clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
                                  title = 'transcriptome')
 ```
 
@@ -350,9 +550,9 @@ proteinDataReduced <- proteinDataFiltered %>%
 setwd('/multiomics/results/consensus_clustering/Group1vsGroup2/')
 results <-  ConsensusClusterPlus(d = proteinDataReduced,
                                  maxK = 12,
-                                 clusterAlg = 'km', distance = 'spearman',
+                                 clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
                                  title = 'proteome')
 ```
 
@@ -380,9 +580,9 @@ phosphoDataReduced <- phosphoDataFiltered %>%
 setwd('/multiomics/results/consensus_clustering/Group1vsGroup2/')
 results <-  ConsensusClusterPlus(d = phosphoDataReduced,
                                  maxK = 12,
-                                 clusterAlg = 'km', distance = 'spearman',
+                                 clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
                                  title = 'phosphoproteome')
 ```
 
@@ -411,9 +611,9 @@ rnaDataReduced <- rnaDataFiltered %>%
 setwd('/multiomics/results/consensus_clustering/Group1vsGroup2/')
 results <-  ConsensusClusterPlus(d = rnaDataReduced,
                                  maxK = 12,
-                                 clusterAlg = 'km', distance = 'spearman',
+                                 clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
                                  title = 'transcriptome')
 ```
 
@@ -449,9 +649,9 @@ proteinDataReduced <- proteinDataFiltered %>%
 setwd('/multiomics/results/consensus_clustering/Group3vsGroup4/')
 results <-  ConsensusClusterPlus(d = proteinDataReduced,
                                  maxK = 12,
-                                 clusterAlg = 'km', distance = 'spearman',
+                                 clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
                                  title = 'proteome')
 ```
 
@@ -479,9 +679,9 @@ phosphoDataReduced <- phosphoDataFiltered %>%
 setwd('/multiomics/results/consensus_clustering/Group3vsGroup4/')
 results <-  ConsensusClusterPlus(d = phosphoDataReduced,
                                  maxK = 12,
-                                 clusterAlg = 'km', distance = 'spearman',
+                                 clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
                                  title = 'phosphoproteome')
 ```
 
@@ -510,8 +710,8 @@ rnaDataReduced <- rnaDataFiltered %>%
 setwd('/multiomics/results/consensus_clustering/Group3vsGroup4/')
 results <-  ConsensusClusterPlus(d = rnaDataReduced,
                                  maxK = 12,
-                                 clusterAlg = 'km', distance = 'spearman',
+                                 clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
                                  title = 'transcriptome')
 ```

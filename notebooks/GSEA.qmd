@@ -78,13 +78,72 @@ p <- ggplot(resultsAll, aes(Experiment, ID, fill= NES)) +
         legend.position = "right",
         legend.direction = "vertical")
 
-if(!dir.exists(paths = '/multiomics/results/figures')) {
-  dir.create(path = '/multiomics/results/figures',recursive = TRUE)
+if(!dir.exists(paths = '/multiomics/results/figures/GSEA/')) {
+  dir.create(path = '/multiomics/results/figures/GSEA/',recursive = TRUE)
 }
-ggsave(filename = 'GSEA_ductalvslobular.png',plot = p,device = 'png',path = '/multiomics/results/figures',units = 'in',width = 10,height = 12,dpi = 600)
+ggsave(filename = 'GSEA_ductalvslobular.png',plot = p,device = 'png',path = '/multiomics/results/figures/GSEA/',units = 'in',width = 10,height = 12,dpi = 600)
 ```
 
 ## LN+ vs LN-
+
+### All samples - Group2 Excluded
+#### Full Proteome
+```{r}
+data <- '/multiomics/results/differentialexpression/LNposvsLNneg/AllSamples_noG2/ductalvslobular_fullproteome_protein/ductalvslobular_fullproteome_protein_stats.tsv'
+gseaMsigProt <- gseaMsigDBProt(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
+```
+
+#### Phosphoproteome
+```{r}
+data <- '/multiomics/results/differentialexpression/LNposvsLNneg/AllSamples_noG2/ductalvslobular_phosphoproteome_peptide/ductalvslobular_phosphoproteome_peptide_stats.tsv'
+gseaMsigPhospho <- gseaMsigDBPhospho(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
+```
+
+#### Transcriptome
+```{r}
+data <- '/multiomics/results/differentialexpression/LNposvsLNneg/AllSamples_noG2/ductalvslobular_transcriptome/ductalvslobular_transcriptome_stats.tsv'
+gseaMsigRNA <- gseaMsigDBRNA(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H',genecol = 'Gene.ID')
+```
+
+#### MultiOmics GSEA Plot
+```{r}
+geneSetName <- msigdbr(species = 'Homo sapiens',category = 'H') %>% dplyr::select(gs_name) %>% unique(x = .)
+resultsProt <- pluck(gseaMsigProt,'result') %>% 
+  left_join(x=geneSetName,y = ., by = c('gs_name'='ID')) %>% 
+  dplyr::mutate(Experiment = 'Proteome') %>% 
+  dplyr::rename(ID=gs_name)
+resultsPhospho <- pluck(gseaMsigPhospho,'result')%>% 
+  left_join(x=geneSetName,y = ., by = c('gs_name'='ID')) %>% 
+  dplyr::mutate(Experiment = 'Phosphoproteome') %>% 
+  dplyr::rename(ID=gs_name)
+resultsRNA <- pluck(gseaMsigRNA,'result') %>%
+  left_join(x=geneSetName,y = ., by = c('gs_name'='ID')) %>% 
+  dplyr::mutate(Experiment = 'Transcriptome') %>% 
+  dplyr::rename(ID=gs_name)
+
+allResults <- list(Proteomics=resultsProt,Phosphoproteomics=resultsPhospho,Transcriptomics=resultsRNA)
+resultsAll <- purrr::reduce(.x = allResults,.f = dplyr::full_join)
+
+resultsAll$ID <- resultsAll$ID %>% 
+  str_remove(string = .,pattern = 'HALLMARK\\_') %>% 
+  str_replace_all(.,'\\_',' ')
+
+p <- ggplot(resultsAll, aes(Experiment, ID, fill= NES)) + 
+  coord_fixed()+
+  geom_tile(color='black',lwd=0.1,linetype=1) +
+  scale_fill_gradient2(low="blue", high="red",na.value = 'white',mid = '#FFFFCC') + 
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 30,hjust = 1),
+        panel.grid.major = element_blank(),
+        legend.position = "right",
+        legend.direction = "vertical")
+
+if(!dir.exists(paths = '/multiomics/results/figures/GSEA/')) {
+  dir.create(path = '/multiomics/results/figures/GSEA/',recursive = TRUE)
+}
+ggsave(filename = 'GSEA_LNposLNneg_allsamples_noG2.png',plot = p,device = 'png',path = '/multiomics/results/figures/GSEA/',units = 'in',width = 10,height = 12,dpi = 600)
+```
+
 ### Ductal
 #### Full Proteome
 ```{r}
@@ -136,10 +195,10 @@ p <- ggplot(resultsAll, aes(Experiment, ID, fill= NES)) +
         legend.position = "right",
         legend.direction = "vertical")
 
-if(!dir.exists(paths = '/multiomics/results/figures')) {
-  dir.create(path = '/multiomics/results/figures',recursive = TRUE)
+if(!dir.exists(paths = '/multiomics/results/figures/GSEA/')) {
+  dir.create(path = '/multiomics/results/figures/GSEA/',recursive = TRUE)
 }
-ggsave(filename = 'GSEA_LNposLNneg_ductal.png',plot = p,device = 'png',path = '/multiomics/results/figures',units = 'in',width = 10,height = 12,dpi = 600)
+ggsave(filename = 'GSEA_LNposLNneg_ductal.png',plot = p,device = 'png',path = '/multiomics/results/figures/GSEA/',units = 'in',width = 10,height = 12,dpi = 600)
 ```
 
 ### Lobular
@@ -193,10 +252,10 @@ p <- ggplot(resultsAll, aes(Experiment, ID, fill= NES)) +
         legend.position = "right",
         legend.direction = "vertical")
 
-if(!dir.exists(paths = '/multiomics/results/figures')) {
-  dir.create(path = '/multiomics/results/figures',recursive = TRUE)
+if(!dir.exists(paths = '/multiomics/results/figures/GSEA/')) {
+  dir.create(path = '/multiomics/results/figures/GSEA/',recursive = TRUE)
 }
-ggsave(filename = 'GSEA_LNposLNneg_lobular.png',plot = p,device = 'png',path = '/multiomics/results/figures',units = 'in',width = 10,height = 12,dpi = 600)
+ggsave(filename = 'GSEA_LNposLNneg_lobular.png',plot = p,device = 'png',path = '/multiomics/results/figures/GSEA/',units = 'in',width = 10,height = 12,dpi = 600)
 ```
 
 ## Group1 vs Group2
@@ -250,10 +309,10 @@ p <- ggplot(resultsAll, aes(Experiment, ID, fill= NES)) +
         legend.position = "right",
         legend.direction = "vertical")
 
-if(!dir.exists(paths = '/multiomics/results/figures')) {
-  dir.create(path = '/multiomics/results/figures',recursive = TRUE)
+if(!dir.exists(paths = '/multiomics/results/figures/GSEA/')) {
+  dir.create(path = '/multiomics/results/figures/GSEA/',recursive = TRUE)
 }
-ggsave(filename = 'GSEA_Group1vsGroup2.png',plot = p,device = 'png',path = '/multiomics/results/figures',units = 'in',width = 10,height = 12,dpi = 600)
+ggsave(filename = 'GSEA_Group1vsGroup2.png',plot = p,device = 'png',path = '/multiomics/results/figures/GSEA/',units = 'in',width = 10,height = 12,dpi = 600)
 ```
 
 ## Group3 vs Group4
@@ -307,8 +366,8 @@ p <- ggplot(resultsAll, aes(Experiment, ID, fill= NES)) +
         legend.position = "right",
         legend.direction = "vertical")
 
-if(!dir.exists(paths = '/multiomics/results/figures')) {
-  dir.create(path = '/multiomics/results/figures',recursive = TRUE)
+if(!dir.exists(paths = '/multiomics/results/figures/GSEA/')) {
+  dir.create(path = '/multiomics/results/figures/GSEA/',recursive = TRUE)
 }
-ggsave(filename = 'GSEA_Group3vsGroup4.png',plot = p,device = 'png',path = '/multiomics/results/figures',units = 'in',width = 10,height = 12,dpi = 600)
+ggsave(filename = 'GSEA_Group3vsGroup4.png',plot = p,device = 'png',path = '/multiomics/results/figures/GSEA/',units = 'in',width = 10,height = 12,dpi = 600)
 ```

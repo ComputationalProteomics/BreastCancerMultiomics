@@ -187,6 +187,15 @@ prothp <- Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, na
 ```{r}
 proteinHeatmapDraw <- grid.grabExpr(draw(prothp,annotation_legend_list = allLegends, heatmap_legend_side = 'bottom', annotation_legend_side = 'right', legend_grouping = 'original')) %>% as.ggplot
 
+alluvialPlot <- ccAll %>% ggplot(mapping = aes(axis1=CC.Phospho,axis2=CC.Prot,axis3=CC.RNA))+geom_alluvium()+ scale_x_discrete(limits = c("Phospho", "Prot", "RNA"), expand = c(.2, .05)) +
+  xlab("Omics") +
+  geom_alluvium(aes(fill = as.factor(CC.Prot))) +
+  scale_fill_manual('Consensus Cluster',values = clusterCol)+
+  geom_stratum() +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  theme_minimal()
+ggsave2(filename = 'alluvialPlot.pdf',plot = alluvialPlot,device = 'pdf',path = '/multiomics/results/figures/clustering/DuctalvsLobular/',dpi = 1200,compress=TRUE)
+
 ggsave2(filename = 'kmeans_proteome.pdf',plot = proteinHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/DuctalvsLobular',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
 varKeep <- c('varianceFiltering','NAFiltering','gprofilerEnrichment','ccAll','calZScore','varKeep')
@@ -358,7 +367,7 @@ colnames(rnadataNorm) <- NULL
 groupCol <- colorspace::divergex_hcl(n = 6) %>% setNames(nm = paste0('Group',1:6))
 nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
 dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
-clusterCol <- colorspace::sequential_hcl(n = 5,palette = 'Purple-Yellow') %>% setNames(nm = c(1:5))
+clusterCol <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6))
 ```
 
 ```{r}
@@ -465,6 +474,440 @@ invisible(gc())
 ```
 
 
+## All samples - Group2 Excluded
+```{r}
+if(!dir.exists(paths = '/multiomics/results/figures/clustering/AllSamples_noG2')) {
+  dir.create(path = '/multiomics/results/figures/clustering/AllSamples_noG2',recursive = TRUE)
+}
+```
+
+### Consensus Clustering Info
+```{r}
+ccProt %<-% read_csv(file = '/multiomics/results/consensus_clustering/AllSamples_noG2/proteome/proteome.k=6.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
+ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/AllSamples_noG2/phosphoproteome/phosphoproteome.k=4.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
+ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/AllSamples_noG2/transcriptome/transcriptome.k=5.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
+
+ccAll <- full_join(ccProt,ccPhospho) %>% full_join(.,ccRNA)
+write_tsv(x = ccAll,file = '/multiomics/results/design_files/ductalvslobular_consensus_clustering_noG2.tsv')
+```
+
+### Proteome
+#### Load Data
+```{r}
+data <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
+  drop_na
+design <- read_tsv(file = '/multiomics/results/design_files/design_Full_noPool_noG2.tsv') %>% 
+  left_join(.,ccAll)
+```
+
+#### Preprocessing
+```{r}
+proteinDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
+
+proteinDataFiltered <- proteinDataFiltered %>% 
+  dplyr::select(Protein,design$sample_id)
+
+proteinDataReduced <- proteinDataFiltered %>% 
+  dplyr::select(design$sample_id)
+```
+
+#### Plotting
+```{r}
+calZScore <- function(x) (x-mean(x))/sd(x)
+
+proteindataNorm <- t(apply(proteinDataReduced,1,calZScore))
+colnames(proteindataNorm) <- NULL
+```
+
+```{r}
+# Setting colors
+groupCol <- colorspace::divergex_hcl(n = 6) %>% setNames(nm = paste0('Group',1:6))
+nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
+dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
+clusterCol <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6))
+```
+
+```{r}
+annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
+                                                        col =groupCol,
+                                                        na_col = 'white',
+                                                        gp = gpar(title='Group')),
+                                      NHG=anno_simple(x = design$NHG,
+                                                      col = nhgCol,
+                                                      gp = gpar(title='NHS')),
+                                      Recurrence=anno_simple(x = design$DRFi_event,
+                                                             col = dfrCol,
+                                                             gp = gpar(title='Recurrence')),
+                                      Batch=anno_simple(x = design$batch,
+                                                             col = setNames(dfrCol,c('1','2')),
+                                                             gp = gpar(title='Batch')),
+                                      BCFi=anno_simple(x = design$BCFi_event,
+                                                             col = dfrCol,
+                                                             gp = gpar(title='Breast Cancer Recurrence')),
+                                      InvasiveType=anno_simple(x = design$InvCa.type,
+                                                       col = setNames(dfrCol,c('Ductal','Lobular')),
+                                                       na_col = 'white',
+                                                       gp = gpar(title='InvasiveType')),
+                                      Proteome.Cluster=anno_simple(x = design$CC.Prot,
+                                                                   col = clusterCol,na_col = 'red'),
+                                      Phospho.Cluster=anno_simple(x=design$CC.Phospho,
+                                                                  col=clusterCol,na_col='red'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
+
+legendNHG <- Legend(labels = levels(factor(design$NHG)),
+                      title = 'NHG',
+                      border = 'black',
+                      legend_gp = gpar(fill=nhgCol))
+legendRecurrence <- Legend(labels = levels(factor(design$DRFi_event)),
+                      title = 'Recurrence',
+                      border = 'black',
+                      legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+legendBatch <- Legend(labels = levels(factor(design$batch)),
+                      title = 'Batch',
+                      border = 'black',
+                      legend_gp = gpar(fill=setNames(dfrCol,c('1','2'))))
+legendBCFi <- Legend(labels = c('Yes','No'),
+                      title = 'Breast Cancer Recurrence',
+                      border = 'black',
+                      legend_gp = gpar(fill=dfrCol))
+
+legendGroup <- Legend(labels = levels(factor(design$Group.Info)),
+                      title = 'Group',
+                      border = 'black',
+                      legend_gp = gpar(fill=groupCol))
+
+legendInvType <- Legend(labels = c('Ductal','Lobular'),
+                   title = 'Invasive Type',
+                   border = 'black',
+                   legend_gp = gpar(fill=setNames(dfrCol,c('Ductal','Lobular'))))
+legendCluster <- Legend(labels = levels(factor(design$CC.Prot)),
+                        title = 'Proteome Cluster',
+                        legend_gp = gpar(fill=clusterCol),
+                        border = 'black')
+
+allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster)
+
+set.seed(123)
+proteinHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
+```
+
+##### Functional enrichment per protein cluster
+```{r}
+#| message: false
+protHeatmap <- draw(value(proteinHeatmap))
+rowOrder <- row_order(protHeatmap)
+protGroups <- future_map(.x = seq_along(rowOrder),.f = ~(proteinDataFiltered$Protein[rowOrder[[.x]]]))
+proteinDataFiltered$Protein.Cluster[proteinDataFiltered$Protein %in% protGroups[[1]]] <- 'Cluster1'
+proteinDataFiltered$Protein.Cluster[proteinDataFiltered$Protein %in% protGroups[[2]]] <- 'Cluster2'
+proteinDataFiltered$Protein.Cluster[proteinDataFiltered$Protein %in% protGroups[[3]]] <- 'Cluster3'
+proteinDataFiltered$Protein.Cluster[proteinDataFiltered$Protein %in% protGroups[[4]]] <- 'Cluster4'
+proteinDataFiltered$Protein.Cluster[proteinDataFiltered$Protein %in% protGroups[[5]]] <- 'Cluster5'
+
+enrichResults <- gprofilerEnrichment(data = proteinDataFiltered,clusterCol = 'Protein.Cluster',idCol = 'Protein',sep = ';')
+enrichTerms <- enrichResults %>% 
+  purrr::map(.f = function(x){pluck(x,'result')}) %>% 
+  purrr::map(.f = ~filter(.,source %in% c('GO:BP','GO:MF','REAC') & term_size<150)) %>% 
+  purrr::map(~slice_min(.,order_by = p_value,n = 5,with_ties = FALSE)) %>% 
+  purrr::map(~dplyr::select(.,term_name)) %>% 
+  purrr::map(unlist) %>% 
+  setNames(.,c(1:5))
+splitRow <- rowOrder %>% 
+  purrr::map(as.data.frame) %>% 
+  list_rbind(names_to = 'order') %>% 
+  arrange(.[[2]])
+
+prothp <- Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,column_split = design$CC.Prot,row_split = splitRow[[1]],right_annotation = rowAnnotation(textbox=anno_textbox(splitRow[[1]],enrichTerms,by = 'anno_block',background_gp = gpar(fill='transparent'),just='left',max_width=unit(1,'mm'),gp=gpar(col='black',fontsize=8,lwd = 0),padding=unit(1,'mm'))),show_row_names = FALSE)
+```
+
+##### Generate figure and export
+```{r}
+proteinHeatmapDraw <- grid.grabExpr(draw(prothp,annotation_legend_list = allLegends, heatmap_legend_side = 'bottom', annotation_legend_side = 'right', legend_grouping = 'original')) %>% as.ggplot
+
+alluvialPlot <- ccAll %>% ggplot(mapping = aes(axis1=CC.Phospho,axis2=CC.Prot,axis3=CC.RNA))+geom_alluvium()+ scale_x_discrete(limits = c("Phospho", "Prot", "RNA"), expand = c(.2, .05)) +
+  xlab("Omics") +
+  geom_alluvium(aes(fill = as.factor(CC.Prot))) +
+  scale_fill_manual('Consensus Cluster',values = clusterCol)+
+  geom_stratum() +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  theme_minimal()
+ggsave2(filename = 'alluvialPlot.pdf',plot = alluvialPlot,device = 'pdf',path = '/multiomics/results/figures/clustering/AllSamples_noG2/',dpi = 1200,compress=TRUE)
+
+ggsave2(filename = 'kmeans_proteome.pdf',plot = proteinHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/AllSamples_noG2',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
+
+varKeep <- c('varianceFiltering','NAFiltering','gprofilerEnrichment','ccAll','calZScore','varKeep')
+rm(list = setdiff(ls(),varKeep))
+invisible(gc())
+```
+
+### Phosphoproteome
+#### Load Data
+```{r}
+data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
+  drop_na
+design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_noPool_noG2.tsv') %>% 
+  left_join(.,ccAll)
+```
+#### Preprocessing
+```{r}
+phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.25)
+
+phosphoDataFiltered <- phosphoDataFiltered %>% 
+  dplyr::select(Protein.Group,design$sample_id)
+
+phosphoDataReduced <- phosphoDataFiltered %>% 
+  dplyr::select(design$sample_id)
+```
+
+#### Plotting
+```{r}
+phosphodataNorm <- t(apply(phosphoDataReduced,1,calZScore))
+colnames(phosphodataNorm) <- NULL
+```
+
+```{r}
+# Setting colors
+groupCol <- colorspace::divergex_hcl(n = 6) %>% setNames(nm = paste0('Group',1:6))
+nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
+dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
+clusterCol <- colorspace::sequential_hcl(n = 4,palette = 'Purple-Yellow') %>% setNames(nm = c(1:4))
+```
+
+```{r}
+annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
+                                                        col =groupCol,
+                                                        na_col = 'white',
+                                                        gp = gpar(title='Group')),
+                                      NHG=anno_simple(x = design$NHG,
+                                                      col = nhgCol,
+                                                      gp = gpar(title='NHS')),
+                                      Recurrence=anno_simple(x = design$DRFi_event,
+                                                             col = dfrCol,
+                                                             gp = gpar(title='Recurrence')),
+                                      Batch=anno_simple(x = design$batch,
+                                                             col = setNames(dfrCol,c('1','2')),
+                                                             gp = gpar(title='Batch')),
+                                      BCFi=anno_simple(x = design$BCFi_event,
+                                                             col = dfrCol,
+                                                             gp = gpar(title='Breast Cancer Recurrence')),
+                                      InvasiveType=anno_simple(x = design$InvCa.type,
+                                                       col = setNames(dfrCol,c('Ductal','Lobular')),
+                                                       na_col = 'white',
+                                                       gp = gpar(title='InvasiveType')),
+                                      Proteome.Cluster=anno_simple(x = design$CC.Prot,
+                                                                   col = clusterCol,na_col = 'red'),
+                                      Phospho.Cluster=anno_simple(x=design$CC.Phospho,
+                                                                  col=clusterCol,na_col='red'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
+
+legendNHG <- Legend(labels = levels(factor(design$NHG)),
+                      title = 'NHG',
+                      border = 'black',
+                      legend_gp = gpar(fill=nhgCol))
+legendRecurrence <- Legend(labels = levels(factor(design$DRFi_event)),
+                      title = 'Recurrence',
+                      border = 'black',
+                      legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+legendBatch <- Legend(labels = levels(factor(design$batch)),
+                      title = 'Batch',
+                      border = 'black',
+                      legend_gp = gpar(fill=setNames(dfrCol,c('1','2'))))
+legendBCFi <- Legend(labels = c('Yes','No'),
+                      title = 'Breast Cancer Recurrence',
+                      border = 'black',
+                      legend_gp = gpar(fill=dfrCol))
+
+legendGroup <- Legend(labels = levels(factor(design$Group.Info)),
+                      title = 'Group',
+                      border = 'black',
+                      legend_gp = gpar(fill=groupCol))
+
+legendInvType <- Legend(labels = c('Ductal','Lobular'),
+                   title = 'Invasive Type',
+                   border = 'black',
+                   legend_gp = gpar(fill=setNames(dfrCol,c('Ductal','Lobular'))))
+legendCluster <- Legend(labels = levels(factor(design$CC.Phospho)),
+                        title = 'Phophoproteome Cluster',
+                        legend_gp = gpar(fill=clusterCol),
+                        border = 'black')
+
+allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster)
+
+set.seed(123)
+phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Phospho)})
+```
+
+##### Functional enrichment per protein cluster
+```{r}
+phosphoHeatmap <- draw(value(phosphoHeatmap))
+rowOrder <- row_order(phosphoHeatmap)
+phosphoGroups <- future_map(.x = seq_along(rowOrder),.f = ~(phosphoDataFiltered$Protein.Group[rowOrder[[.x]]]))
+phosphoDataFiltered$Phospho.Cluster[phosphoDataFiltered$Protein.Group %in% phosphoGroups[[1]]] <- 'Cluster1'
+phosphoDataFiltered$Phospho.Cluster[phosphoDataFiltered$Protein.Group %in% phosphoGroups[[2]]] <- 'Cluster2'
+phosphoDataFiltered$Phospho.Cluster[phosphoDataFiltered$Protein.Group %in% phosphoGroups[[3]]] <- 'Cluster3'
+phosphoDataFiltered$Phospho.Cluster[phosphoDataFiltered$Protein.Group %in% phosphoGroups[[4]]] <- 'Cluster4'
+phosphoDataFiltered$Phospho.Cluster[phosphoDataFiltered$Protein.Group %in% phosphoGroups[[5]]] <- 'Cluster5'
+
+enrichResults <- gprofilerEnrichment(data = phosphoDataFiltered,clusterCol = 'Phospho.Cluster',idCol = 'Protein.Group',sep = ';')
+enrichTerms <- enrichResults %>% 
+  purrr::map(.f = function(x){pluck(x,'result')}) %>% 
+  purrr::map(.f = ~filter(.,source %in% c('GO:BP','GO:MF','REAC') & term_size<600)) %>% 
+  purrr::map(~slice_min(.,order_by = p_value,n = 5,with_ties = FALSE)) %>% 
+  purrr::map(~dplyr::select(.,term_name)) %>% 
+  purrr::map(unlist) %>% 
+  setNames(.,c(1:5))
+splitRow <- rowOrder %>% 
+  purrr::map(as.data.frame) %>% 
+  list_rbind(names_to = 'order') %>% 
+  arrange(.[[2]])
+
+phosphohp <- Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,column_split = design$CC.Phospho,row_split = splitRow[[1]],right_annotation = rowAnnotation(textbox=anno_textbox(splitRow[[1]],enrichTerms,by = 'anno_block',background_gp = gpar(fill='transparent'),just='left',max_width=unit(1,'mm'),gp=gpar(col='black',fontsize=8,lwd = 0),padding=unit(1,'mm'))),show_row_names = FALSE)
+```
+
+##### Generate figure and export
+```{r}
+phosphoHeatmapDraw <- grid.grabExpr(draw(phosphohp,annotation_legend_list = allLegends, heatmap_legend_side = 'bottom', annotation_legend_side = 'right', legend_grouping = 'original')) %>% as.ggplot
+
+ggsave2(filename = 'kmeans_phosphoproteome.pdf',plot = phosphoHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/AllSamples_noG2',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
+
+rm(list = setdiff(ls(),varKeep))
+invisible(gc())
+```
+
+### Transcriptome
+#### Load Data
+```{r}
+data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
+  drop_na
+design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_noPool_noG2.tsv') %>% 
+  left_join(.,ccAll)
+```
+#### Preprocessing
+```{r}
+rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.85)
+
+rnaDataFiltered <- rnaDataFiltered %>% 
+  dplyr::select(Gene.ID,design$sample_id)
+
+rnaDataReduced <- rnaDataFiltered %>% 
+  dplyr::select(design$sample_id)
+```
+
+#### Plotting
+```{r}
+rnadataNorm <- t(apply(rnaDataReduced,1,calZScore))
+colnames(rnadataNorm) <- NULL
+```
+
+```{r}
+# Setting colors
+groupCol <- colorspace::divergex_hcl(n = 6) %>% setNames(nm = paste0('Group',1:6))
+nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
+dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
+clusterCol <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6))
+```
+
+```{r}
+annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
+                                                        col =groupCol,
+                                                        na_col = 'white',
+                                                        gp = gpar(title='Group')),
+                                      NHG=anno_simple(x = design$NHG,
+                                                      col = nhgCol,
+                                                      gp = gpar(title='NHS')),
+                                      Recurrence=anno_simple(x = design$DRFi_event,
+                                                             col = dfrCol,
+                                                             gp = gpar(title='Recurrence')),
+                                      Batch=anno_simple(x = design$batch,
+                                                             col = setNames(dfrCol,c('1','2')),
+                                                             gp = gpar(title='Batch')),
+                                      BCFi=anno_simple(x = design$BCFi_event,
+                                                             col = dfrCol,
+                                                             gp = gpar(title='Breast Cancer Recurrence')),
+                                      InvasiveType=anno_simple(x = design$InvCa.type,
+                                                       col = setNames(dfrCol,c('Ductal','Lobular')),
+                                                       na_col = 'white',
+                                                       gp = gpar(title='InvasiveType')),
+                                      Proteome.Cluster=anno_simple(x = design$CC.Prot,
+                                                                   col = clusterCol,na_col = 'red'),
+                                      Phospho.Cluster=anno_simple(x=design$CC.Phospho,
+                                                                  col=clusterCol,na_col='red'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
+
+legendNHG <- Legend(labels = levels(factor(design$NHG)),
+                      title = 'NHG',
+                      border = 'black',
+                      legend_gp = gpar(fill=nhgCol))
+legendRecurrence <- Legend(labels = levels(factor(design$DRFi_event)),
+                      title = 'Recurrence',
+                      border = 'black',
+                      legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+legendBatch <- Legend(labels = levels(factor(design$batch)),
+                      title = 'Batch',
+                      border = 'black',
+                      legend_gp = gpar(fill=setNames(dfrCol,c('1','2'))))
+legendBCFi <- Legend(labels = c('Yes','No'),
+                      title = 'Breast Cancer Recurrence',
+                      border = 'black',
+                      legend_gp = gpar(fill=dfrCol))
+
+legendGroup <- Legend(labels = levels(factor(design$Group.Info)),
+                      title = 'Group',
+                      border = 'black',
+                      legend_gp = gpar(fill=groupCol))
+
+legendInvType <- Legend(labels = c('Ductal','Lobular'),
+                   title = 'Invasive Type',
+                   border = 'black',
+                   legend_gp = gpar(fill=setNames(dfrCol,c('Ductal','Lobular'))))
+legendCluster <- Legend(labels = levels(factor(design$CC.RNA)),
+                        title = 'Transcriptome Cluster',
+                        legend_gp = gpar(fill=clusterCol),
+                        border = 'black')
+
+allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster)
+
+set.seed(123)
+rnaHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Gene Expression',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.RNA)})
+```
+
+##### Functional enrichment per protein cluster
+```{r}
+#| message: false
+rnaHeatmap <- draw(value(rnaHeatmap))
+rowOrder <- row_order(rnaHeatmap)
+rnaGroups <- future_map(.x = seq_along(rowOrder),.f = ~(rnaDataFiltered$Gene.ID[rowOrder[[.x]]]))
+rnaDataFiltered$rna.Cluster[rnaDataFiltered$Gene.ID %in% rnaGroups[[1]]] <- 'Cluster1'
+rnaDataFiltered$rna.Cluster[rnaDataFiltered$Gene.ID %in% rnaGroups[[2]]] <- 'Cluster2'
+rnaDataFiltered$rna.Cluster[rnaDataFiltered$Gene.ID %in% rnaGroups[[3]]] <- 'Cluster3'
+rnaDataFiltered$rna.Cluster[rnaDataFiltered$Gene.ID %in% rnaGroups[[4]]] <- 'Cluster4'
+rnaDataFiltered$rna.Cluster[rnaDataFiltered$Gene.ID %in% rnaGroups[[5]]] <- 'Cluster5'
+
+
+enrichResults <- gprofilerEnrichment(data = rnaDataFiltered,clusterCol = 'rna.Cluster',idCol = 'Gene.ID',sep = '.')
+enrichTerms <- enrichResults %>% 
+  purrr::map(.f = function(x){pluck(x,'result')}) %>% 
+  purrr::map(.f = ~filter(.,source %in% c('GO:BP','GO:MF','REAC') & term_size<150)) %>% 
+  purrr::map(~slice_min(.,order_by = p_value,n = 5,with_ties = FALSE)) %>% 
+  purrr::map(~dplyr::select(.,term_name)) %>% 
+  purrr::map(unlist) %>% 
+  setNames(.,c(1:5))
+splitRow <- rowOrder %>% 
+  purrr::map(as.data.frame) %>% 
+  list_rbind(names_to = 'order') %>% 
+  arrange(.[[2]])
+
+rnahp <- Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Gene Expression',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,column_split = design$CC.RNA,row_split = splitRow[[1]],right_annotation = rowAnnotation(textbox=anno_textbox(splitRow[[1]],enrichTerms,by = 'anno_block',background_gp = gpar(fill='transparent'),just='left',max_width=unit(1,'mm'),gp=gpar(col='black',fontsize=8,lwd = 0),padding=unit(1,'mm'))),show_row_names = FALSE)
+```
+
+##### Generate figure and export
+```{r}
+rnaHeatmapDraw <- grid.grabExpr(draw(rnahp,annotation_legend_list = allLegends, heatmap_legend_side = 'bottom', annotation_legend_side = 'right', legend_grouping = 'original')) %>% as.ggplot
+
+ggsave2(filename = 'kmeans_transcriptome.pdf',plot = rnaHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/AllSamples_noG2',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
+
+rm(list = setdiff(ls(),varKeep))
+invisible(gc())
+```
 
 ## LN+ vs LN-
 ### Ductal
@@ -619,6 +1062,15 @@ prothp <- Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, na
 ###### Generate figure and export
 ```{r}
 proteinHeatmapDraw <- grid.grabExpr(draw(prothp,annotation_legend_list = allLegends, heatmap_legend_side = 'bottom', annotation_legend_side = 'right', legend_grouping = 'original')) %>% as.ggplot
+
+alluvialPlot <- ccAll %>% ggplot(mapping = aes(axis1=CC.Phospho,axis2=CC.Prot,axis3=CC.RNA))+geom_alluvium()+ scale_x_discrete(limits = c("Phospho", "Prot", "RNA"), expand = c(.2, .05)) +
+  xlab("Omics") +
+  geom_alluvium(aes(fill = as.factor(CC.Prot))) +
+  scale_fill_manual('Consensus Cluster',values = clusterCol)+
+  geom_stratum() +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  theme_minimal()
+ggsave2(filename = 'alluvialPlot.pdf',plot = alluvialPlot,device = 'pdf',path = '/multiomics/results/figures/clustering/LNposvsLNneg/Ductal/',dpi = 1200,compress=TRUE)
 
 ggsave2(filename = 'kmeans_proteome.pdf',plot = proteinHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/LNposvsLNneg/Ductal/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
@@ -913,22 +1365,21 @@ invisible(gc())
 ```
 
 
-
-### Lobular
+### Ductal - Group2 Excluded
 ```{r}
-if(!dir.exists(paths = '/multiomics/results/figures/clustering/LNposvsLNneg/Lobular')) {
-  dir.create(path = '/multiomics/results/figures/clustering/LNposvsLNneg/Lobular',recursive = TRUE)
+if(!dir.exists(paths = '/multiomics/results/figures/clustering/LNposvsLNneg/Ductal_noG2')) {
+  dir.create(path = '/multiomics/results/figures/clustering/LNposvsLNneg/Ductal_noG2',recursive = TRUE)
 }
 ```
 
 #### Consensus Clustering Info
 ```{r}
-ccProt %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/proteome/proteome.k=4.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
-ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/phosphoproteome/phosphoproteome.k=6.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
-ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/transcriptome/transcriptome.k=5.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
+ccProt %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal_noG2/proteome/proteome.k=6.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
+ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal_noG2/phosphoproteome/phosphoproteome.k=4.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
+ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal_noG2/transcriptome/transcriptome.k=4.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
 
 ccAll <- full_join(ccProt,ccPhospho) %>% full_join(.,ccRNA)
-write_tsv(x = ccAll,file = '/multiomics/results/design_files/lnposvslnneg_lobular_consensus_clustering.tsv')
+write_tsv(x = ccAll,file = '/multiomics/results/design_files/lnposvslnneg_ductal_consensus_clustering_noG2.tsv')
 ```
 
 #### Proteome
@@ -936,7 +1387,7 @@ write_tsv(x = ccAll,file = '/multiomics/results/design_files/lnposvslnneg_lobula
 ```{r}
 data <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_full_lobular.tsv') %>% 
+design <- read_tsv(file = '/multiomics/results/design_files/design_full_ductal_noG2.tsv') %>% 
   left_join(.,ccAll)
 ```
 ##### Preprocessing
@@ -958,10 +1409,10 @@ colnames(proteindataNorm) <- NULL
 
 ```{r}
 # Setting colors
-groupCol <- colorspace::divergex_hcl(n = 2) %>% setNames(nm = paste0('Group',5:6))
+groupCol <- colorspace::divergex_hcl(n = 4) %>% setNames(nm = paste0('Group',1:4))
 nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
 dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
-clusterCol <- colorspace::sequential_hcl(n = 5,palette = 'Purple-Yellow') %>% setNames(nm = c(1:5))
+clusterCol <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6))
 ```
 
 ```{r}
@@ -1066,6 +1517,469 @@ prothp <- Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, na
 ###### Generate figure and export
 ```{r}
 proteinHeatmapDraw <- grid.grabExpr(draw(prothp,annotation_legend_list = allLegends, heatmap_legend_side = 'bottom', annotation_legend_side = 'right', legend_grouping = 'original')) %>% as.ggplot
+
+alluvialPlot <- ccAll %>% ggplot(mapping = aes(axis1=CC.Phospho,axis2=CC.Prot,axis3=CC.RNA))+geom_alluvium()+ scale_x_discrete(limits = c("Phospho", "Prot", "RNA"), expand = c(.2, .05)) +
+  xlab("Omics") +
+  geom_alluvium(aes(fill = as.factor(CC.Prot))) +
+  scale_fill_manual('Consensus Cluster',values = clusterCol)+
+  geom_stratum() +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  theme_minimal()
+ggsave2(filename = 'alluvialPlot.pdf',plot = alluvialPlot,device = 'pdf',path = '/multiomics/results/figures/clustering/LNposvsLNneg/Ductal_noG2/',dpi = 1200,compress=TRUE)
+
+ggsave2(filename = 'kmeans_proteome.pdf',plot = proteinHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/LNposvsLNneg/Ductal_noG2/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
+
+varKeep <- c('varianceFiltering','NAFiltering','gprofilerEnrichment','ccAll','calZScore','varKeep')
+rm(list = setdiff(ls(),varKeep))
+invisible(gc())
+```
+
+#### Phosphoproteome
+##### Load Data
+```{r}
+data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
+  drop_na
+design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_ductal_noG2.tsv') %>% 
+  left_join(.,ccAll)
+```
+##### Preprocessing
+```{r}
+phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.25)
+
+phosphoDataFiltered <- phosphoDataFiltered %>% 
+  dplyr::select(Protein.Group,design$sample_id)
+
+phosphoDataReduced <- phosphoDataFiltered %>% 
+  dplyr::select(design$sample_id)
+```
+
+##### Plotting
+```{r}
+phosphodataNorm <- t(apply(phosphoDataReduced,1,calZScore))
+colnames(phosphodataNorm) <- NULL
+```
+
+```{r}
+# Setting colors
+groupCol <- colorspace::divergex_hcl(n = 4) %>% setNames(nm = paste0('Group',1:4))
+nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
+dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
+clusterCol <- colorspace::sequential_hcl(n = 4,palette = 'Purple-Yellow') %>% setNames(nm = c(1:4))
+```
+
+```{r}
+annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
+                                                        col =groupCol,
+                                                        na_col = 'white',
+                                                        gp = gpar(title='Group')),
+                                      NHG=anno_simple(x = design$NHG,
+                                                      col = nhgCol,
+                                                      gp = gpar(title='NHS')),
+                                      Recurrence=anno_simple(x = design$DRFi_event,
+                                                             col = dfrCol,
+                                                             gp = gpar(title='Recurrence')),
+                                      Batch=anno_simple(x = design$batch,
+                                                             col = setNames(dfrCol,c('1','2')),
+                                                             gp = gpar(title='Batch')),
+                                      BCFi=anno_simple(x = design$BCFi_event,
+                                                             col = dfrCol,
+                                                             gp = gpar(title='Breast Cancer Recurrence')),
+                                      InvasiveType=anno_simple(x = design$InvCa.type,
+                                                       col = setNames(dfrCol,c('Ductal','Lobular')),
+                                                       na_col = 'white',
+                                                       gp = gpar(title='InvasiveType')),
+                                      LN=anno_simple(x = design$LN,
+                                                     col = dfrCol,
+                                                     na_col = 'white'),
+                                      Proteome.Cluster=anno_simple(x = design$CC.Prot,
+                                                                   col = clusterCol,na_col = 'red'),
+                                      Phospho.Cluster=anno_simple(x=design$CC.Phospho,
+                                                                  col=clusterCol,na_col='red'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
+
+legendNHG <- Legend(labels = levels(factor(design$NHG)),
+                      title = 'NHG',
+                      border = 'black',
+                      legend_gp = gpar(fill=nhgCol))
+legendRecurrence <- Legend(labels = levels(factor(design$DRFi_event)),
+                      title = 'Recurrence',
+                      border = 'black',
+                      legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+legendBatch <- Legend(labels = levels(factor(design$batch)),
+                      title = 'Batch',
+                      border = 'black',
+                      legend_gp = gpar(fill=setNames(dfrCol,c('1','2'))))
+legendBCFi <- Legend(labels = c('Yes','No'),
+                      title = 'Breast Cancer Recurrence',
+                      border = 'black',
+                      legend_gp = gpar(fill=dfrCol))
+
+legendGroup <- Legend(labels = levels(factor(design$Group.Info)),
+                      title = 'Group',
+                      border = 'black',
+                      legend_gp = gpar(fill=groupCol))
+
+legendInvType <- Legend(labels = c('Ductal','Lobular'),
+                   title = 'Invasive Type',
+                   border = 'black',
+                   legend_gp = gpar(fill=setNames(dfrCol,c('Ductal','Lobular'))))
+legendCluster <- Legend(labels = levels(factor(design$CC.Phospho)),
+                        title = 'Phophoproteome Cluster',
+                        legend_gp = gpar(fill=clusterCol),
+                        border = 'black')
+legendLN <- Legend(labels = levels(factor(design$LN)),
+                      title = 'LN',
+                      border = 'black',
+                      legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+
+allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster,legendLN)
+
+set.seed(123)
+phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Phospho)})
+```
+
+###### Functional enrichment per protein cluster
+```{r}
+phosphoHeatmap <- draw(value(phosphoHeatmap))
+rowOrder <- row_order(phosphoHeatmap)
+phosphoGroups <- future_map(.x = seq_along(rowOrder),.f = ~(phosphoDataFiltered$Protein.Group[rowOrder[[.x]]]))
+phosphoDataFiltered$Phospho.Cluster[phosphoDataFiltered$Protein.Group %in% phosphoGroups[[1]]] <- 'Cluster1'
+phosphoDataFiltered$Phospho.Cluster[phosphoDataFiltered$Protein.Group %in% phosphoGroups[[2]]] <- 'Cluster2'
+phosphoDataFiltered$Phospho.Cluster[phosphoDataFiltered$Protein.Group %in% phosphoGroups[[3]]] <- 'Cluster3'
+phosphoDataFiltered$Phospho.Cluster[phosphoDataFiltered$Protein.Group %in% phosphoGroups[[4]]] <- 'Cluster4'
+phosphoDataFiltered$Phospho.Cluster[phosphoDataFiltered$Protein.Group %in% phosphoGroups[[5]]] <- 'Cluster5'
+
+enrichResults <- gprofilerEnrichment(data = phosphoDataFiltered,clusterCol = 'Phospho.Cluster',idCol = 'Protein.Group',sep = ';')
+enrichTerms <- enrichResults %>% 
+  purrr::map(.f = function(x){pluck(x,'result')}) %>% 
+  purrr::map(.f = ~filter(.,source %in% c('GO:BP','GO:MF','REAC') & term_size<600)) %>% 
+  purrr::map(~slice_min(.,order_by = p_value,n = 5,with_ties = FALSE)) %>% 
+  purrr::map(~dplyr::select(.,term_name)) %>% 
+  purrr::map(unlist) %>% 
+  setNames(.,c(1:5))
+splitRow <- rowOrder %>% 
+  purrr::map(as.data.frame) %>% 
+  list_rbind(names_to = 'order') %>% 
+  arrange(.[[2]])
+
+phosphohp <- Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,column_split = design$CC.Phospho,row_split = splitRow[[1]],right_annotation = rowAnnotation(textbox=anno_textbox(splitRow[[1]],enrichTerms,by = 'anno_block',background_gp = gpar(fill='transparent'),just='left',max_width=unit(1,'mm'),gp=gpar(col='black',fontsize=8,lwd = 0),padding=unit(1,'mm'))),show_row_names = FALSE)
+```
+
+###### Generate figure and export
+```{r}
+phosphoHeatmapDraw <- grid.grabExpr(draw(phosphohp,annotation_legend_list = allLegends, heatmap_legend_side = 'bottom', annotation_legend_side = 'right', legend_grouping = 'original')) %>% as.ggplot
+
+ggsave2(filename = 'kmeans_phosphoproteome.pdf',plot = phosphoHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/LNposvsLNneg/Ductal_noG2/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
+
+rm(list = setdiff(ls(),varKeep))
+invisible(gc())
+```
+
+#### Transcriptome
+##### Load Data
+```{r}
+data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
+  drop_na
+design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_ductal_noG2.tsv') %>% 
+  left_join(.,ccAll)
+```
+
+##### Preprocessing
+```{r}
+rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.85)
+
+rnaDataFiltered <- rnaDataFiltered %>% 
+  dplyr::select(Gene.ID,design$sample_id)
+
+rnaDataReduced <- rnaDataFiltered %>% 
+  dplyr::select(design$sample_id)
+```
+
+##### Plotting
+```{r}
+rnadataNorm <- t(apply(rnaDataReduced,1,calZScore))
+colnames(rnadataNorm) <- NULL
+```
+
+```{r}
+# Setting colors
+groupCol <- colorspace::divergex_hcl(n = 4) %>% setNames(nm = paste0('Group',1:4))
+nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
+dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
+clusterCol <- colorspace::sequential_hcl(n = 4,palette = 'Purple-Yellow') %>% setNames(nm = c(1:4))
+```
+
+```{r}
+annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
+                                                        col =groupCol,
+                                                        na_col = 'white',
+                                                        gp = gpar(title='Group')),
+                                      NHG=anno_simple(x = design$NHG,
+                                                      col = nhgCol,
+                                                      gp = gpar(title='NHS')),
+                                      Recurrence=anno_simple(x = design$DRFi_event,
+                                                             col = dfrCol,
+                                                             gp = gpar(title='Recurrence')),
+                                      Batch=anno_simple(x = design$batch,
+                                                             col = setNames(dfrCol,c('1','2')),
+                                                             gp = gpar(title='Batch')),
+                                      BCFi=anno_simple(x = design$BCFi_event,
+                                                             col = dfrCol,
+                                                             gp = gpar(title='Breast Cancer Recurrence')),
+                                      InvasiveType=anno_simple(x = design$InvCa.type,
+                                                       col = setNames(dfrCol,c('Ductal','Lobular')),
+                                                       na_col = 'white',
+                                                       gp = gpar(title='InvasiveType')),
+                                      LN=anno_simple(x = design$LN,
+                                                     col = dfrCol,
+                                                     na_col = 'white'),
+                                      Proteome.Cluster=anno_simple(x = design$CC.Prot,
+                                                                   col = clusterCol,na_col = 'red'),
+                                      Phospho.Cluster=anno_simple(x=design$CC.Phospho,
+                                                                  col=clusterCol,na_col='red'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
+
+legendNHG <- Legend(labels = levels(factor(design$NHG)),
+                      title = 'NHG',
+                      border = 'black',
+                      legend_gp = gpar(fill=nhgCol))
+legendRecurrence <- Legend(labels = levels(factor(design$DRFi_event)),
+                      title = 'Recurrence',
+                      border = 'black',
+                      legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+legendBatch <- Legend(labels = levels(factor(design$batch)),
+                      title = 'Batch',
+                      border = 'black',
+                      legend_gp = gpar(fill=setNames(dfrCol,c('1','2'))))
+legendBCFi <- Legend(labels = c('Yes','No'),
+                      title = 'Breast Cancer Recurrence',
+                      border = 'black',
+                      legend_gp = gpar(fill=dfrCol))
+
+legendGroup <- Legend(labels = levels(factor(design$Group.Info)),
+                      title = 'Group',
+                      border = 'black',
+                      legend_gp = gpar(fill=groupCol))
+
+legendInvType <- Legend(labels = c('Ductal','Lobular'),
+                   title = 'Invasive Type',
+                   border = 'black',
+                   legend_gp = gpar(fill=setNames(dfrCol,c('Ductal','Lobular'))))
+legendCluster <- Legend(labels = levels(factor(design$CC.RNA)),
+                        title = 'Transcriptome Cluster',
+                        legend_gp = gpar(fill=clusterCol),
+                        border = 'black')
+legendLN <- Legend(labels = levels(factor(design$LN)),
+                      title = 'LN',
+                      border = 'black',
+                      legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+
+allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster,legendLN)
+
+set.seed(123)
+rnaHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Gene Expression',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.RNA)})
+```
+
+###### Functional enrichment per protein cluster
+```{r}
+#| message: false
+rnaHeatmap <- draw(value(rnaHeatmap))
+rowOrder <- row_order(rnaHeatmap)
+rnaGroups <- future_map(.x = seq_along(rowOrder),.f = ~(rnaDataFiltered$Gene.ID[rowOrder[[.x]]]))
+rnaDataFiltered$rna.Cluster[rnaDataFiltered$Gene.ID %in% rnaGroups[[1]]] <- 'Cluster1'
+rnaDataFiltered$rna.Cluster[rnaDataFiltered$Gene.ID %in% rnaGroups[[2]]] <- 'Cluster2'
+rnaDataFiltered$rna.Cluster[rnaDataFiltered$Gene.ID %in% rnaGroups[[3]]] <- 'Cluster3'
+rnaDataFiltered$rna.Cluster[rnaDataFiltered$Gene.ID %in% rnaGroups[[4]]] <- 'Cluster4'
+rnaDataFiltered$rna.Cluster[rnaDataFiltered$Gene.ID %in% rnaGroups[[5]]] <- 'Cluster5'
+
+
+enrichResults <- gprofilerEnrichment(data = rnaDataFiltered,clusterCol = 'rna.Cluster',idCol = 'Gene.ID',sep = '.')
+enrichTerms <- enrichResults %>% 
+  purrr::map(.f = function(x){pluck(x,'result')}) %>% 
+  purrr::map(.f = ~filter(.,source %in% c('GO:BP','GO:MF','REAC') & term_size<150)) %>% 
+  purrr::map(~slice_min(.,order_by = p_value,n = 5,with_ties = FALSE)) %>% 
+  purrr::map(~dplyr::select(.,term_name)) %>% 
+  purrr::map(unlist) %>% 
+  setNames(.,c(1:5))
+splitRow <- rowOrder %>% 
+  purrr::map(as.data.frame) %>% 
+  list_rbind(names_to = 'order') %>% 
+  arrange(.[[2]])
+
+rnahp <- Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Gene Expression',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,column_split = design$CC.RNA,row_split = splitRow[[1]],right_annotation = rowAnnotation(textbox=anno_textbox(splitRow[[1]],enrichTerms,by = 'anno_block',background_gp = gpar(fill='transparent'),just='left',max_width=unit(1,'mm'),gp=gpar(col='black',fontsize=8,lwd = 0),padding=unit(1,'mm'))),show_row_names = FALSE)
+```
+
+###### Generate figure and export
+```{r}
+rnaHeatmapDraw <- grid.grabExpr(draw(rnahp,annotation_legend_list = allLegends, heatmap_legend_side = 'bottom', annotation_legend_side = 'right', legend_grouping = 'original')) %>% as.ggplot
+
+ggsave2(filename = 'kmeans_transcriptome.pdf',plot = rnaHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/LNposvsLNneg/Ductal_noG2/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
+
+rm(list = setdiff(ls(),varKeep))
+invisible(gc())
+```
+
+### Lobular
+```{r}
+if(!dir.exists(paths = '/multiomics/results/figures/clustering/LNposvsLNneg/Lobular')) {
+  dir.create(path = '/multiomics/results/figures/clustering/LNposvsLNneg/Lobular',recursive = TRUE)
+}
+```
+
+#### Consensus Clustering Info
+```{r}
+ccProt %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/proteome/proteome.k=4.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
+ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/phosphoproteome/phosphoproteome.k=6.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
+ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/transcriptome/transcriptome.k=5.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
+
+ccAll <- full_join(ccProt,ccPhospho) %>% full_join(.,ccRNA)
+write_tsv(x = ccAll,file = '/multiomics/results/design_files/lnposvslnneg_lobular_consensus_clustering.tsv')
+```
+
+#### Proteome
+##### Load Data
+```{r}
+data <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
+  drop_na
+design <- read_tsv(file = '/multiomics/results/design_files/design_full_lobular.tsv') %>% 
+  left_join(.,ccAll)
+```
+##### Preprocessing
+```{r}
+proteinDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
+
+proteinDataFiltered <- proteinDataFiltered %>% 
+  dplyr::select(Protein,design$sample_id)
+
+proteinDataReduced <- proteinDataFiltered %>% 
+  dplyr::select(design$sample_id)
+```
+
+##### Plotting
+```{r}
+proteindataNorm <- t(apply(proteinDataReduced,1,calZScore))
+colnames(proteindataNorm) <- NULL
+```
+
+```{r}
+# Setting colors
+groupCol <- colorspace::divergex_hcl(n = 2) %>% setNames(nm = paste0('Group',5:6))
+nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
+dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
+clusterCol <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6))
+```
+
+```{r}
+annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
+                                                        col =groupCol,
+                                                        na_col = 'white',
+                                                        gp = gpar(title='Group')),
+                                      NHG=anno_simple(x = design$NHG,
+                                                      col = nhgCol,
+                                                      gp = gpar(title='NHS')),
+                                      Recurrence=anno_simple(x = design$DRFi_event,
+                                                             col = dfrCol,
+                                                             gp = gpar(title='Recurrence')),
+                                      Batch=anno_simple(x = design$batch,
+                                                             col = setNames(dfrCol,c('1','2')),
+                                                             gp = gpar(title='Batch')),
+                                      BCFi=anno_simple(x = design$BCFi_event,
+                                                             col = dfrCol,
+                                                             gp = gpar(title='Breast Cancer Recurrence')),
+                                      InvasiveType=anno_simple(x = design$InvCa.type,
+                                                       col = setNames(dfrCol,c('Ductal','Lobular')),
+                                                       na_col = 'white',
+                                                       gp = gpar(title='InvasiveType')),
+                                      LN=anno_simple(x = design$LN,
+                                                     col = dfrCol,
+                                                     na_col = 'white'),
+                                      Proteome.Cluster=anno_simple(x = design$CC.Prot,
+                                                                   col = clusterCol,na_col = 'red'),
+                                      Phospho.Cluster=anno_simple(x=design$CC.Phospho,
+                                                                  col=clusterCol,na_col='red'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
+
+legendNHG <- Legend(labels = levels(factor(design$NHG)),
+                      title = 'NHG',
+                      border = 'black',
+                      legend_gp = gpar(fill=nhgCol))
+legendRecurrence <- Legend(labels = levels(factor(design$DRFi_event)),
+                      title = 'Recurrence',
+                      border = 'black',
+                      legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+legendBatch <- Legend(labels = levels(factor(design$batch)),
+                      title = 'Batch',
+                      border = 'black',
+                      legend_gp = gpar(fill=setNames(dfrCol,c('1','2'))))
+legendBCFi <- Legend(labels = c('Yes','No'),
+                      title = 'Breast Cancer Recurrence',
+                      border = 'black',
+                      legend_gp = gpar(fill=dfrCol))
+
+legendGroup <- Legend(labels = levels(factor(design$Group.Info)),
+                      title = 'Group',
+                      border = 'black',
+                      legend_gp = gpar(fill=groupCol))
+
+legendInvType <- Legend(labels = c('Ductal','Lobular'),
+                   title = 'Invasive Type',
+                   border = 'black',
+                   legend_gp = gpar(fill=setNames(dfrCol,c('Ductal','Lobular'))))
+legendCluster <- Legend(labels = levels(factor(design$CC.Prot)),
+                        title = 'Proteome Cluster',
+                        legend_gp = gpar(fill=clusterCol),
+                        border = 'black')
+legendLN <- Legend(labels = levels(factor(design$LN)),
+                      title = 'LN',
+                      border = 'black',
+                      legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+
+allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster,legendLN)
+
+set.seed(123)
+proteinHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
+```
+
+###### Functional enrichment per protein cluster
+```{r}
+#| message: false
+protHeatmap <- draw(value(proteinHeatmap))
+rowOrder <- row_order(protHeatmap)
+protGroups <- future_map(.x = seq_along(rowOrder),.f = ~(proteinDataFiltered$Protein[rowOrder[[.x]]]))
+proteinDataFiltered$Protein.Cluster[proteinDataFiltered$Protein %in% protGroups[[1]]] <- 'Cluster1'
+proteinDataFiltered$Protein.Cluster[proteinDataFiltered$Protein %in% protGroups[[2]]] <- 'Cluster2'
+proteinDataFiltered$Protein.Cluster[proteinDataFiltered$Protein %in% protGroups[[3]]] <- 'Cluster3'
+proteinDataFiltered$Protein.Cluster[proteinDataFiltered$Protein %in% protGroups[[4]]] <- 'Cluster4'
+proteinDataFiltered$Protein.Cluster[proteinDataFiltered$Protein %in% protGroups[[5]]] <- 'Cluster5'
+
+enrichResults <- gprofilerEnrichment(data = proteinDataFiltered,clusterCol = 'Protein.Cluster',idCol = 'Protein',sep = ';')
+enrichTerms <- enrichResults %>% 
+  purrr::map(.f = function(x){pluck(x,'result')}) %>% 
+  purrr::map(.f = ~filter(.,source %in% c('GO:BP','GO:MF','REAC') & term_size<150)) %>% 
+  purrr::map(~slice_min(.,order_by = p_value,n = 5,with_ties = FALSE)) %>% 
+  purrr::map(~dplyr::select(.,term_name)) %>% 
+  purrr::map(unlist) %>% 
+  setNames(.,c(1:5))
+splitRow <- rowOrder %>% 
+  purrr::map(as.data.frame) %>% 
+  list_rbind(names_to = 'order') %>% 
+  arrange(.[[2]])
+
+prothp <- Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,column_split = design$CC.Prot,row_split = splitRow[[1]],right_annotation = rowAnnotation(textbox=anno_textbox(splitRow[[1]],enrichTerms,by = 'anno_block',background_gp = gpar(fill='transparent'),just='left',max_width=unit(1,'mm'),gp=gpar(col='black',fontsize=8,lwd = 0),padding=unit(1,'mm'))),show_row_names = FALSE)
+```
+
+###### Generate figure and export
+```{r}
+proteinHeatmapDraw <- grid.grabExpr(draw(prothp,annotation_legend_list = allLegends, heatmap_legend_side = 'bottom', annotation_legend_side = 'right', legend_grouping = 'original')) %>% as.ggplot
+
+alluvialPlot <- ccAll %>% ggplot(mapping = aes(axis1=CC.Phospho,axis2=CC.Prot,axis3=CC.RNA))+geom_alluvium()+ scale_x_discrete(limits = c("Phospho", "Prot", "RNA"), expand = c(.2, .05)) +
+  xlab("Omics") +
+  geom_alluvium(aes(fill = as.factor(CC.Prot))) +
+  scale_fill_manual('Consensus Cluster',values = clusterCol)+
+  geom_stratum() +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  theme_minimal()
+ggsave2(filename = 'alluvialPlot.pdf',plot = alluvialPlot,device = 'pdf',path = '/multiomics/results/figures/clustering/LNposvsLNneg/Lobular/',dpi = 1200,compress=TRUE)
 
 ggsave2(filename = 'kmeans_proteome.pdf',plot = proteinHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/LNposvsLNneg/Lobular/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
@@ -1245,7 +2159,7 @@ colnames(rnadataNorm) <- NULL
 groupCol <- colorspace::divergex_hcl(n = 2) %>% setNames(nm = paste0('Group',5:6))
 nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
 dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
-clusterCol <- colorspace::sequential_hcl(n = 5,palette = 'Purple-Yellow') %>% setNames(nm = c(1:5))
+clusterCol <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6))
 ```
 
 ```{r}
@@ -1407,7 +2321,7 @@ colnames(proteindataNorm) <- NULL
 groupCol <- colorspace::divergex_hcl(n = 2) %>% setNames(nm = paste0('Group',1:2))
 nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
 dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
-clusterCol <- colorspace::sequential_hcl(n = 5,palette = 'Purple-Yellow') %>% setNames(nm = c(1:5))
+clusterCol <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6))
 ```
 
 ```{r}
@@ -1505,6 +2419,15 @@ prothp <- Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, na
 ##### Generate figure and export
 ```{r}
 proteinHeatmapDraw <- grid.grabExpr(draw(prothp,annotation_legend_list = allLegends, heatmap_legend_side = 'bottom', annotation_legend_side = 'right', legend_grouping = 'original')) %>% as.ggplot
+
+alluvialPlot <- ccAll %>% ggplot(mapping = aes(axis1=CC.Phospho,axis2=CC.Prot,axis3=CC.RNA))+geom_alluvium()+ scale_x_discrete(limits = c("Phospho", "Prot", "RNA"), expand = c(.2, .05)) +
+  xlab("Omics") +
+  geom_alluvium(aes(fill = as.factor(CC.Prot))) +
+  scale_fill_manual('Consensus Cluster',values = clusterCol)+
+  geom_stratum() +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  theme_minimal()
+ggsave2(filename = 'alluvialPlot.pdf',plot = alluvialPlot,device = 'pdf',path = '/multiomics/results/figures/clustering/Group1vsGroup2/',dpi = 1200,compress=TRUE)
 
 ggsave2(filename = 'kmeans_proteome.pdf',plot = proteinHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/Group1vsGroup2/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
@@ -1930,6 +2853,15 @@ prothp <- Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, na
 ```{r}
 proteinHeatmapDraw <- grid.grabExpr(draw(prothp,annotation_legend_list = allLegends, heatmap_legend_side = 'bottom', annotation_legend_side = 'right', legend_grouping = 'original')) %>% as.ggplot
 
+alluvialPlot <- ccAll %>% ggplot(mapping = aes(axis1=CC.Phospho,axis2=CC.Prot,axis3=CC.RNA))+geom_alluvium()+ scale_x_discrete(limits = c("Phospho", "Prot", "RNA"), expand = c(.2, .05)) +
+  xlab("Omics") +
+  geom_alluvium(aes(fill = as.factor(CC.Prot))) +
+  scale_fill_manual('Consensus Cluster',values = clusterCol)+
+  geom_stratum() +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  theme_minimal()
+ggsave2(filename = 'alluvialPlot.pdf',plot = alluvialPlot,device = 'pdf',path = '/multiomics/results/figures/clustering/Group3vsGroup4/',dpi = 1200,compress=TRUE)
+
 ggsave2(filename = 'kmeans_proteome.pdf',plot = proteinHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/Group3vsGroup4/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
 rm(list = setdiff(ls(),varKeep))
@@ -2100,7 +3032,7 @@ colnames(rnadataNorm) <- NULL
 groupCol <- colorspace::divergex_hcl(n = 2) %>% setNames(nm = paste0('Group',3:4))
 nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
 dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
-clusterCol <- colorspace::sequential_hcl(n = 5,palette = 'Purple-Yellow') %>% setNames(nm = c(1:5))
+clusterCol <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6))
 ```
 
 ```{r}

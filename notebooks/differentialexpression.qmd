@@ -114,7 +114,87 @@ invisible(gc())
 rm(list = ls())
 ```
 
+## Ductal vs Lobular - Group 2 Excluded
+### Full Proteome
+```{r}
+dataP <- '/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv'
+designP <- '/multiomics/results/design_files/design_Full_noPool_noG2.tsv'
+outDir <- '/multiomics/results/differentialexpression/DuctalvsLobular_noG2'
+jDEName <- "ductalvslobular_fullproteome_protein"
+
+proteomeProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'InvCa.type',comparisons = c('Ductal-Lobular'),leastRepCount = 3,batchCol = 'group')})
+```
+
+### Phosphoproteome
+#### Phosphopeptide aggregation Modified.Sequence
+```{r}
+dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
+designP <- '/multiomics/results/design_files/design_phospho_noPool_noG2.tsv'
+outDir <- '/multiomics/results/differentialexpression/DuctalvsLobular_noG2'
+jDEName <- "ductalvslobular_phosphoproteome_peptide_aggModSeq"
+
+phosphoPepAggMod <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'InvCa.type',comparisons = c('Ductal-Lobular'),leastRepCount = 3,batchCol = 'group')})
+```
+
+### Transcriptomics
+```{r}
+dataP <- '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv'
+designP <- '/multiomics/results/design_files/design_RNA_noPool_noG2.tsv'
+outDir <- '/multiomics/results/differentialexpression/DuctalvsLobular_noG2'
+jDEName <- "ductalvslobular_transcriptome"
+
+transcriptome <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'InvCa.type',comparisons = c('Ductal-Lobular'),leastRepCount = 3,logTrans = FALSE)})
+```
+
+### Results
+```{r}
+results <- list(proteomeProt,transcriptome,phosphoPepAggSite)
+future_map(.x = results,.f = value)
+invisible(gc())
+rm(list = ls())
+```
+
 ## LN+ vs LN-
+### All samples - Group 2 Excluded
+#### Full Proteome
+```{r}
+dataP <- '/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv'
+designP <- '/multiomics/results/design_files/design_Full_noPool_noG2.tsv'
+outDir <- '/multiomics/results/differentialexpression/LNposvsLNneg/AllSamples_noG2'
+jDEName <- "ductalvslobular_fullproteome_protein"
+
+proteomeProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'group')})
+```
+
+#### Phosphoproteome
+##### Phosphopeptide aggregation Modified.Sequence
+```{r}
+dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
+designP <- '/multiomics/results/design_files/design_phospho_noPool_noG2.tsv'
+outDir <- '/multiomics/results/differentialexpression/LNposvsLNneg/AllSamples_noG2'
+jDEName <- "ductalvslobular_phosphoproteome_peptide_aggModSeq"
+
+phosphoPepAggMod <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'group')})
+```
+
+#### Transcriptomics
+```{r}
+dataP <- '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv'
+designP <- '/multiomics/results/design_files/design_RNA_noPool_noG2.tsv'
+outDir <- '/multiomics/results/differentialexpression/LNposvsLNneg/AllSamples_noG2'
+jDEName <- "ductalvslobular_transcriptome"
+
+transcriptome <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,logTrans = FALSE)})
+```
+
+#### Results
+```{r}
+results <- list(proteomeProt,transcriptome,phosphoPepAggSite)
+future_map(.x = results,.f = value)
+invisible(gc())
+rm(list = ls())
+```
+
 ### Ductal
 #### Full Proteome
 ##### Protein Level
@@ -188,6 +268,50 @@ future_map(.x = results,.f = value)
 invisible(gc())
 rm(list = ls())
 ```
+
+
+### Ductal - Group2 Excluded
+#### Full Proteome
+##### Protein Level
+
+```{r}
+dataP <- '/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv'
+designP <- '/multiomics/results/design_files/design_full_ductal_noG2.tsv'
+outDir <- '/multiomics/results/differentialexpression/LNposvsLNneg/Ductal_noG2'
+jDEName <- "LN_ductal_fullproteome_protein"
+
+proteomeProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'group')})
+```
+
+#### Phosphoproteome
+##### Phosphopeptide aggregation Modified.Sequence
+```{r}
+dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
+designP <- '/multiomics/results/design_files/design_phospho_ductal_noG2.tsv'
+outDir <- '/multiomics/results/differentialexpression/LNposvsLNneg/Ductal_noG2'
+jDEName <- "LN_ductal_phosphoproteome_peptide_aggModSeq"
+
+phosphoPepAggMod <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'group')})
+```
+
+#### Transcriptomics
+```{r}
+dataP <- '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv'
+designP <- '/multiomics/results/design_files/design_RNA_ductal_noG2.tsv'
+outDir <- '/multiomics/results/differentialexpression/LNposvsLNneg/Ductal_noG2'
+jDEName <- "LN_ductal_transcriptome"
+
+transcriptome <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,logTrans = FALSE)})
+```
+
+#### Results
+```{r}
+results <- list(proteomeProt,transcriptome,phosphoPepAggSite)
+future_map(.x = results,.f = value)
+invisible(gc())
+rm(list = ls())
+```
+
 
 ### Lobular
 #### Full Proteome

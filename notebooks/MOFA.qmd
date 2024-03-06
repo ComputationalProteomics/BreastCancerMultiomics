@@ -1819,7 +1819,7 @@ slotNames(bestModel)
 
 #### Save model
 ```{r}
-saveRDS(object = bestModel,file = '/multiomics/results/MOFA/MOFA/AllSamples_noG2/model.RDS',compress = 'gzip')
+saveRDS(object = bestModel,file = '/multiomics/results/MOFA/AllSamples_noG2/model.RDS',compress = 'gzip')
 ```
 
 #### Correlation between factors

@@ -95,7 +95,7 @@ gseaMsigProt <- gseaMsigDBProt(data = data,qvaluecutoff = 0.25,padjustmethod = '
 
 #### Phosphoproteome
 ```{r}
-data <- '/multiomics/results/differentialexpression/LNposvsLNneg/AllSamples_noG2/ductalvslobular_phosphoproteome_peptide/ductalvslobular_phosphoproteome_peptide_stats.tsv'
+data <- '/multiomics/results/differentialexpression/LNposvsLNneg/AllSamples_noG2/ductalvslobular_phosphoproteome_peptide_aggModSeq/ductalvslobular_phosphoproteome_peptide_aggModSeq_stats.tsv'
 gseaMsigPhospho <- gseaMsigDBPhospho(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
 ```
 

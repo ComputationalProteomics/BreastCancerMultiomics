@@ -37,7 +37,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_Full_noPool.t
 
 #### Preprocessing
 ```{r}
-proteinDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
+proteinDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
 
 proteinDataFiltered <- proteinDataFiltered %>% 
   dplyr::select(Protein,design$sample_id)
@@ -67,7 +67,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_noPoo
 ```
 #### Preprocessing
 ```{r}
-phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.5)
+phosphoDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.5)
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
   dplyr::select(Protein.Group,design$sample_id)
@@ -98,7 +98,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_noPool.ts
 
 #### Preprocessing
 ```{r}
-rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
+rnaDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
 
 rnaDataFiltered <- rnaDataFiltered %>% 
   dplyr::select(Gene.ID,design$sample_id)
@@ -137,7 +137,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_Full_noPool_n
 
 #### Preprocessing
 ```{r}
-proteinDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
+proteinDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
 
 proteinDataFiltered <- proteinDataFiltered %>% 
   dplyr::select(Protein,design$sample_id)
@@ -167,7 +167,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_noPoo
 ```
 #### Preprocessing
 ```{r}
-phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.5)
+phosphoDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.5)
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
   dplyr::select(Protein.Group,design$sample_id)
@@ -198,7 +198,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_noPool_no
 
 #### Preprocessing
 ```{r}
-rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
+rnaDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
 
 rnaDataFiltered <- rnaDataFiltered %>% 
   dplyr::select(Gene.ID,design$sample_id)
@@ -237,7 +237,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_full_ductal.t
 
 ##### Preprocessing
 ```{r}
-proteinDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
+proteinDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
 
 proteinDataFiltered <- proteinDataFiltered %>% 
   dplyr::select(Protein,design$sample_id)
@@ -267,7 +267,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_ducta
 ```
 ##### Preprocessing
 ```{r}
-phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.5)
+phosphoDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.5)
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
   dplyr::select(Protein.Group,design$sample_id)
@@ -298,7 +298,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_ductal.ts
 
 ##### Preprocessing
 ```{r}
-rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
+rnaDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
 
 rnaDataFiltered <- rnaDataFiltered %>% 
   dplyr::select(Gene.ID,design$sample_id)
@@ -337,7 +337,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_full_ductal_n
 
 ##### Preprocessing
 ```{r}
-proteinDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
+proteinDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
 
 proteinDataFiltered <- proteinDataFiltered %>% 
   dplyr::select(Protein,design$sample_id)
@@ -367,7 +367,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_ducta
 ```
 ##### Preprocessing
 ```{r}
-phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.5)
+phosphoDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.5)
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
   dplyr::select(Protein.Group,design$sample_id)
@@ -398,7 +398,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_ductal_no
 
 ##### Preprocessing
 ```{r}
-rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
+rnaDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
 
 rnaDataFiltered <- rnaDataFiltered %>% 
   dplyr::select(Gene.ID,design$sample_id)
@@ -436,7 +436,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_full_lobular.
 
 ##### Preprocessing
 ```{r}
-proteinDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
+proteinDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
 
 proteinDataFiltered <- proteinDataFiltered %>% 
   dplyr::select(Protein,design$sample_id)
@@ -466,7 +466,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_lobul
 ```
 ##### Preprocessing
 ```{r}
-phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.5)
+phosphoDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.5)
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
   dplyr::select(Protein.Group,design$sample_id)
@@ -497,7 +497,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_lobular.t
 
 ##### Preprocessing
 ```{r}
-rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
+rnaDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
 
 rnaDataFiltered <- rnaDataFiltered %>% 
   dplyr::select(Gene.ID,design$sample_id)
@@ -535,7 +535,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_full_g1g2.tsv
 
 #### Preprocessing
 ```{r}
-proteinDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
+proteinDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
 
 proteinDataFiltered <- proteinDataFiltered %>% 
   dplyr::select(Protein,design$sample_id)
@@ -565,7 +565,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_g1g2.
 ```
 #### Preprocessing
 ```{r}
-phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.5)
+phosphoDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.5)
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
   dplyr::select(Protein.Group,design$sample_id)
@@ -596,7 +596,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_g1g2.tsv'
 
 #### Preprocessing
 ```{r}
-rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
+rnaDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
 
 rnaDataFiltered <- rnaDataFiltered %>% 
   dplyr::select(Gene.ID,design$sample_id)
@@ -634,7 +634,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_full_g3g4.tsv
 
 #### Preprocessing
 ```{r}
-proteinDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
+proteinDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
 
 proteinDataFiltered <- proteinDataFiltered %>% 
   dplyr::select(Protein,design$sample_id)
@@ -664,7 +664,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_g3g4.
 ```
 #### Preprocessing
 ```{r}
-phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.5)
+phosphoDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.5)
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
   dplyr::select(Protein.Group,design$sample_id)
@@ -695,7 +695,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_g3g4.tsv'
 
 #### Preprocessing
 ```{r}
-rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
+rnaDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',cutoff = 0.75)
 
 rnaDataFiltered <- rnaDataFiltered %>% 
   dplyr::select(Gene.ID,design$sample_id)

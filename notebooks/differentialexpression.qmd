@@ -148,7 +148,7 @@ transcriptome <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerD
 
 ### Results
 ```{r}
-results <- list(proteomeProt,transcriptome,phosphoPepAggSite)
+results <- list(proteomeProt,transcriptome,phosphoPepAggMod)
 future_map(.x = results,.f = value)
 invisible(gc())
 rm(list = ls())
@@ -189,7 +189,7 @@ transcriptome <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerD
 
 #### Results
 ```{r}
-results <- list(proteomeProt,transcriptome,phosphoPepAggSite)
+results <- list(proteomeProt,transcriptome,phosphoPepAggMod)
 future_map(.x = results,.f = value)
 invisible(gc())
 rm(list = ls())

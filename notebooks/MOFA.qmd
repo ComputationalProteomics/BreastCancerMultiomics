@@ -49,7 +49,7 @@ if(!dir.exists(paths = '/multiomics/results/MOFA/all_samples/infiltration')) {
 design <- read_tsv('/multiomics/results/design_files/design_multiomics_mofa.tsv')
 proteindata <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
 prot <- proteindata %>% 
-  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
+  madFfiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 prot$Unique.Ids <- make.names(names = prot$Protein.Names,unique = TRUE)
 protFeatures <- prot$Unique.Ids
 prot <- prot %>% 
@@ -59,7 +59,7 @@ rownames(prot) <- protFeatures
 
 phosphodata <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv')
 phospho <- phosphodata %>%
-  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.75)
+  madFfiltering(design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.75)
 phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
 phosphoFeatures <- phospho$Unique.Ids
 phospho <- phospho %>% 
@@ -70,7 +70,7 @@ rownames(phospho) <- phosphoFeatures
 
 genedata <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv')
 gene <- genedata %>% 
-  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
+  madFfiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
 geneFeatures <- gene$Gene.ID
 gene <- gene %>% 
   dplyr::select(design$sample_id) %>% 
@@ -313,7 +313,7 @@ map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device 
 
 ## All samples without infiltration
 ```{r}
-varskeep <- c('workers','varianceFiltering','NAFiltering')
+varskeep <- c('workers','madFfiltering','NAFiltering')
 rm(list = c(setdiff(ls(),varskeep)))
 invisible(gc())
 
@@ -331,7 +331,7 @@ if(!dir.exists(paths = '/multiomics/results/MOFA/all_samples/no_infiltration')) 
 design <- read_tsv('/multiomics/results/design_files/design_multiomics_mofa.tsv')
 proteindata <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
 prot <- proteindata %>% 
-  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
+  madFfiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 prot$Unique.Ids <- make.names(names = prot$Protein.Names,unique = TRUE)
 protFeatures <- prot$Unique.Ids
 prot <- prot %>% 
@@ -341,7 +341,7 @@ rownames(prot) <- protFeatures
 
 phosphodata <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv')
 phospho <- phosphodata %>%
-  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.75)
+  madFfiltering(design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.75)
 phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
 phosphoFeatures <- phospho$Unique.Ids
 phospho <- phospho %>% 
@@ -351,7 +351,7 @@ rownames(phospho) <- phosphoFeatures
 
 genedata <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv')
 gene <- genedata %>% 
-  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
+  madFfiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
 geneFeatures <- gene$Gene.ID
 gene <- gene %>% 
   dplyr::select(design$sample_id) %>% 
@@ -543,7 +543,7 @@ map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device 
 
 ## Group1 vs Group2
 ```{r}
-varskeep <- c('workers','varianceFiltering','NAFiltering')
+varskeep <- c('workers','madFfiltering','NAFiltering')
 rm(list = c(setdiff(ls(),varskeep)))
 invisible(gc())
 
@@ -562,7 +562,7 @@ design <- read_tsv('/multiomics/results/design_files/design_multiomics_mofa.tsv'
     filter(str_detect(string = Group.Info,pattern = 'Group1|Group2'))
 proteindata <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
 prot <- proteindata %>% 
-  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
+  madFfiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 prot$Unique.Ids <- make.names(names = prot$Protein.Names,unique = TRUE)
 protFeatures <- prot$Unique.Ids
 prot <- prot %>% 
@@ -572,7 +572,7 @@ rownames(prot) <- protFeatures
 
 phosphodata <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv')
 phospho <- phosphodata %>%
-  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.75)
+  madFfiltering(design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.75)
 phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
 phosphoFeatures <- phospho$Unique.Ids
 phospho <- phospho %>% 
@@ -582,7 +582,7 @@ rownames(phospho) <- phosphoFeatures
 
 genedata <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv')
 gene <- genedata %>% 
-  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
+  madFfiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
 geneFeatures <- gene$Gene.ID
 gene <- gene %>% 
   dplyr::select(design$sample_id) %>% 
@@ -825,7 +825,7 @@ map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device 
 
 ## Group3 vs Group4
 ```{r}
-varskeep <- c('workers','varianceFiltering','NAFiltering')
+varskeep <- c('workers','madFfiltering','NAFiltering')
 rm(list = c(setdiff(ls(),varskeep)))
 invisible(gc())
 
@@ -844,7 +844,7 @@ design <- read_tsv('/multiomics/results/design_files/design_multiomics_mofa.tsv'
     filter(str_detect(string = Group.Info,pattern = 'Group3|Group4'))
 proteindata <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
 prot <- proteindata %>% 
-  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
+  madFfiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 prot$Unique.Ids <- make.names(names = prot$Protein.Names,unique = TRUE)
 protFeatures <- prot$Unique.Ids
 prot <- prot %>% 
@@ -854,7 +854,7 @@ rownames(prot) <- protFeatures
 
 phosphodata <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv')
 phospho <- phosphodata %>%
-  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.75)
+  madFfiltering(design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.75)
 phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
 phosphoFeatures <- phospho$Unique.Ids
 phospho <- phospho %>% 
@@ -864,7 +864,7 @@ rownames(phospho) <- phosphoFeatures
 
 genedata <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv')
 gene <- genedata %>% 
-  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
+  madFfiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
 geneFeatures <- gene$Gene.ID
 gene <- gene %>% 
   dplyr::select(design$sample_id) %>% 
@@ -1107,7 +1107,7 @@ map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device 
 
 ## Lymphnode Positive vs Negative - Ductal
 ```{r}
-varskeep <- c('workers','varianceFiltering','NAFiltering')
+varskeep <- c('workers','madFfiltering','NAFiltering')
 rm(list = c(setdiff(ls(),varskeep)))
 invisible(gc())
 
@@ -1126,7 +1126,7 @@ design <- read_tsv('/multiomics/results/design_files/design_multiomics_mofa.tsv'
     filter(str_detect(string = InvCa.type,pattern = 'Ductal'))
 proteindata <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
 prot <- proteindata %>% 
-  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
+  madFfiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 prot$Unique.Ids <- make.names(names = prot$Protein.Names,unique = TRUE)
 protFeatures <- prot$Unique.Ids
 prot <- prot %>% 
@@ -1136,7 +1136,7 @@ rownames(prot) <- protFeatures
 
 phosphodata <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv')
 phospho <- phosphodata %>%
-  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.75)
+  madFfiltering(design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.75)
 phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
 phosphoFeatures <- phospho$Unique.Ids
 phospho <- phospho %>% 
@@ -1146,7 +1146,7 @@ rownames(phospho) <- phosphoFeatures
 
 genedata <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv')
 gene <- genedata %>% 
-  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
+  madFfiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
 geneFeatures <- gene$Gene.ID
 gene <- gene %>% 
   dplyr::select(design$sample_id) %>% 
@@ -1389,7 +1389,7 @@ map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device 
 
 ## Lymphnode Positive vs Negative - Lobular
 ```{r}
-varskeep <- c('workers','varianceFiltering','NAFiltering')
+varskeep <- c('workers','madFfiltering','NAFiltering')
 rm(list = c(setdiff(ls(),varskeep)))
 invisible(gc())
 
@@ -1408,7 +1408,7 @@ design <- read_tsv('/multiomics/results/design_files/design_multiomics_mofa.tsv'
     filter(str_detect(string = InvCa.type,pattern = 'Lobular'))
 proteindata <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
 prot <- proteindata %>% 
-  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
+  madFfiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 prot$Unique.Ids <- make.names(names = prot$Protein.Names,unique = TRUE)
 protFeatures <- prot$Unique.Ids
 prot <- prot %>% 
@@ -1418,7 +1418,7 @@ rownames(prot) <- protFeatures
 
 phosphodata <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv')
 phospho <- phosphodata %>%
-  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.75)
+  madFfiltering(design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.75)
 phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
 phosphoFeatures <- phospho$Unique.Ids
 phospho <- phospho %>% 
@@ -1428,7 +1428,7 @@ rownames(phospho) <- phosphoFeatures
 
 genedata <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv')
 gene <- genedata %>% 
-  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
+  madFfiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
 geneFeatures <- gene$Gene.ID
 gene <- gene %>% 
   dplyr::select(design$sample_id) %>% 
@@ -1688,7 +1688,7 @@ design <- read_tsv('/multiomics/results/design_files/design_multiomics_mofa.tsv'
 
 proteindata <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
 prot <- proteindata %>% 
-  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
+  madFfiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 prot$Unique.Ids <- make.names(names = prot$Protein.Names,unique = TRUE)
 protFeatures <- prot$Unique.Ids
 prot <- prot %>% 
@@ -1698,7 +1698,7 @@ rownames(prot) <- protFeatures
 
 phosphodata <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv')
 phospho <- phosphodata %>%
-  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.75)
+  madFfiltering(design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.75)
 phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
 phosphoFeatures <- phospho$Unique.Ids
 phospho <- phospho %>% 
@@ -1709,7 +1709,7 @@ rownames(phospho) <- phosphoFeatures
 
 genedata <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv')
 gene <- genedata %>% 
-  varianceFiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
+  madFfiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
 geneFeatures <- gene$Gene.ID
 gene <- gene %>% 
   dplyr::select(design$sample_id) %>% 

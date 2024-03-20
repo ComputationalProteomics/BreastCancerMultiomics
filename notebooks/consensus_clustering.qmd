@@ -5,7 +5,7 @@ format:
   html:
     toc: true
     code-fold: true
-    embed-resources: true
+    embed-resources: false
     toc-location: left
     smooth-scroll: true
 engine: knitr
@@ -54,7 +54,7 @@ results <-  ConsensusClusterPlus(d = proteinDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
                                  title = 'proteome')
 ```
 
@@ -84,7 +84,7 @@ results <-  ConsensusClusterPlus(d = phosphoDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
                                  title = 'phosphoproteome')
 ```
 
@@ -115,7 +115,7 @@ results <-  ConsensusClusterPlus(d = rnaDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
                                  title = 'transcriptome')
 ```
 
@@ -154,7 +154,7 @@ results <-  ConsensusClusterPlus(d = proteinDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
                                  title = 'proteome')
 ```
 
@@ -184,7 +184,7 @@ results <-  ConsensusClusterPlus(d = phosphoDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
                                  title = 'phosphoproteome')
 ```
 
@@ -215,7 +215,7 @@ results <-  ConsensusClusterPlus(d = rnaDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
                                  title = 'transcriptome')
 ```
 
@@ -254,7 +254,7 @@ results <-  ConsensusClusterPlus(d = proteinDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
                                  title = 'proteome')
 ```
 
@@ -284,7 +284,7 @@ results <-  ConsensusClusterPlus(d = phosphoDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
                                  title = 'phosphoproteome')
 ```
 
@@ -315,7 +315,7 @@ results <-  ConsensusClusterPlus(d = rnaDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
                                  title = 'transcriptome')
 ```
 
@@ -354,7 +354,7 @@ results <-  ConsensusClusterPlus(d = proteinDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
                                  title = 'proteome')
 ```
 
@@ -384,7 +384,7 @@ results <-  ConsensusClusterPlus(d = phosphoDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
                                  title = 'phosphoproteome')
 ```
 
@@ -415,7 +415,7 @@ results <-  ConsensusClusterPlus(d = rnaDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
                                  title = 'transcriptome')
 ```
 
@@ -453,7 +453,7 @@ results <-  ConsensusClusterPlus(d = proteinDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
                                  title = 'proteome')
 ```
 
@@ -483,7 +483,7 @@ results <-  ConsensusClusterPlus(d = phosphoDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
                                  title = 'phosphoproteome')
 ```
 
@@ -514,7 +514,7 @@ results <-  ConsensusClusterPlus(d = rnaDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
                                  title = 'transcriptome')
 ```
 
@@ -552,7 +552,7 @@ results <-  ConsensusClusterPlus(d = proteinDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
                                  title = 'proteome')
 ```
 
@@ -582,7 +582,7 @@ results <-  ConsensusClusterPlus(d = phosphoDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
                                  title = 'phosphoproteome')
 ```
 
@@ -613,7 +613,7 @@ results <-  ConsensusClusterPlus(d = rnaDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
                                  title = 'transcriptome')
 ```
 
@@ -651,7 +651,7 @@ results <-  ConsensusClusterPlus(d = proteinDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
                                  title = 'proteome')
 ```
 
@@ -681,7 +681,7 @@ results <-  ConsensusClusterPlus(d = phosphoDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
                                  title = 'phosphoproteome')
 ```
 
@@ -712,6 +712,6 @@ results <-  ConsensusClusterPlus(d = rnaDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
                                  seed = 123,
-                                 verbose = TRUE,reps = 5000,plot = 'pdf',writeTable = TRUE,
+                                 verbose = TRUE,reps = 1000,plot = 'pdf',writeTable = TRUE,
                                  title = 'transcriptome')
 ```

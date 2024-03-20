@@ -271,8 +271,8 @@ process SURVIVAL_MOFA{
     """
     quarto render ${notebook} -P outputdir:'/multiomics/results/figures/survival_analysis/MOFA/DuctalvsLobular/' -P model:'/multiomics/results/MOFA/all_samples/infiltration/model.RDS' -P factor:3 > .html
 
-    quarto render ${notebook} -P outputdir:'/multiomics/results/figures/survival_analysis/MOFA/LNposvsLNneg/Ductal/' -P model:'/multiomics/results/MOFA/LNposvsLNneg/Ductal/model.RDS' -P factor:3 > .html
+    #quarto render ${notebook} -P outputdir:'/multiomics/results/figures/survival_analysis/MOFA/LNposvsLNneg/Ductal/' -P model:'/multiomics/results/MOFA/LNposvsLNneg/Ductal/model.RDS' -P factor:3 > .html
 
-    quarto render ${notebook} -P outputdir:'/multiomics/results/figures/survival_analysis/MOFA/LNposvsLNneg/Lobular/' -P model:'/multiomics/results/MOFA/LNposvsLNneg/Lobular/model.RDS' -P factor:13 -P df:3 -P topN:3 -P iterMax:10 > .html
+    #quarto render ${notebook} -P outputdir:'/multiomics/results/figures/survival_analysis/MOFA/LNposvsLNneg/Lobular/' -P model:'/multiomics/results/MOFA/LNposvsLNneg/Lobular/model.RDS' -P factor:13 -P df:3 -P topN:3 -P iterMax:10 > .html
     """
 }

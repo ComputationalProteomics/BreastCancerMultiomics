@@ -57,6 +57,11 @@ workflow  {
       ch_notebook_multiomics.filter {it.name == 'survival_mofa.qmd'},
       MOFA.out.collect()
     )
+
+    SURVIVAL_DE(
+      ch_notebook_multiomics.filter {it.name == 'survival_DE_multiomics.qmd'}
+      DIFFERENTIAL_EXPRESSION.out.collect()
+    )
 }
 
 // Process definition
@@ -269,10 +274,29 @@ process SURVIVAL_MOFA{
         path("*.html"),emit: html
     script:
     """
-    quarto render ${notebook} -P outputdir:'/multiomics/results/figures/survival_analysis/MOFA/DuctalvsLobular/' -P model:'/multiomics/results/MOFA/all_samples/infiltration/model.RDS' -P factor:3 > .html
+    quarto render ${notebook} -P model:'/multiomics/results/MOFA/all_samples/infiltration/model.RDS' -P factor:3 > .html
 
-    #quarto render ${notebook} -P outputdir:'/multiomics/results/figures/survival_analysis/MOFA/LNposvsLNneg/Ductal/' -P model:'/multiomics/results/MOFA/LNposvsLNneg/Ductal/model.RDS' -P factor:3 > .html
+    #quarto render ${notebook} -P model:'/multiomics/results/MOFA/LNposvsLNneg/Ductal/model.RDS' -P factor:3 > .html
 
-    #quarto render ${notebook} -P outputdir:'/multiomics/results/figures/survival_analysis/MOFA/LNposvsLNneg/Lobular/' -P model:'/multiomics/results/MOFA/LNposvsLNneg/Lobular/model.RDS' -P factor:13 -P df:3 -P topN:3 -P iterMax:10 > .html
+    #quarto render ${notebook} -P model:'/multiomics/results/MOFA/LNposvsLNneg/Lobular/model.RDS' -P factor:13 > .html
+    """
+}
+
+process SURVIVAL_DE{
+    publishDir "./results/rendered_notebooks",
+        mode: "copy"
+
+    input:
+        path(notebook)
+        path(html)
+    output:
+        path("*.html"),emit: html
+    script:
+    """
+    quarto render ${notebook} -P comparison:'DuctalvsLobular_noG2' > .html
+
+    #quarto render ${notebook} -P comparison:'LNposvsLNneg/Ductal/' > .html
+
+    #quarto render ${notebook} -P comparison:'LNposvsLNneg/Lobular/' > .html
     """
 }

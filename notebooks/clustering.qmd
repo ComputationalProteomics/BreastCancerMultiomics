@@ -58,8 +58,8 @@ if(!dir.exists(paths = '/multiomics/results/figures/clustering/DuctalvsLobular')
 ### Consensus Clustering Info
 ```{r}
 ccProt %<-% read_csv(file = '/multiomics/results/consensus_clustering/DuctalvsLobular/proteome/proteome.k=6.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
-ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/DuctalvsLobular/phosphoproteome/phosphoproteome.k=6.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
-ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/DuctalvsLobular/transcriptome/transcriptome.k=6.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
+ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/DuctalvsLobular/phosphoproteome/phosphoproteome.k=5.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
+ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/DuctalvsLobular/transcriptome/transcriptome.k=5.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
 
 ccAll <- full_join(ccProt,ccPhospho) %>% full_join(.,ccRNA)
 write_tsv(x = ccAll,file = '/multiomics/results/design_files/ductalvslobular_consensus_clustering.tsv')
@@ -76,7 +76,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_Full_noPool.t
 
 #### Preprocessing
 ```{r}
-proteinDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
+proteinDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 
 proteinDataFiltered <- proteinDataFiltered %>% 
   dplyr::select(Protein,design$sample_id)
@@ -122,6 +122,8 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
+                                      LN=anno_simple(x = design$LN,col = dfrCol,
+                                                     na_col = 'white'),
                                       Proteome.Cluster=anno_simple(x = design$CC.Prot,
                                                                    col = clusterCol,na_col = 'red'),
                                       Phospho.Cluster=anno_simple(x=design$CC.Phospho,
@@ -159,7 +161,12 @@ legendCluster <- Legend(labels = levels(factor(design$CC.Prot)),
                         legend_gp = gpar(fill=clusterCol),
                         border = 'black')
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster)
+legendLN <- Legend(labels = levels(factor(design$LN)),
+                   title = 'LN',
+                   border = 'black',
+                   legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+
+allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendLN,legendCluster)
 
 set.seed(123)
 proteinHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
@@ -208,7 +215,7 @@ ggsave2(filename = 'alluvialPlot.pdf',plot = alluvialPlot,device = 'pdf',path = 
 
 ggsave2(filename = 'kmeans_proteome.pdf',plot = proteinHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/DuctalvsLobular',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
-varKeep <- c('varianceFiltering','NAFiltering','gprofilerEnrichment','ccAll','calZScore','varKeep')
+varKeep <- c('madFiltering','NAFiltering','gprofilerEnrichment','ccAll','calZScore','varKeep')
 rm(list = setdiff(ls(),varKeep))
 invisible(gc())
 ```
@@ -223,7 +230,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_noPoo
 ```
 #### Preprocessing
 ```{r}
-phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.25)
+phosphoDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.25)
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
   dplyr::select(Protein.Group,design$sample_id)
@@ -267,6 +274,8 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
+                                      LN=anno_simple(x = design$LN,
+                                                     col = dfrCol,na_col = 'white'),
                                       Proteome.Cluster=anno_simple(x = design$CC.Prot,
                                                                    col = clusterCol,na_col = 'red'),
                                       Phospho.Cluster=anno_simple(x=design$CC.Phospho,
@@ -304,7 +313,12 @@ legendCluster <- Legend(labels = levels(factor(design$CC.Phospho)),
                         legend_gp = gpar(fill=clusterCol),
                         border = 'black')
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster)
+legendLN <- Legend(labels = levels(factor(design$LN)),
+                   title = 'LN',
+                   border = 'black',
+                   legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+
+allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendLN,legendCluster)
 
 set.seed(123)
 phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Phospho)})
@@ -357,7 +371,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_noPool.ts
 ```
 #### Preprocessing
 ```{r}
-rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.85)
+rnaDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.85)
 
 rnaDataFiltered <- rnaDataFiltered %>% 
   dplyr::select(Gene.ID,design$sample_id)
@@ -401,6 +415,8 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
+                                      LN=anno_simple(x = design$LN,
+                                                     col = dfrCol,na_col = 'white'),
                                       Proteome.Cluster=anno_simple(x = design$CC.Prot,
                                                                    col = clusterCol,na_col = 'red'),
                                       Phospho.Cluster=anno_simple(x=design$CC.Phospho,
@@ -438,7 +454,12 @@ legendCluster <- Legend(labels = levels(factor(design$CC.RNA)),
                         legend_gp = gpar(fill=clusterCol),
                         border = 'black')
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster)
+legendLN <- Legend(labels = levels(factor(design$LN)),
+                   title = 'LN',
+                   border = 'black',
+                   legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+
+allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendLN,legendCluster)
 
 set.seed(123)
 rnaHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Gene Expression',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.RNA)})
@@ -495,7 +516,7 @@ if(!dir.exists(paths = '/multiomics/results/figures/clustering/AllSamples_noG2')
 ```{r}
 ccProt %<-% read_csv(file = '/multiomics/results/consensus_clustering/AllSamples_noG2/proteome/proteome.k=6.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
 ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/AllSamples_noG2/phosphoproteome/phosphoproteome.k=6.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
-ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/AllSamples_noG2/transcriptome/transcriptome.k=5.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
+ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/AllSamples_noG2/transcriptome/transcriptome.k=4.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
 
 ccAll <- full_join(ccProt,ccPhospho) %>% full_join(.,ccRNA)
 write_tsv(x = ccAll,file = '/multiomics/results/design_files/ductalvslobular_consensus_clustering_noG2.tsv')
@@ -512,7 +533,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_Full_noPool_n
 
 #### Preprocessing
 ```{r}
-proteinDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
+proteinDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 
 proteinDataFiltered <- proteinDataFiltered %>% 
   dplyr::select(Protein,design$sample_id)
@@ -558,6 +579,8 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
+                                      LN=anno_simple(x = design$LN,
+                                                     col = dfrCol,na_col = 'white'),
                                       Proteome.Cluster=anno_simple(x = design$CC.Prot,
                                                                    col = clusterCol,na_col = 'red'),
                                       Phospho.Cluster=anno_simple(x=design$CC.Phospho,
@@ -595,7 +618,12 @@ legendCluster <- Legend(labels = levels(factor(design$CC.Prot)),
                         legend_gp = gpar(fill=clusterCol),
                         border = 'black')
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster)
+legendLN <- Legend(labels = levels(factor(design$LN)),
+                   title = 'LN',
+                   border = 'black',
+                   legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+
+allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendLN,legendCluster)
 
 set.seed(123)
 proteinHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
@@ -644,7 +672,7 @@ ggsave2(filename = 'alluvialPlot.pdf',plot = alluvialPlot,device = 'pdf',path = 
 
 ggsave2(filename = 'kmeans_proteome.pdf',plot = proteinHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/AllSamples_noG2',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
-varKeep <- c('varianceFiltering','NAFiltering','gprofilerEnrichment','ccAll','calZScore','varKeep')
+varKeep <- c('madFiltering','NAFiltering','gprofilerEnrichment','ccAll','calZScore','varKeep')
 rm(list = setdiff(ls(),varKeep))
 invisible(gc())
 ```
@@ -659,7 +687,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_noPoo
 ```
 #### Preprocessing
 ```{r}
-phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.25)
+phosphoDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.25)
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
   dplyr::select(Protein.Group,design$sample_id)
@@ -703,6 +731,8 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
+                                      LN=anno_simple(x = design$LN,
+                                                     col = dfrCol,na_col = 'white'),
                                       Proteome.Cluster=anno_simple(x = design$CC.Prot,
                                                                    col = clusterCol,na_col = 'red'),
                                       Phospho.Cluster=anno_simple(x=design$CC.Phospho,
@@ -740,7 +770,12 @@ legendCluster <- Legend(labels = levels(factor(design$CC.Phospho)),
                         legend_gp = gpar(fill=clusterCol),
                         border = 'black')
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster)
+legendLN <- Legend(labels = levels(factor(design$LN)),
+                   title = 'LN',
+                   border = 'black',
+                   legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+
+allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendLN,legendCluster)
 
 set.seed(123)
 phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Phospho)})
@@ -793,7 +828,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_noPool_no
 ```
 #### Preprocessing
 ```{r}
-rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.85)
+rnaDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.85)
 
 rnaDataFiltered <- rnaDataFiltered %>% 
   dplyr::select(Gene.ID,design$sample_id)
@@ -837,6 +872,8 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
+                                      LN=anno_simple(x = design$LN,
+                                                     col = dfrCol,na_col = 'white'),
                                       Proteome.Cluster=anno_simple(x = design$CC.Prot,
                                                                    col = clusterCol,na_col = 'red'),
                                       Phospho.Cluster=anno_simple(x=design$CC.Phospho,
@@ -874,7 +911,12 @@ legendCluster <- Legend(labels = levels(factor(design$CC.RNA)),
                         legend_gp = gpar(fill=clusterCol),
                         border = 'black')
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster)
+legendLN <- Legend(labels = levels(factor(design$LN)),
+                   title = 'LN',
+                   border = 'black',
+                   legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+
+allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendLN,legendCluster)
 
 set.seed(123)
 rnaHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Gene Expression',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.RNA)})
@@ -929,9 +971,9 @@ if(!dir.exists(paths = '/multiomics/results/figures/clustering/LNposvsLNneg/Duct
 
 #### Consensus Clustering Info
 ```{r}
-ccProt %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/proteome/proteome.k=6.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
-ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/phosphoproteome/phosphoproteome.k=5.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
-ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/transcriptome/transcriptome.k=6.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
+ccProt %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/proteome/proteome.k=5.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
+ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/phosphoproteome/phosphoproteome.k=4.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
+ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/transcriptome/transcriptome.k=4.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
 
 ccAll <- full_join(ccProt,ccPhospho) %>% full_join(.,ccRNA)
 write_tsv(x = ccAll,file = '/multiomics/results/design_files/lnposvslnneg_ductal_consensus_clustering.tsv')
@@ -947,7 +989,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_full_ductal.t
 ```
 ##### Preprocessing
 ```{r}
-proteinDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
+proteinDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 
 proteinDataFiltered <- proteinDataFiltered %>% 
   dplyr::select(Protein,design$sample_id)
@@ -1035,7 +1077,7 @@ legendLN <- Legend(labels = levels(factor(design$LN)),
                       border = 'black',
                       legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster,legendLN)
+allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendLN,legendCluster)
 
 set.seed(123)
 proteinHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
@@ -1084,7 +1126,7 @@ ggsave2(filename = 'alluvialPlot.pdf',plot = alluvialPlot,device = 'pdf',path = 
 
 ggsave2(filename = 'kmeans_proteome.pdf',plot = proteinHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/LNposvsLNneg/Ductal/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
-varKeep <- c('varianceFiltering','NAFiltering','gprofilerEnrichment','ccAll','calZScore','varKeep')
+varKeep <- c('madFiltering','NAFiltering','gprofilerEnrichment','ccAll','calZScore','varKeep')
 rm(list = setdiff(ls(),varKeep))
 invisible(gc())
 ```
@@ -1099,7 +1141,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_ducta
 ```
 ##### Preprocessing
 ```{r}
-phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.25)
+phosphoDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.25)
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
   dplyr::select(Protein.Group,design$sample_id)
@@ -1187,7 +1229,7 @@ legendLN <- Legend(labels = levels(factor(design$LN)),
                       border = 'black',
                       legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster,legendLN)
+allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendLN,legendCluster)
 
 set.seed(123)
 phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Phospho)})
@@ -1241,7 +1283,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_ductal.ts
 
 ##### Preprocessing
 ```{r}
-rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.85)
+rnaDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.85)
 
 rnaDataFiltered <- rnaDataFiltered %>% 
   dplyr::select(Gene.ID,design$sample_id)
@@ -1329,7 +1371,7 @@ legendLN <- Legend(labels = levels(factor(design$LN)),
                       border = 'black',
                       legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster,legendLN)
+allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendLN,legendCluster)
 
 set.seed(123)
 rnaHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Gene Expression',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.RNA)})
@@ -1384,9 +1426,9 @@ if(!dir.exists(paths = '/multiomics/results/figures/clustering/LNposvsLNneg/Duct
 
 #### Consensus Clustering Info
 ```{r}
-ccProt %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal_noG2/proteome/proteome.k=5.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
+ccProt %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal_noG2/proteome/proteome.k=4.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
 ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal_noG2/phosphoproteome/phosphoproteome.k=6.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
-ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal_noG2/transcriptome/transcriptome.k=6.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
+ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal_noG2/transcriptome/transcriptome.k=5.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
 
 ccAll <- full_join(ccProt,ccPhospho) %>% full_join(.,ccRNA)
 write_tsv(x = ccAll,file = '/multiomics/results/design_files/lnposvslnneg_ductal_consensus_clustering_noG2.tsv')
@@ -1402,7 +1444,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_full_ductal_n
 ```
 ##### Preprocessing
 ```{r}
-proteinDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
+proteinDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 
 proteinDataFiltered <- proteinDataFiltered %>% 
   dplyr::select(Protein,design$sample_id)
@@ -1490,7 +1532,7 @@ legendLN <- Legend(labels = levels(factor(design$LN)),
                       border = 'black',
                       legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster,legendLN)
+allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendLN,legendCluster)
 
 set.seed(123)
 proteinHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
@@ -1539,7 +1581,7 @@ ggsave2(filename = 'alluvialPlot.pdf',plot = alluvialPlot,device = 'pdf',path = 
 
 ggsave2(filename = 'kmeans_proteome.pdf',plot = proteinHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/LNposvsLNneg/Ductal_noG2/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
-varKeep <- c('varianceFiltering','NAFiltering','gprofilerEnrichment','ccAll','calZScore','varKeep')
+varKeep <- c('madFiltering','NAFiltering','gprofilerEnrichment','ccAll','calZScore','varKeep')
 rm(list = setdiff(ls(),varKeep))
 invisible(gc())
 ```
@@ -1554,7 +1596,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_ducta
 ```
 ##### Preprocessing
 ```{r}
-phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.25)
+phosphoDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.25)
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
   dplyr::select(Protein.Group,design$sample_id)
@@ -1642,7 +1684,7 @@ legendLN <- Legend(labels = levels(factor(design$LN)),
                       border = 'black',
                       legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster,legendLN)
+allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendLN,legendCluster)
 
 set.seed(123)
 phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Phospho)})
@@ -1696,7 +1738,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_ductal_no
 
 ##### Preprocessing
 ```{r}
-rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.85)
+rnaDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.85)
 
 rnaDataFiltered <- rnaDataFiltered %>% 
   dplyr::select(Gene.ID,design$sample_id)
@@ -1784,7 +1826,7 @@ legendLN <- Legend(labels = levels(factor(design$LN)),
                       border = 'black',
                       legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster,legendLN)
+allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendLN,legendCluster)
 
 set.seed(123)
 rnaHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Gene Expression',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.RNA)})
@@ -1838,9 +1880,9 @@ if(!dir.exists(paths = '/multiomics/results/figures/clustering/LNposvsLNneg/Lobu
 
 #### Consensus Clustering Info
 ```{r}
-ccProt %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/proteome/proteome.k=6.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
-ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/phosphoproteome/phosphoproteome.k=6.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
-ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/transcriptome/transcriptome.k=6.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
+ccProt %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/proteome/proteome.k=4.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
+ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/phosphoproteome/phosphoproteome.k=4.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
+ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/transcriptome/transcriptome.k=4.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
 
 ccAll <- full_join(ccProt,ccPhospho) %>% full_join(.,ccRNA)
 write_tsv(x = ccAll,file = '/multiomics/results/design_files/lnposvslnneg_lobular_consensus_clustering.tsv')
@@ -1856,7 +1898,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_full_lobular.
 ```
 ##### Preprocessing
 ```{r}
-proteinDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
+proteinDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 
 proteinDataFiltered <- proteinDataFiltered %>% 
   dplyr::select(Protein,design$sample_id)
@@ -1944,7 +1986,7 @@ legendLN <- Legend(labels = levels(factor(design$LN)),
                       border = 'black',
                       legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster,legendLN)
+allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendLN,legendCluster)
 
 set.seed(123)
 proteinHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
@@ -1993,7 +2035,7 @@ ggsave2(filename = 'alluvialPlot.pdf',plot = alluvialPlot,device = 'pdf',path = 
 
 ggsave2(filename = 'kmeans_proteome.pdf',plot = proteinHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/LNposvsLNneg/Lobular/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
-varKeep <- c('varianceFiltering','NAFiltering','gprofilerEnrichment','ccAll','calZScore','varKeep')
+varKeep <- c('madFiltering','NAFiltering','gprofilerEnrichment','ccAll','calZScore','varKeep')
 rm(list = setdiff(ls(),varKeep))
 invisible(gc())
 ```
@@ -2008,7 +2050,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_lobul
 ```
 ##### Preprocessing
 ```{r}
-phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.25)
+phosphoDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.25)
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
   dplyr::select(Protein.Group,design$sample_id)
@@ -2096,7 +2138,7 @@ legendLN <- Legend(labels = levels(factor(design$LN)),
                       border = 'black',
                       legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster,legendLN)
+allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendLN,legendCluster)
 
 set.seed(123)
 phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Phospho)})
@@ -2149,7 +2191,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_lobular.t
 ```
 ##### Preprocessing
 ```{r}
-rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.85)
+rnaDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.85)
 
 rnaDataFiltered <- rnaDataFiltered %>% 
   dplyr::select(Gene.ID,design$sample_id)
@@ -2237,7 +2279,7 @@ legendLN <- Legend(labels = levels(factor(design$LN)),
                       border = 'black',
                       legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster,legendLN)
+allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendLN,legendCluster)
 
 set.seed(123)
 rnaHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Gene Expression',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.RNA)})
@@ -2293,7 +2335,7 @@ if(!dir.exists(paths = '/multiomics/results/figures/clustering/Group1vsGroup2'))
 ```{r}
 ccProt %<-% read_csv(file = '/multiomics/results/consensus_clustering/Group1vsGroup2/proteome/proteome.k=5.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
 ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/Group1vsGroup2/phosphoproteome/phosphoproteome.k=6.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
-ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/Group1vsGroup2/transcriptome/transcriptome.k=6.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
+ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/Group1vsGroup2/transcriptome/transcriptome.k=4.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
 
 ccAll <- full_join(ccProt,ccPhospho) %>% full_join(.,ccRNA)
 write_tsv(x = ccAll,file = '/multiomics/results/design_files/g1vsg2_consensus_clustering.tsv')
@@ -2309,7 +2351,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_full_g1g2.tsv
 ```
 #### Preprocessing
 ```{r}
-proteinDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
+proteinDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 
 proteinDataFiltered <- proteinDataFiltered %>% 
   dplyr::select(Protein,design$sample_id)
@@ -2455,7 +2497,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_g1g2.
 ```
 #### Preprocessing
 ```{r}
-phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.25)
+phosphoDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.25)
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
   dplyr::select(Protein.Group,design$sample_id)
@@ -2589,7 +2631,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_g1g2.tsv'
 ```
 #### Preprocessing
 ```{r}
-rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.85)
+rnaDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.85)
 
 rnaDataFiltered <- rnaDataFiltered %>% 
   dplyr::select(Gene.ID,design$sample_id)
@@ -2724,9 +2766,9 @@ if(!dir.exists(paths = '/multiomics/results/figures/clustering/Group3vsGroup4'))
 
 ### Consensus Clustering Info
 ```{r}
-ccProt %<-% read_csv(file = '/multiomics/results/consensus_clustering/Group3vsGroup4/proteome/proteome.k=5.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
-ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/Group3vsGroup4/phosphoproteome/phosphoproteome.k=5.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
-ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/Group3vsGroup4/transcriptome/transcriptome.k=5.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
+ccProt %<-% read_csv(file = '/multiomics/results/consensus_clustering/Group3vsGroup4/proteome/proteome.k=4.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
+ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/Group3vsGroup4/phosphoproteome/phosphoproteome.k=4.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
+ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/Group3vsGroup4/transcriptome/transcriptome.k=4.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
 
 ccAll <- full_join(ccProt,ccPhospho) %>% full_join(.,ccRNA)
 write_tsv(x = ccAll,file = '/multiomics/results/design_files/g3vsg4_consensus_clustering.tsv')
@@ -2742,7 +2784,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_full_g3g4.tsv
 ```
 #### Preprocessing
 ```{r}
-proteinDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
+proteinDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 
 proteinDataFiltered <- proteinDataFiltered %>% 
   dplyr::select(Protein,design$sample_id)
@@ -2888,7 +2930,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_g3g4.
 ```
 #### Preprocessing
 ```{r}
-phosphoDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.25)
+phosphoDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.25)
 
 phosphoDataFiltered <- phosphoDataFiltered %>% 
   dplyr::select(Protein.Group,design$sample_id)
@@ -3022,7 +3064,7 @@ design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_g3g4.tsv'
 ```
 #### Preprocessing
 ```{r}
-rnaDataFiltered <- varianceFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.85)
+rnaDataFiltered <- madFiltering(data = data,design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.85)
 
 rnaDataFiltered <- rnaDataFiltered %>% 
   dplyr::select(Gene.ID,design$sample_id)

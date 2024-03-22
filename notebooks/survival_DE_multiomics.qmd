@@ -40,12 +40,12 @@ if(!dir.exists(paths = outputdir)) {
 ```{r}
 #| message: false
 
-files <- list.files(path = '~/multiomics',pattern = 'stats.tsv',recursive = TRUE,include.dirs = TRUE,full.names = TRUE) %>% .[str_detect(.,params$comparison)]
+files <- list.files(path = '/multiomics',pattern = 'stats.tsv',recursive = TRUE,include.dirs = TRUE,full.names = TRUE) %>% .[str_detect(.,params$comparison)]
 
-design <- read_tsv(file = '~/multiomics/results/design_files/design_multiomics_mofa.tsv')
+design <- read_tsv(file = '/multiomics/results/design_files/design_multiomics_mofa.tsv')
 
 data <- list(proteomics=read_tsv(file = files[str_detect(files,'full')]),
-             phosphoproteomics=read_tsv(file = files[str_detect(files,'phospho')]),
+             phosphoproteomics=read_tsv(file = files[str_detect(files,'aggModSeq')]),
              transcriptomics=read_tsv(file = files[str_detect(files,'transcript')]))
 
 idCol <- list(proteomics='Protein.Names',phosphoproteomics='Protein.Names',transcriptomics='Gene.ID')

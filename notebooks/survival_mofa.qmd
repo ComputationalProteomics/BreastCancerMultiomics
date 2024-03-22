@@ -40,7 +40,12 @@ library(glmnet)
 # Survival Analysis
 ## MOFA Factors
 ```{r}
-outputdir <- paste0('/multiomics/results/figures/survival_analysis/MOFA/',str_split_i(string = params$model,pattern = '/',i = 5),'/')
+outputdir <- str_split(string = params$model,pattern = '/',n = 4)[[1]][4] %>% 
+  str_split_1(pattern = '/') %>% 
+  .[1:length(.)-1] %>% 
+  paste0(.,collapse = '/')
+outputdir <- paste0('/multiomics/results/figures/survival_analysis/',outputdir,'/')
+
 
 if(!dir.exists(paths = outputdir)) {
   dir.create(path = outputdir,recursive = TRUE)

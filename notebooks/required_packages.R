@@ -15,7 +15,12 @@ packages <- c(
   'cluster',
   'factoextra',
   'gprofiler2',
-  'BiocManager')
+  'BiocManager',
+  'tidymodels',
+  'censored',
+  'glmnet',
+  'survival',
+  'survminer')
 
 packages_bioconductor <- c('enrichplot',
                            'AnnotationDbi',

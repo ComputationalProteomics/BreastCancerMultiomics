@@ -1,5 +1,5 @@
 ---
-title: "Survival Analysis"
+title: "Survival Analysis - MOFA"
 author: "Sergio Mosquim Junior"
 format:
   html:
@@ -11,12 +11,8 @@ format:
     message: false
 engine: knitr
 params:
-  outputdir: '/multiomics/results/figures/survival_analysis/MOFA/LNposvsLNneg/Lobular/'
-  model: '/multiomics/results/MOFA/LNposvsLNneg/Lobular/model.RDS'
-  factor: 3
-  df: 3
-  topN: 3
-  iterMax: 20
+  model: '/multiomics/results/MOFA/AllSamples_noG2/model.RDS'
+  factor: 2
 ---
 
 # Requires Packages:
@@ -24,6 +20,7 @@ params:
 ```{r required packages}
 #| message: false
 #| warning: false
+
 pkgCheck <- function(pkg)
 if(!require(package=pkg,quietly = TRUE,character.only = TRUE)){
   install.packages(pkgs = pkg,dependencies = TRUE,clean = TRUE,quiet = TRUE)
@@ -36,63 +33,127 @@ library(survminer)
 library(tidyverse)
 library(tidymodels)
 library(MOFA2)
+library(censored)
+library(glmnet)
 ```
 
 # Survival Analysis
-## MOFA Models
-### All samples
+## MOFA Factors
 ```{r}
-if(!dir.exists(paths = params$outputdir)) {
-  dir.create(path = params$outputdir,recursive = TRUE)
+outputdir <- paste0('/multiomics/results/figures/survival_analysis/MOFA/',str_split_i(string = params$model,pattern = '/',i = 5),'/')
+
+if(!dir.exists(paths = outputdir)) {
+  dir.create(path = outputdir,recursive = TRUE)
 }
 ```
 
-#### Load MOFA Model
+### Load MOFA Model
 ```{r}
+set.seed(123)
 model <- readRDS(file = params$model)
 factors <- get_factors(model)[[1]]
 factors <- tibble(sample=rownames(factors)) %>% bind_cols(.,factors)
+
+data <- model@samples_metadata %>% 
+  dplyr::select(sample,time=DRFi_days,event=DRFi_event) %>% 
+  mutate(surv=Surv(time=time,event=event)) %>% 
+  left_join(factors)
 ```
 
-#### Fit Cox Model
+### Fit Cox Model
   This creates a survival object with distant recurrence free interval as time and DRFi_event (death) as the event.
   A Cox Propotional Hazards model is fit with all factors as variables followed by evaluating the model with the scaled Schoenfeld test which tests the null hypothesis that the variable is stable over time, therefore respecting the Cox test assumptions. A graphical representation of the scaled Schoenfeld residuals can also be seen.
+
+### Tidymodels Cox Factors
 ```{r}
-#| tbl-column: margin
-objSurv <- Surv(time = model@samples_metadata$DRFi_days,event = model@samples_metadata$DRFi_event)
-variables <- factors %>% 
-  dplyr::select(dplyr::contains('Factor')) %>% 
-  colnames() 
+variables <- data %>%
+  dplyr::select(contains('Factor')) %>%
+  colnames()
 
-coxFormula <- reformulate(termlabels = variables,response = 'objSurv')
 
-fit <- coxph(formula = coxFormula,data = factors,control = coxph.control(iter.max = params$iterMax))
-summary(fit)
+cox_factors <- map(.x = variables,.f = function(x){
+  basic_recipe <- recipe(x =  data) %>%
+    update_role(sample,new_role = 'ID') %>% 
+    update_role(all_of(x),new_role = 'predictor') %>% 
+    update_role(surv,new_role = 'outcome')
+
+  data_feat_baked <- basic_recipe %>% 
+    prep() %>% 
+    bake(new_data = NULL)
+
+  hr_factors <- proportional_hazards() %>% 
+    set_engine('survival') %>% 
+    set_mode('censored regression')
+
+  wf <- workflow() %>%
+    add_recipe(basic_recipe) %>% 
+    add_model(hr_factors,formula = surv~.) %>% 
+    fit(data=data) %>% 
+    extract_fit_engine() %>% 
+    summary()
+  
+})
+
+cox_factors_summary <- map(1:length(cox_factors),function(x){
+  pluck(cox_factors[[x]],'coefficients') %>% 
+    as.data.frame()}) %>% 
+  bind_rows() 
+
+signif_factors <- cox_factors_summary %>% 
+  filter(`Pr(>|z|)`<0.1) %>% 
+  rownames()
+
+cox_multi_factors <- {
+  basic_recipe <- recipe(x =  data) %>%
+    update_role(sample,new_role = 'ID') %>% 
+    update_role(all_of(variables),new_role = 'predictor') %>% 
+    update_role(surv,new_role = 'outcome')
+
+  data_feat_baked <- basic_recipe %>% 
+    prep() %>% 
+    bake(new_data = NULL)
+
+  hr_factors <- proportional_hazards() %>% 
+    set_engine('survival') %>% 
+    set_mode('censored regression')
+
+  wf <- workflow() %>%
+    add_recipe(basic_recipe) %>% 
+    add_model(hr_factors,formula = surv~.) %>% 
+    fit(data=data)
+}
 ```
 ```{r}
 #| tbl-column: page
 #| tbl-colwidths: true
-fitcheck <- cox.zph(fit)
+fitcheck <- cox.zph(extract_fit_engine(cox_multi_factors))
 fitcheck
 ```
 ```{r}
-pdf(file = paste0(params$outputdir,'zph_plot_factors.pdf'),width = 20,height = 20,onefile = TRUE)
-ggcoxzph(fitcheck,resid = TRUE,df = params$df)
-dev.off()
+# pdf(file = paste0(outputdir,'zph_plot_factors.pdf'),width = 20,height = 20,onefile = TRUE)
+# ggcoxzph(fitcheck,resid = TRUE,df = params$df)
+# dev.off()
 ```
-
 #### Plot Hazard Ratios
 ```{r}
-hrPlot <- ggforest(fit,data = factors)
-ggsave(filename = 'HR_plot_factors.pdf',plot = hrPlot,device = 'pdf',path = params$outputdir,width = 10,height = 10,dpi = 300)
+hrPlot <- extract_fit_engine(cox_multi_factors) %>% ggforest(data = data)
+ggsave(filename = 'HR_plot_factors_cox.pdf',plot = hrPlot,device = 'pdf',path = outputdir,width = 10,height = 10,dpi = 300)
+
+varKeep <- list('params','varKeep','outputdir')
+rm(list = setdiff(ls(),varKeep))
+invisible(gc())
 ```
-#### Extract top features
+
+
+## MOFA - Cox Single Features
 ```{r}
+model <- readRDS(file = params$model)
 modelMeta <- model@samples_metadata
-features <- get_weights(object = model,views = 'all',factors = c(params$factor),as.data.frame = TRUE,scale = TRUE)
+
+features <- MOFA2::get_weights(object = model,views = 'all',factors = c(params$factor),as.data.frame = TRUE,scale = TRUE)
 featFactors <- features %>% 
   dplyr::group_by(factor,view) %>% 
-  slice_max(order_by = abs(value),n = params$topN) %>% 
+  filter(abs(value)>=0.8) %>% 
   as_tibble
 
 featList <- list(proteomics={featFactors %>%dplyr::filter(view=='proteomics',factor==paste0('Factor',params$factor)) %>% select(feature) %>% unlist %>% as.character %>% unique},
@@ -101,70 +162,366 @@ featList <- list(proteomics={featFactors %>%dplyr::filter(view=='proteomics',fac
               epic={featFactors %>% dplyr::filter(view=='EPIC',factor==paste0('Factor',params$factor)) %>% select(feature) %>% unlist %>% as.character %>% unique},
               cibersort={featFactors %>% dplyr::filter(view=='cibersortx',factor==paste0('Factor',params$factor)) %>% select(feature) %>% unlist %>% as.character %>% unique}) 
 
-protFeatures <- get_data(object = model,features = list(proteomics=featList$proteomics),as.data.frame = TRUE) %>% pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
-phosphoFeatures <- get_data(object = model,features = list(phosphoproteomics=featList$phosphoproteomics),as.data.frame = TRUE) %>% pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
-rnaFeatures <- get_data(object = model,features = list(transcriptomics=featList$transcriptomics),as.data.frame = TRUE) %>% pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
-epicFeatures <- get_data(object = model,features = list(EPIC=featList$epic),as.data.frame = TRUE) %>% pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
-cibersortFeatures <- get_data(object = model,features = list(cibersortx=featList$cibersort),as.data.frame = TRUE) %>% pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
+if(!is_empty(featList[['proteomics']])){
+  protFeatures <- get_data(object = model,features = list(proteomics=featList$proteomics),as.data.frame = TRUE) %>% 
+    pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
+  }else{protFeatures <- data_frame(sample=modelMeta[['sample']])}
+
+if(!is_empty(featList[['phosphoproteomics']])){
+  phosphoFeatures <- get_data(object = model,features = list(phosphoproteomics=featList$phosphoproteomics),as.data.frame = TRUE) %>% 
+    pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
+  }else{phosphoFeatures <- data_frame(sample=modelMeta[['sample']])}
+
+if(!is_empty(featList[['transcriptomics']])){
+  rnaFeatures <- get_data(object = model,features = list(transcriptomics=featList$transcriptomics),as.data.frame = TRUE) %>% 
+    pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
+  }else{rnaFeatures <- data_frame(sample=modelMeta[['sample']])}
+
+if(!is_empty(featList[['epic']])){
+  epicFeatures <- get_data(object = model,features = list(EPIC=featList$epic),as.data.frame = TRUE) %>% 
+    pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
+  }else{epicFeatures <- data_frame(sample=modelMeta[['sample']])}
+
+if(!is_empty(featList[['cibersort']])){
+  cibersortFeatures <- get_data(object = model,features = list(cibersortx=featList$cibersort),as.data.frame = TRUE) %>% 
+    pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
+  }else{cibersortFeatures <- data_frame(sample=modelMeta[['sample']])}
 
 
-finalFeatures <- reduce(.x = list(protFeatures,phosphoFeatures,rnaFeatures,epicFeatures,cibersortFeatures),.f = ~left_join(x = .x,y = .y,by = 'sample'))
-colnames(finalFeatures) <- make.names(names = colnames(finalFeatures),unique = TRUE)
-finalFeatures <- modelMeta %>% select(sample,time=DRFi_days,event=DRFi_event) %>% left_join(finalFeatures)
+omicFeatures <- reduce(.x = list(protFeatures,phosphoFeatures,rnaFeatures,epicFeatures,cibersortFeatures),.f = ~left_join(x = .x,y = .y,by = 'sample'))
+colnames(omicFeatures) <- make.names(names = colnames(omicFeatures),unique = TRUE)
+
+omics_variables <- omicFeatures %>% 
+  dplyr::select(-sample) %>% 
+  colnames()
+
+clinicalFeatures <- modelMeta %>% 
+  select(
+    sample,
+    time=DRFi_days,
+    event=DRFi_event,
+    Age=`Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)`,
+    tumor_mutational_burden,
+    HisScoreLymphocytes,
+    HisScoreStroma,
+    HisScoreInsituCancer,
+    HisScoreInvasiveCancer,
+    LN,
+    NHG,
+    PR,
+    SSP.PAM50,
+    InvCa.type) %>% 
+  mutate(Age=if_else(Age<50,'<50','≥50'),
+         NHG=if_else(NHG=='3','3','1|2')) 
+
+colnames(clinicalFeatures) <- colnames(clinicalFeatures) %>% str_replace_all(.,'\\_','\\.')
+
+finalFeatures <- left_join(clinicalFeatures,omicFeatures) %>% 
+  mutate(surv=Surv(time=time,event=event))
 ```
 
-
-#### Fit Cox Model with same clinical data in factor of choice
+### Model fit single feature
 ```{r}
-variables <- finalFeatures %>% 
+clinical_variables <- clinicalFeatures %>% 
   dplyr::select(-c(sample,time,event)) %>% 
   colnames()
 
-coxFormula <- reformulate(termlabels = variables,response = 'objSurv')
+cox_models_omics <- map(.x = omics_variables,.f = function(x){
+  data <- finalFeatures %>% dplyr::select(sample,surv,x) 
+  
+  basic_recipe <- recipe(x =  data) %>%
+    update_role(x,new_role = 'predictor') %>%
+    update_role(sample,new_role = 'ID') %>%
+    update_role(surv, new_role = 'outcome') %>% 
+    step_normalize(all_numeric_predictors())
 
-fit2 <- coxph(formula = coxFormula,data = finalFeatures,control = coxph.control(iter.max = params$iterMax))
+  hr_factors <- proportional_hazards() %>% 
+    set_engine('survival') %>% 
+    set_mode('censored regression')
 
-fit2Test <- cox.zph(fit2)
+  wf <- workflow() %>%
+    add_recipe(basic_recipe) %>% 
+    add_model(hr_factors,formula = surv~.) %>% 
+    fit(data=data)
+
+  res <- extract_fit_engine(wf) %>% summary()
+  return(res)
+})
+
+cox_models_clinical <- map(.x = clinical_variables,.f = function(x){
+  data <- finalFeatures %>% dplyr::select(sample,surv,x) 
+  
+  basic_recipe <- recipe(x =  data) %>%
+    update_role(x,new_role = 'predictor') %>%
+    update_role(sample,new_role = 'ID') %>%
+    update_role(surv, new_role = 'outcome') %>% 
+    step_string2factor(all_string_predictors()) %>% 
+    step_dummy(all_factor_predictors()) %>% 
+    step_normalize(all_numeric_predictors())
+
+
+  hr_factors <- proportional_hazards() %>% 
+    set_engine('survival') %>% 
+    set_mode('censored regression')
+
+  wf <- workflow() %>%
+    add_recipe(basic_recipe) %>% 
+    add_model(hr_factors,formula = surv~.) %>% 
+    fit(data=data)
+
+  res <- extract_fit_engine(wf) %>% summary()
+  return(res)
+})
+
+signif_omics <- map(.x = seq_len(length(cox_models_omics)),function(x){
+  pluck(cox_models_omics[[x]],'coefficients') %>% as.data.frame() %>% filter(.[['Pr(>|z|)']]<0.1) %>% rownames(.)
+}) %>% 
+  as_vector() %>% 
+  unique
+
+signif_clinical <- map(.x = seq_len(length(cox_models_clinical)),function(x){
+  pluck(cox_models_clinical[[x]],'coefficients') %>% as.data.frame() %>% filter(.[['Pr(>|z|)']]<0.1) %>% rownames(.)
+}) %>% 
+  as_vector() %>% 
+  unique
+
 ```
 
+### Multivariate Model
+```{r}
+data <- finalFeatures %>% 
+  dplyr::select(sample,time,event,surv,all_of(signif_omics),all_of(str_split_i(signif_clinical,'\\_',i = 1)))
+
+basic_recipe <- recipe(x =  data) %>%
+  update_role(any_of(signif_omics),any_of(str_split_i(signif_clinical,'\\_',i = 1)),new_role = 'predictor') %>%
+  update_role(sample,new_role = 'ID') %>%
+  update_role(surv, new_role = 'outcome') %>% 
+  step_string2factor(all_string_predictors()) %>% 
+  step_normalize(all_numeric_predictors())
+
+data_feat_baked <- basic_recipe %>% 
+  prep() %>% 
+  bake(new_data = NULL)
+
+hr_factors <- proportional_hazards() %>% 
+  set_engine('survival') %>% 
+  set_mode('censored regression')
+
+wf <- workflow() %>%
+  add_recipe(basic_recipe) %>% 
+  add_model(hr_factors,formula = surv~.) %>% 
+  fit(data=data)
+
+```
+```{r}
 ##### Check fit
-```{r}
-pdf(file = paste0(params$outputdir,'plot_coxzph.pdf'),width = 20,height = 20,onefile = TRUE)
-ggcoxzph(fit2Test,df = params$df)
-dev.off()
+fitcheck <- cox.zph(fit = extract_fit_engine(wf))
+# pdf(file = paste0(outputdir,'plot_coxzph.pdf'),width = 20,height = 20,onefile = TRUE)
+# ggcoxzph(fitcheck)
+# dev.off()
 ```
 
-##### Plot Hazard Ratios
+#### Plot Hazard Ratios
 ```{r}
-plotPH <- ggforest(model = fit2,data = finalFeatures)
-ggsave(filename = 'plot_forest_features.pdf',plot = plotPH,device = 'pdf',path = params$outputdir,dpi = 300,width = 20,height = 20)
+plotPH <- ggforest(model = extract_fit_engine(wf),data = data)
+ggsave(filename = 'plot_forest_features_cox.pdf',plot = plotPH,device = 'pdf',path = outputdir,dpi = 300)
 ```
 
-##### Calculate cut points and fit model to high vs low
+### Calculate cut points and fit model to high vs low
 ```{r}
+variables <- finalFeatures %>% 
+  dplyr::select(all_of(signif_omics),all_of(str_split_i(signif_clinical,'\\_',i = 1))) %>% 
+  colnames()
+
 featCut <- surv_cutpoint(data = finalFeatures,variables = variables)
 
-finalFeaturesFactors <- surv_categorize(x = featCut)
+finalFeaturesFactors <- surv_categorize(x = featCut,labels = c('Low','High')) %>% as_tibble() %>% mutate(surv=Surv(time=time,event=event),LN=finalFeatures$LN,PR=finalFeatures$PR)
 
-objSurv <- Surv(time = finalFeatures$time,event = finalFeatures$event)
-
-survFormula <- reformulate(termlabels = variables,response = 'objSurv')
-
-fitFeatures <- surv_fit(formula = survFormula,data = finalFeaturesFactors)
+featCutMedian <- finalFeatures %>% mutate(across(c(signif_omics),~if_else(.x<median(.x,na.rm=TRUE),true = 'Low',false = 'High'))) %>% mutate(surv=Surv(time=time,event=event),LN=finalFeatures$LN,PR=finalFeatures$PR)
 ```
 
-###### Kaplan-Meier plots
+#### Kaplan-Meier plots
 ```{r}
 #| warning: false
 kmPlots <- map(.x = variables,.f = function(x){
-  survFormula <- reformulate(termlabels = x,response = 'objSurv')
+  survFormula <- reformulate(termlabels = c(x),response = 'surv')
   fit <- surv_fit(formula = survFormula,data = finalFeaturesFactors)
   ggsurvplot(fit = fit,data = finalFeaturesFactors,conf.int = TRUE,pval = TRUE,pval.method = TRUE,surv.median.line = 'hv',risk.table = TRUE)
   })
 ```
 ```{r}
-invisible(pdf(file = paste0(params$outputdir,'kaplan_meier.pdf'),width = 20,height = 10,onefile = TRUE))
+invisible(pdf(file = paste0(outputdir,'kaplan_meier_cox.pdf'),width = 20,height = 10,onefile = TRUE))
 invisible(map(1:length(kmPlots),~print(kmPlots[[.x]])))
 invisible(dev.off())
+
+varKeep <- list('params','varKeep','outputdir')
+rm(list = setdiff(ls(),varKeep))
+invisible(gc())
 ```
 
+# Fit Elastic Net Model
+  This creates a survival object with distant recurrence free interval as time and DRFi_event (death) as the event.
+  A Cox Propotional Hazards model is fit with all factors as variables followed by evaluating the model with the scaled Schoenfeld test which tests the null hypothesis that the variable is stable over time, therefore respecting the Cox test assumptions. A graphical representation of the scaled Schoenfeld residuals can also be seen.
+  
+```{r}
+set.seed(123)
+model <- readRDS(file = params$model)
+modelMeta <- model@samples_metadata
+
+features <- MOFA2::get_weights(object = model,views = 'all',factors = c(params$factor),as.data.frame = TRUE,scale = TRUE)
+featFactors <- features %>% 
+  dplyr::group_by(factor,view) %>% 
+  filter(abs(value)>=0.5) %>% 
+  as_tibble
+
+featList <- list(proteomics={featFactors %>%dplyr::filter(view=='proteomics',factor==paste0('Factor',params$factor)) %>% select(feature) %>% unlist %>% as.character %>% unique},
+              phosphoproteomics={featFactors %>% dplyr::filter(view=='phosphoproteomics',factor==paste0('Factor',params$factor)) %>% select(feature) %>% unlist %>% as.character %>% unique},
+              transcriptomics={featFactors %>% dplyr::filter(view=='transcriptomics',factor==paste0('Factor',params$factor)) %>% select(feature) %>% unlist %>% as.character %>% unique},
+              epic={featFactors %>% dplyr::filter(view=='EPIC',factor==paste0('Factor',params$factor)) %>% select(feature) %>% unlist %>% as.character %>% unique},
+              cibersort={featFactors %>% dplyr::filter(view=='cibersortx',factor==paste0('Factor',params$factor)) %>% select(feature) %>% unlist %>% as.character %>% unique}) 
+
+if(!is_empty(featList[['proteomics']])){
+  protFeatures <- get_data(object = model,features = list(proteomics=featList$proteomics),as.data.frame = TRUE) %>% 
+    pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
+  }else{protFeatures <- data_frame(sample=modelMeta[['sample']])}
+
+if(!is_empty(featList[['phosphoproteomics']])){
+  phosphoFeatures <- get_data(object = model,features = list(phosphoproteomics=featList$phosphoproteomics),as.data.frame = TRUE) %>% 
+    pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
+  }else{phosphoFeatures <- data_frame(sample=modelMeta[['sample']])}
+
+if(!is_empty(featList[['transcriptomics']])){
+  rnaFeatures <- get_data(object = model,features = list(transcriptomics=featList$transcriptomics),as.data.frame = TRUE) %>% 
+    pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
+  }else{rnaFeatures <- data_frame(sample=modelMeta[['sample']])}
+
+if(!is_empty(featList[['epic']])){
+  epicFeatures <- get_data(object = model,features = list(EPIC=featList$epic),as.data.frame = TRUE) %>% 
+    pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
+  }else{epicFeatures <- data_frame(sample=modelMeta[['sample']])}
+
+if(!is_empty(featList[['cibersort']])){
+  cibersortFeatures <- get_data(object = model,features = list(cibersortx=featList$cibersort),as.data.frame = TRUE) %>% 
+    pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
+  }else{cibersortFeatures <- data_frame(sample=modelMeta[['sample']])}
+
+
+omicFeatures <- reduce(.x = list(protFeatures,phosphoFeatures,rnaFeatures,epicFeatures,cibersortFeatures),.f = ~left_join(x = .x,y = .y,by = 'sample'))
+colnames(omicFeatures) <- make.names(names = colnames(omicFeatures),unique = TRUE)
+
+omics_variables <- omicFeatures %>% 
+  dplyr::select(-sample) %>% 
+  colnames()
+
+clinicalFeatures <- modelMeta %>% 
+  select(
+    sample,
+    time=DRFi_days,
+    event=DRFi_event,
+    Age=`Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)`,
+    tumor_mutational_burden,
+    HisScoreLymphocytes,
+    HisScoreStroma,
+    HisScoreInsituCancer,
+    HisScoreInvasiveCancer,
+    LN,
+    NHG,
+    PR,
+    SSP.PAM50,
+    InvCa.type) %>% 
+  mutate(Age=if_else(Age<50,'<50','≥50'),
+         NHG=if_else(NHG=='3','3','1|2'),
+         LN=as.factor(LN)) 
+
+colnames(clinicalFeatures) <- colnames(clinicalFeatures) %>% str_replace_all(.,'\\_','\\.')
+
+finalFeatures <- left_join(clinicalFeatures,omicFeatures) %>% 
+  mutate(surv=Surv(time=time,event=event))
+```
+
+## Model
+```{r}
+#| tbl-column: margin
+tidymodels_prefer()
+set.seed(234)
+
+clinical <- clinicalFeatures %>%
+  dplyr::select(-c(sample,time,event)) %>%
+  colnames()
+
+basic_recipe <- recipe(x =  finalFeatures) %>%
+  update_role(all_of(omics_variables),all_of(clinical),new_role = 'predictor') %>%
+  update_role(sample,new_role = 'ID') %>%
+  update_role(surv, new_role = 'outcome') %>% 
+  step_other(SSP.PAM50,threshold = 0.1,other = 'Other') %>%
+  step_dummy(all_factor_predictors(),all_string_predictors()) %>%
+  step_rm(all_factor_predictors(),all_string_predictors()) %>% 
+  step_zv(all_predictors()) %>% 
+  step_nzv(all_predictors()) %>%
+  step_normalize(all_predictors()) %>% 
+  step_impute_knn(all_predictors())
+
+dataPreprocess <- basic_recipe %>% 
+  prep() %>% 
+  bake(NULL)
+```
+```{r}
+set.seed(234)
+x <- dataPreprocess %>% 
+  select(-c(sample,time,event,surv)) %>% 
+  as.matrix()
+
+y <- dataPreprocess %>% 
+  select(time,status=event) %>% 
+  as.matrix
+
+cv.fit <- cv.glmnet(x,y, family = "cox", nfolds = 10,type.measure = 'C',parallel = TRUE,grouped = TRUE,maxit=1e+9,nlambda=200,alpha=1,standardize=FALSE)
+```
+```{r}
+lambda_min <- cv.fit$lambda.min
+lambda_1se <- cv.fit$lambda.1se
+
+lassoPlot <- cv.fit[["glmnet.fit"]] %>% autoplot(best_penalty = lambda_min,top_n = 5)
+
+pdf(file = paste0(outputdir,'plot_lasso.pdf'))
+cIndexPlot <- cv.fit %>% plot()
+lassoPlot
+dev.off()
+
+featSparse <- coef(cv.fit,s = lambda_min) %>% as.matrix() %>% as.data.frame() %>% filter(`1`!=0) %>% arrange(desc(abs(`1`)))
+selectedFeat <- rownames(featSparse)
+```
+
+### Calculate cut points and fit model to high vs low
+```{r}
+selectedFeat[which(!(selectedFeat %in% colnames(finalFeatures)))] <- str_split_i(string = selectedFeat[which(!(selectedFeat %in% colnames(finalFeatures)))],pattern = '\\_',i = 1)
+
+featCut <- surv_cutpoint(data = finalFeatures,variables = selectedFeat)
+
+finalFeaturesFactors <- surv_categorize(x = featCut,labels = c('Low','High')) %>% as_tibble() %>% mutate(surv=Surv(time=time,event=event),group=finalFeatures[['group']])
+
+featCutMedian <- finalFeatures %>% 
+  select(selectedFeat) %>% 
+  mutate(across(where(is.numeric),~if_else(.x<median(.x,na.rm=TRUE),true = 'Low',false = 'High'))) %>% 
+  bind_cols(finalFeatures[,c('sample','time','event')],.) %>% 
+  mutate(surv=Surv(time=time,event=event))
+```
+
+#### Kaplan-Meier plots
+```{r}
+#| warning: false
+kmPlots <- map(.x = selectedFeat,.f = function(x){
+  survFormula <- reformulate(termlabels = c(x),response = 'surv')
+  fit <- surv_fit(formula = survFormula,data = finalFeaturesFactors)
+  ggsurvplot(fit = fit,data = finalFeaturesFactors,conf.int = TRUE,pval = TRUE,pval.method = TRUE,surv.median.line = 'hv',risk.table = TRUE)
+  })
+```
+```{r}
+invisible(pdf(file = paste0(outputdir,'kaplan_meier_Lassocox.pdf'),width = 20,height = 10,onefile = TRUE))
+invisible(map(1:length(kmPlots),~print(kmPlots[[.x]])))
+invisible(dev.off())
+
+varKeep <- list('params','varKeep','outputdir')
+rm(list = setdiff(ls(),varKeep))
+invisible(gc())
+```

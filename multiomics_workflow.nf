@@ -59,7 +59,7 @@ workflow  {
     )
 
     SURVIVAL_DE(
-      ch_notebook_multiomics.filter {it.name == 'survival_DE_multiomics.qmd'}
+      ch_notebook_multiomics.filter {it.name == 'survival_DE_multiomics.qmd'},
       DIFFERENTIAL_EXPRESSION.out.collect()
     )
 }

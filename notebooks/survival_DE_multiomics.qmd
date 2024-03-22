@@ -1,0 +1,220 @@
+---
+title: "Survival Analysis"
+author: "Sergio Mosquim Junior"
+format:
+  html:
+    toc: true
+    code-fold: true
+    embed-resources: true
+    toc-location: left
+    smooth-scroll: true
+    message: false
+engine: knitr
+params:
+  comparison: 'DuctalvsLobular_noG2'
+---
+
+# Requires Packages:
+
+```{r required packages}
+#| message: false
+#| warning: false
+library(tidyverse)
+library(survival)
+library(survminer)
+library(tidymodels)
+library(glmnet)
+library(censored)
+```
+
+
+```{r Output Directory}
+outputdir <- paste0('/multiomics/results/figures/survival_analysis/DE/',params$comparison,'/')
+
+if(!dir.exists(paths = outputdir)) {
+  dir.create(path = outputdir,recursive = TRUE)
+}
+```
+
+## Load data
+```{r}
+#| message: false
+
+files <- list.files(path = '~/multiomics',pattern = 'stats.tsv',recursive = TRUE,include.dirs = TRUE,full.names = TRUE) %>% .[str_detect(.,params$comparison)]
+
+design <- read_tsv(file = '~/multiomics/results/design_files/design_multiomics_mofa.tsv')
+
+data <- list(proteomics=read_tsv(file = files[str_detect(files,'full')]),
+             phosphoproteomics=read_tsv(file = files[str_detect(files,'phospho')]),
+             transcriptomics=read_tsv(file = files[str_detect(files,'transcript')]))
+
+idCol <- list(proteomics='Protein.Names',phosphoproteomics='Protein.Names',transcriptomics='Gene.ID')
+omics_type <- list('_proteomics','_phosphoproteomics','')
+```
+
+### Filter significant features and prep data
+```{r}
+set.seed(123)
+data <- pmap(list(data,idCol,omics_type),function(x,y,z){
+  signifCol <- colnames(x) %>% str_which(pattern = 'Adj') %>% colnames(x)[.]
+  x[[y]] <- paste0(make.names(names = x[[y]],unique = TRUE),z)
+  data <- x %>% 
+  select(all_of(y),all_of(signifCol),design$sample_id) %>% 
+  filter(.[[signifCol]]<0.1) %>% 
+  drop_na()
+})
+
+features <- map2(data,idCol,function(x,y){
+  features <- x %>% 
+    select(design$sample_id) %>% 
+    t() %>% 
+    cbind(sample_id=rownames(.),.) %>% 
+    as.data.frame()
+  colnames(features) <- c('sample_id',x[[y]])
+  features <- features %>% 
+    mutate(across(x[[y]],as.numeric))
+}) %>% reduce(.x = .,.f = ~left_join(x = .x,y = .y,by = 'sample_id'))
+
+omics_variables <- features %>% 
+  dplyr::select(-sample_id) %>% 
+  colnames()
+
+clinical <- design %>% 
+  select(
+    sample_id,
+    time=DRFi_days,
+    event=DRFi_event,
+    Age=`Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)`,
+    tumor_mutational_burden,
+    HisScoreLymphocytes,
+    HisScoreStroma,
+    HisScoreInsituCancer,
+    HisScoreInvasiveCancer,
+    NHG,
+    PR,
+    SSP.PAM50,
+    InvCa.type,
+    LN
+    ) %>%   
+  mutate(Age=if_else(Age<50,'<50','≥50'),
+         NHG=if_else(NHG=='3','3','1|2'),
+         LN=as.factor(LN)) %>% 
+  drop_na()
+
+clinical_variables <- clinical %>%
+  dplyr::select(-c(sample_id,time,event)) %>%
+  colnames()
+
+finalFeatures <- left_join(clinical,features) %>% 
+  mutate(surv=Surv(time=time,event=event))
+
+basic_recipe <- recipe(x =  finalFeatures) %>%
+  update_role(all_of(omics_variables),all_of(clinical_variables),new_role = 'predictor') %>%
+  update_role(sample_id,new_role = 'ID') %>%
+  update_role(surv, new_role = 'outcome') %>% 
+  step_other(SSP.PAM50,threshold = 0.1,other = 'Other') %>%
+  step_dummy(all_factor_predictors(),all_string_predictors()) %>%
+  step_rm(all_factor_predictors(),all_string_predictors()) %>% 
+  step_zv(all_predictors()) %>% 
+  step_nzv(all_predictors()) %>%
+  step_normalize(all_predictors()) 
+
+dataPreprocess <- basic_recipe %>% 
+  prep() %>% 
+  bake(NULL)
+```
+
+## Fit Elastic net survival model
+```{r}
+#| tbl-column: margin
+# I have to fit the model within the glmnet pakcage because there is some error when fitting many predictors using censored
+library(future)
+library(future.callr)
+library(callr)
+library(parallelly)
+library(doParallel)
+
+set.seed(234)
+workers <- availableCores(constraints = 'connections',which = 'min')/2 %>% round()
+plan(callr,workers=workers)
+registerDoParallel()
+x <- dataPreprocess %>% 
+  select(-c(sample_id,time,event,surv)) %>% 
+  as.matrix()
+
+y <- dataPreprocess %>% 
+  select(time,status=event) %>% 
+  as.matrix
+
+cv.fit <- cv.glmnet(x,y, family = "cox", nfolds = 10,type.measure = 'C',parallel = TRUE,grouped = TRUE,maxit=1e+9,nlambda=200,alpha=1)
+
+stopImplicitCluster()
+```
+```{r}
+lambda_min <- cv.fit$lambda.min
+lambda_1se <- cv.fit$lambda.1se
+
+lassoPlot <- cv.fit[["glmnet.fit"]] %>% autoplot(best_penalty = lambda_min,top_n = 5)
+
+pdf(file = paste0(outputdir,'plot_lasso.pdf'))
+cIndexPlot <- cv.fit %>% plot()
+print(lassoPlot)
+dev.off()
+
+featSparse <- coef(cv.fit,s = lambda_min) %>% as.matrix() %>% as.data.frame() %>% filter(`1`!=0) %>% arrange(desc(abs(`1`)))
+selectedFeat <- rownames(featSparse)
+```
+
+
+### Multivariate Model
+```{r}
+hr_factors <- proportional_hazards() %>% 
+  set_engine('survival') %>% 
+  set_mode('censored regression')
+
+wf <- workflow() %>%
+  add_model(hr_factors,formula = surv~.) %>%
+  add_variables(outcomes = surv,predictors = all_of(selectedFeat)) %>% 
+  fit(data=dataPreprocess)
+
+```
+```{r}
+##### Check fit
+fitcheck <- cox.zph(fit = extract_fit_engine(wf))
+# pdf(file = paste0(params$outputdir,'plot_coxzph.pdf'),width = 20,height = 20,onefile = TRUE)
+# ggcoxzph(fitcheck)
+# dev.off()
+```
+
+#### Plot Hazard Ratios
+```{r}
+plotPH <- ggforest(model = extract_fit_engine(wf),data = dataPreprocess)
+ggsave(filename = 'plot_forest_features.pdf',plot = plotPH,device = 'pdf',path = outputdir,dpi = 300)
+```
+### Calculate cut points and fit model to high vs low
+```{r}
+featCut <- surv_cutpoint(data = dataPreprocess,variables = selectedFeat)
+
+finalFeaturesFactors <- surv_categorize(x = featCut,labels = c('Low','High')) %>% as_tibble() %>% mutate(surv=Surv(time=time,event=event))
+
+featCutMedian <- finalFeatures %>% mutate(across(all_of(selectedFeat),~if_else(.x<median(.x,na.rm=TRUE),true = 'Low',false = 'High'))) %>% mutate(surv=Surv(time=time,event=event))
+```
+
+#### Kaplan-Meier plots
+```{r}
+#| warning: false
+kmPlots <- map(.x = selectedFeat,.f = function(x){
+  survFormula <- reformulate(termlabels = c(x),response = 'surv')
+  fit <- surv_fit(formula = survFormula,data = featCutMedian)
+  ggsurvplot(fit = fit,data = featCutMedian,conf.int = TRUE,pval = TRUE,pval.method = TRUE,surv.median.line = 'hv',risk.table = TRUE)
+  })
+```
+```{r}
+invisible(pdf(file = paste0(outputdir,'kaplan_meier.pdf'),width = 20,height = 10,onefile = TRUE))
+invisible(map(1:length(kmPlots),~print(kmPlots[[.x]])))
+invisible(dev.off())
+
+varKeep <- list('params','varKeep')
+rm(list = setdiff(ls(),varKeep))
+invisible(gc())
+```

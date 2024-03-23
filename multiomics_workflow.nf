@@ -62,6 +62,11 @@ workflow  {
       ch_notebook_multiomics.filter {it.name == 'survival_DE_multiomics.qmd'},
       DIFFERENTIAL_EXPRESSION.out.collect()
     )
+
+    DIFFERENTIAL_EXPRESSION_CLUSTER(
+      ch_notebook_multiomics.filter {it.name == 'differentialexpression_consensus_cluster.qmd'},
+      CLUSTERING.out.collect()
+    )
 }
 
 // Process definition
@@ -298,5 +303,25 @@ process SURVIVAL_DE{
     #quarto render ${notebook} -P comparison:'LNposvsLNneg/Ductal/' > .html
 
     #quarto render ${notebook} -P comparison:'LNposvsLNneg/Lobular/' > .html
+    """
+}
+
+process DIFFERENTIAL_EXPRESSION_CLUSTER{
+    publishDir "./results/rendered_notebooks",
+        mode: "copy"
+
+    input:
+        path(notebook)
+        path(html)
+
+    when:
+        html.exists()
+
+    output:
+        path("*.html"), emit: html
+
+    script:
+    """
+    quarto render ${notebook} --to html > .html
     """
 }

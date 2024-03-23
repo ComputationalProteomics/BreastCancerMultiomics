@@ -216,8 +216,10 @@ clinicalFeatures <- modelMeta %>%
     PR,
     SSP.PAM50,
     InvCa.type) %>% 
+  mutate(across(SSP.PAM50,~if_else(str_detect(.x,'Lum',negate=TRUE),'Other',.x))) %>% 
   mutate(Age=if_else(Age<50,'<50','≥50'),
-         NHG=if_else(NHG=='3','3','1|2')) 
+         NHG=if_else(NHG=='3','3','1|2'),
+         SSP.PAM50=as.factor(SSP.PAM50))
 
 colnames(clinicalFeatures) <- colnames(clinicalFeatures) %>% str_replace_all(.,'\\_','\\.')
 
@@ -302,6 +304,7 @@ basic_recipe <- recipe(x =  data) %>%
   update_role(sample,new_role = 'ID') %>%
   update_role(surv, new_role = 'outcome') %>% 
   step_string2factor(all_string_predictors()) %>% 
+  step_dummy(all_factor_predictors()) %>% 
   step_normalize(all_numeric_predictors())
 
 data_feat_baked <- basic_recipe %>% 

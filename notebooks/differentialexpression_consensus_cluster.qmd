@@ -95,11 +95,11 @@ rm(list = ls())
 ```{r}
 dataP <- '/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv'
 designP <- '/multiomics/results/design_files/ductalvslobular_consensus_clustering_noG2.tsv'
-outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/AllSamples/'
+outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/AllSamples_noG2/'
 jDEName <- "allsamples_proteome_cluster"
 
 design <- read_tsv(designP)
-design2 <- read_tsv('/multiomics/results/design_files/design_Full_noPool.tsv') %>% left_join(.,design,'sample_id')
+design2 <- read_tsv('/multiomics/results/design_files/design_Full_noPool_noG2.tsv') %>% left_join(.,design,'sample_id')
 designP <- paste0(designP,'_proteome.tsv')
 write_tsv(x = design2,file = designP)
 
@@ -112,11 +112,11 @@ proteomeProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE
 ```{r}
 dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
 designP <- '/multiomics/results/design_files/ductalvslobular_consensus_clustering_noG2.tsv'
-outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/AllSamples/'
+outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/AllSamples_noG2/'
 jDEName <- "allsamples_phospho_cluster"
 
 design <- read_tsv(designP)
-design2 <- read_tsv('/multiomics/results/design_files/design_phospho_noPool.tsv') %>% left_join(.,design,'sample_id')
+design2 <- read_tsv('/multiomics/results/design_files/design_phospho_noPool_noG2.tsv') %>% left_join(.,design,'sample_id')
 designP <- paste0(designP,'_phospho.tsv')
 write_tsv(x = design2,file = designP)
 comparisons <- design2[["CC.Phospho"]] %>% na.omit() %>% unique() %>% combn(.,2) %>% t() %>% apply(.,1,function(x)paste0(x,collapse = '-'))
@@ -128,11 +128,11 @@ phosphoPep <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(j
 ```{r}
 dataP <- '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv'
 designP <- '/multiomics/results/design_files/ductalvslobular_consensus_clustering_noG2.tsv'
-outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/AllSamples/'
+outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/AllSamples_noG2/'
 jDEName <- "allsamples_transcriptome_cluster"
 
 design <- read_tsv(designP)
-design2 <- read_tsv('/multiomics/results/design_files/design_RNA_noPool.tsv') %>% left_join(.,design,'sample_id')
+design2 <- read_tsv('/multiomics/results/design_files/design_RNA_noPool_noG2.tsv') %>% left_join(.,design,'sample_id')
 designP <- paste0(designP,'_rna.tsv')
 write_tsv(x = design2,file = designP)
 

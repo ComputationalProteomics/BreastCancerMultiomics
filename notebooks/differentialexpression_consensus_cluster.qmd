@@ -35,56 +35,73 @@ on.exit(expr = {plan(sequential)})
 ```{r}
 dataP <- '/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv'
 designP <- '/multiomics/results/design_files/ductalvslobular_consensus_clustering.tsv'
-outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/AllSamples/'
+outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/AllSamples/Proteome/'
 jDEName <- "allsamples_proteome_cluster"
 
-design <- read_tsv(designP)
+design <- read_tsv(designP) %>% 
+  pivot_wider(names_from = 'CC.Prot',values_from = 'CC.Prot',values_fn = ~if_else(is.numeric(.x),1,0),values_fill = 0,names_prefix = 'CC.Prot.') %>%
+  dplyr::select(-matches('CC.Prot.NA'))
+
 design2 <- read_tsv('/multiomics/results/design_files/design_Full_noPool.tsv') %>% left_join(.,design,'sample_id')
 designP <- paste0(designP,'_proteome.tsv')
 write_tsv(x = design2,file = designP)
 
-comparisons <- design2[["CC.Prot"]] %>% na.omit() %>% unique() %>% combn(.,2) %>% t() %>% apply(.,1,function(x)paste0(x,collapse = '-'))
+compCols <- design2 %>% dplyr::select(contains('CC.Prot')) %>% colnames()
 
-proteomeProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'CC.Prot',comparisons = comparisons,batchCol = 'group')})
+proteomeProt <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),.x = compCols,.f = function(x){
+  jDEName <- paste0(jDEName,'_',x)
+  normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = x,comparisons = '1-0',batchCol = 'group')
+})
 ```
 
 ### Phospho
 ```{r}
 dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
 designP <- '/multiomics/results/design_files/ductalvslobular_consensus_clustering.tsv'
-outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/AllSamples/'
+outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/AllSamples/Phosphoproteome/'
 jDEName <- "allsamples_phospho_cluster"
 
-design <- read_tsv(designP)
+design <- read_tsv(designP) %>% 
+  pivot_wider(names_from = 'CC.Phospho',values_from = 'CC.Phospho',values_fn = ~if_else(is.numeric(.x),1,0),values_fill = 0,names_prefix = 'CC.Phospho.') %>%
+  dplyr::select(-matches('CC.Phospho.NA'))
+
 design2 <- read_tsv('/multiomics/results/design_files/design_phospho_noPool.tsv') %>% left_join(.,design,'sample_id')
 designP <- paste0(designP,'_phospho.tsv')
 write_tsv(x = design2,file = designP)
-comparisons <- design2[["CC.Phospho"]] %>% na.omit() %>% unique() %>% combn(.,2) %>% t() %>% apply(.,1,function(x)paste0(x,collapse = '-'))
 
-phosphoPep <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'CC.Phospho',comparisons = comparisons,batchCol = 'group')})
+compCols <- design2 %>% dplyr::select(contains('CC.Phospho')) %>% colnames()
+
+phosphoPep <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),.x = compCols,.f = function(x){
+  jDEName <- paste0(jDEName,'_',x)
+  normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = x,comparisons = '1-0',batchCol = 'group')
+})
 ```
 
 ### Transcriptome
 ```{r}
 dataP <- '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv'
 designP <- '/multiomics/results/design_files/ductalvslobular_consensus_clustering.tsv'
-outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/AllSamples/'
+outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/AllSamples/Transcriptome/'
 jDEName <- "allsamples_transcriptome_cluster"
 
-design <- read_tsv(designP)
+design <- read_tsv(designP) %>% 
+  pivot_wider(names_from = 'CC.RNA',values_from = 'CC.RNA',values_fn = ~if_else(is.numeric(.x),1,0),values_fill = 0,names_prefix = 'CC.RNA.') %>%
+  dplyr::select(-matches('CC.RNA.NA'))
+
 design2 <- read_tsv('/multiomics/results/design_files/design_RNA_noPool.tsv') %>% left_join(.,design,'sample_id')
 designP <- paste0(designP,'_rna.tsv')
 write_tsv(x = design2,file = designP)
 
-comparisons <- design2[["CC.RNA"]] %>% na.omit() %>% unique() %>% combn(.,2) %>% t() %>% apply(.,1,function(x)paste0(x,collapse = '-'))
+compCols <- design2 %>% dplyr::select(contains('CC.RNA')) %>% colnames()
 
-transcriptome <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'CC.RNA',comparisons = comparisons)})
+phosphoPep <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),.x = compCols,.f = function(x){
+  jDEName <- paste0(jDEName,'_',x)
+  normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = x,comparisons = '1-0',batchCol = 'group')
+})
 ```
 
 ### Results
 ```{r}
-results <- list(proteomeProt,phosphoPep,transcriptome)
-future_map(.x = results,.f = value)
 invisible(gc())
 rm(list = ls())
 ```
@@ -95,56 +112,73 @@ rm(list = ls())
 ```{r}
 dataP <- '/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv'
 designP <- '/multiomics/results/design_files/ductalvslobular_consensus_clustering_noG2.tsv'
-outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/AllSamples_noG2/'
+outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/AllSamples_noG2/Proteome/'
 jDEName <- "allsamples_proteome_cluster"
 
-design <- read_tsv(designP)
+design <- read_tsv(designP) %>% 
+  pivot_wider(names_from = 'CC.Prot',values_from = 'CC.Prot',values_fn = ~if_else(is.numeric(.x),1,0),values_fill = 0,names_prefix = 'CC.Prot.') %>%
+  dplyr::select(-matches('CC.Prot.NA'))
+
 design2 <- read_tsv('/multiomics/results/design_files/design_Full_noPool_noG2.tsv') %>% left_join(.,design,'sample_id')
 designP <- paste0(designP,'_proteome.tsv')
 write_tsv(x = design2,file = designP)
 
-comparisons <- design2[["CC.Prot"]] %>% na.omit() %>% unique() %>% combn(.,2) %>% t() %>% apply(.,1,function(x)paste0(x,collapse = '-'))
+compCols <- design2 %>% dplyr::select(contains('CC.Prot')) %>% colnames()
 
-proteomeProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'CC.Prot',comparisons = comparisons,batchCol = 'group')})
+proteomeProt <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),.x = compCols,.f = function(x){
+  jDEName <- paste0(jDEName,'_',x)
+  normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = x,comparisons = '1-0',batchCol = 'group')
+})
 ```
 
 ### Phospho
 ```{r}
 dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
 designP <- '/multiomics/results/design_files/ductalvslobular_consensus_clustering_noG2.tsv'
-outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/AllSamples_noG2/'
+outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/AllSamples_noG2/Phosphoproteome/'
 jDEName <- "allsamples_phospho_cluster"
 
-design <- read_tsv(designP)
+design <- read_tsv(designP) %>% 
+  pivot_wider(names_from = 'CC.Phospho',values_from = 'CC.Phospho',values_fn = ~if_else(is.numeric(.x),1,0),values_fill = 0,names_prefix = 'CC.Phospho.') %>%
+  dplyr::select(-matches('CC.Phospho.NA'))
+
 design2 <- read_tsv('/multiomics/results/design_files/design_phospho_noPool_noG2.tsv') %>% left_join(.,design,'sample_id')
 designP <- paste0(designP,'_phospho.tsv')
 write_tsv(x = design2,file = designP)
-comparisons <- design2[["CC.Phospho"]] %>% na.omit() %>% unique() %>% combn(.,2) %>% t() %>% apply(.,1,function(x)paste0(x,collapse = '-'))
 
-phosphoPep <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'CC.Phospho',comparisons = comparisons,batchCol = 'group')})
+compCols <- design2 %>% dplyr::select(contains('CC.Phospho')) %>% colnames()
+
+phosphoPep <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),.x = compCols,.f = function(x){
+  jDEName <- paste0(jDEName,'_',x)
+  normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = x,comparisons = '1-0',batchCol = 'group')
+})
 ```
 
 ### Transcriptome
 ```{r}
 dataP <- '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv'
 designP <- '/multiomics/results/design_files/ductalvslobular_consensus_clustering_noG2.tsv'
-outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/AllSamples_noG2/'
+outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/AllSamples_noG2/Transcriptome/'
 jDEName <- "allsamples_transcriptome_cluster"
 
-design <- read_tsv(designP)
+design <- read_tsv(designP) %>% 
+  pivot_wider(names_from = 'CC.RNA',values_from = 'CC.RNA',values_fn = ~if_else(is.numeric(.x),1,0),values_fill = 0,names_prefix = 'CC.RNA.') %>%
+  dplyr::select(-matches('CC.RNA.NA'))
+
 design2 <- read_tsv('/multiomics/results/design_files/design_RNA_noPool_noG2.tsv') %>% left_join(.,design,'sample_id')
 designP <- paste0(designP,'_rna.tsv')
 write_tsv(x = design2,file = designP)
 
-comparisons <- design2[["CC.RNA"]] %>% na.omit() %>% unique() %>% combn(.,2) %>% t() %>% apply(.,1,function(x)paste0(x,collapse = '-'))
+compCols <- design2 %>% dplyr::select(contains('CC.RNA')) %>% colnames()
 
-transcriptome <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'CC.RNA',comparisons = comparisons)})
+phosphoPep <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),.x = compCols,.f = function(x){
+  jDEName <- paste0(jDEName,'_',x)
+  normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = x,comparisons = '1-0',batchCol = 'group')
+})
 ```
 
 ### Results
 ```{r}
-results <- list(proteomeProt,phosphoPep,transcriptome)
-future_map(.x = results,.f = value)
 invisible(gc())
 rm(list = ls())
 ```
@@ -156,57 +190,73 @@ rm(list = ls())
 ```{r}
 dataP <- '/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv'
 designP <- '/multiomics/results/design_files/lnposvslnneg_ductal_consensus_clustering.tsv'
-outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/LNposvsLNneg/Ductal/'
+outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/LNposvsLNneg/Ductal/Proteome/'
 jDEName <- "lnposvslnneg_ductal_proteome_cluster"
 
-design <- read_tsv(designP)
+design <- read_tsv(designP) %>% 
+  pivot_wider(names_from = 'CC.Prot',values_from = 'CC.Prot',values_fn = ~if_else(is.numeric(.x),1,0),values_fill = 0,names_prefix = 'CC.Prot.') %>%
+  dplyr::select(-matches('CC.Prot.NA'))
+
 design2 <- read_tsv('/multiomics/results/design_files/design_full_ductal.tsv') %>% left_join(.,design,'sample_id')
 designP <- paste0(designP,'_proteome.tsv')
 write_tsv(x = design2,file = designP)
 
-comparisons <- design2[["CC.Prot"]] %>% na.omit() %>% unique() %>% combn(.,2) %>% t() %>% apply(.,1,function(x)paste0(x,collapse = '-'))
+compCols <- design2 %>% dplyr::select(contains('CC.Prot')) %>% colnames()
 
-proteomeProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'CC.Prot',comparisons = comparisons,batchCol = 'group')})
+proteomeProt <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),.x = compCols,.f = function(x){
+  jDEName <- paste0(jDEName,'_',x)
+  normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = x,comparisons = '1-0',batchCol = 'group')
+})
 ```
 
 #### Phospho
 ```{r}
 dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
 designP <- '/multiomics/results/design_files/lnposvslnneg_ductal_consensus_clustering.tsv'
-outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/LNposvsLNneg/Ductal/'
+outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/LNposvsLNneg/Ductal/Phosphoproteome/'
 jDEName <- "lnposvslnneg_ductal_phospho_cluster"
 
-design <- read_tsv(designP)
+design <- read_tsv(designP) %>% 
+  pivot_wider(names_from = 'CC.Phospho',values_from = 'CC.Phospho',values_fn = ~if_else(is.numeric(.x),1,0),values_fill = 0,names_prefix = 'CC.Phospho.') %>%
+  dplyr::select(-matches('CC.Phospho.NA'))
+
 design2 <- read_tsv('/multiomics/results/design_files/design_phospho_ductal.tsv') %>% left_join(.,design,'sample_id')
 designP <- paste0(designP,'_phospho.tsv')
 write_tsv(x = design2,file = designP)
 
-comparisons <- design2[["CC.Phospho"]] %>% na.omit() %>% unique() %>% combn(.,2) %>% t() %>% apply(.,1,function(x)paste0(x,collapse = '-'))
+compCols <- design2 %>% dplyr::select(contains('CC.Phospho')) %>% colnames()
 
-phosphoPep <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'CC.Phospho',comparisons = comparisons,batchCol = 'group')})
+phosphoPep <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),.x = compCols,.f = function(x){
+  jDEName <- paste0(jDEName,'_',x)
+  normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = x,comparisons = '1-0',batchCol = 'group')
+})
 ```
 
 #### Transcriptome
 ```{r}
 dataP <- '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv'
 designP <- '/multiomics/results/design_files/lnposvslnneg_ductal_consensus_clustering.tsv'
-outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/LNposvsLNneg/Ductal/'
+outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/LNposvsLNneg/Ductal/Transcriptome/'
 jDEName <- "lnposvslnneg_ductal_transcriptome_cluster"
 
-design <- read_tsv(designP)
+design <- read_tsv(designP) %>% 
+  pivot_wider(names_from = 'CC.RNA',values_from = 'CC.RNA',values_fn = ~if_else(is.numeric(.x),1,0),values_fill = 0,names_prefix = 'CC.RNA.') %>%
+  dplyr::select(-matches('CC.RNA.NA'))
+
 design2 <- read_tsv('/multiomics/results/design_files/design_RNA_ductal.tsv') %>% left_join(.,design,'sample_id')
 designP <- paste0(designP,'_rna.tsv')
 write_tsv(x = design2,file = designP)
 
-comparisons <- design2[["CC.RNA"]] %>% na.omit() %>% unique() %>% combn(.,2) %>% t() %>% apply(.,1,function(x)paste0(x,collapse = '-'))
+compCols <- design2 %>% dplyr::select(contains('CC.RNA')) %>% colnames()
 
-transcriptome <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'CC.RNA',comparisons = comparisons)})
+phosphoPep <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),.x = compCols,.f = function(x){
+  jDEName <- paste0(jDEName,'_',x)
+  normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = x,comparisons = '1-0',batchCol = 'group')
+})
 ```
 
 #### Results
 ```{r}
-results <- list(proteomeProt,phosphoPep,transcriptome)
-future_map(.x = results,.f = value)
 invisible(gc())
 rm(list = ls())
 ```
@@ -217,57 +267,73 @@ rm(list = ls())
 ```{r}
 dataP <- '/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv'
 designP <- '/multiomics/results/design_files/lnposvslnneg_lobular_consensus_clustering.tsv'
-outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/LNposvsLNneg/Lobular/'
+outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/LNposvsLNneg/Lobular/Proteome/'
 jDEName <- "lnposvslnneg_lobular_proteome_cluster"
 
-design <- read_tsv(designP)
+design <- read_tsv(designP) %>% 
+  pivot_wider(names_from = 'CC.Prot',values_from = 'CC.Prot',values_fn = ~if_else(is.numeric(.x),1,0),values_fill = 0,names_prefix = 'CC.Prot.') %>%
+  dplyr::select(-matches('CC.Prot.NA'))
+
 design2 <- read_tsv('/multiomics/results/design_files/design_full_lobular.tsv') %>% left_join(.,design,'sample_id')
 designP <- paste0(designP,'_proteome.tsv')
 write_tsv(x = design2,file = designP)
 
-comparisons <- design2[["CC.Prot"]] %>% na.omit() %>% unique() %>% combn(.,2) %>% t() %>% apply(.,1,function(x)paste0(x,collapse = '-'))
+compCols <- design2 %>% dplyr::select(contains('CC.Prot')) %>% colnames()
 
-proteomeProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'CC.Prot',comparisons = comparisons,batchCol = 'group')})
+proteomeProt <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),.x = compCols,.f = function(x){
+  jDEName <- paste0(jDEName,'_',x)
+  normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = x,comparisons = '1-0',batchCol = 'group')
+})
 ```
 
 #### Phospho
 ```{r}
 dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
 designP <- '/multiomics/results/design_files/lnposvslnneg_lobular_consensus_clustering.tsv'
-outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/LNposvsLNneg/Lobular/'
+outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/LNposvsLNneg/Lobular/Phosphoproteome/'
 jDEName <- "lnposvslnneg_lobular_phospho_cluster"
 
-design <- read_tsv(designP)
+design <- read_tsv(designP) %>% 
+  pivot_wider(names_from = 'CC.Phospho',values_from = 'CC.Phospho',values_fn = ~if_else(is.numeric(.x),1,0),values_fill = 0,names_prefix = 'CC.Phospho.') %>%
+  dplyr::select(-matches('CC.Phospho.NA'))
+
 design2 <- read_tsv('/multiomics/results/design_files/design_phospho_lobular.tsv') %>% left_join(.,design,'sample_id')
 designP <- paste0(designP,'_phospho.tsv')
 write_tsv(x = design2,file = designP)
 
-comparisons <- design2[["CC.Phospho"]] %>% na.omit() %>% unique() %>% combn(.,2) %>% t() %>% apply(.,1,function(x)paste0(x,collapse = '-'))
+compCols <- design2 %>% dplyr::select(contains('CC.Phospho')) %>% colnames()
 
-phosphoPep <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'CC.Phospho',comparisons = comparisons,batchCol = 'group')})
+phosphoPep <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),.x = compCols,.f = function(x){
+  jDEName <- paste0(jDEName,'_',x)
+  normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = x,comparisons = '1-0',batchCol = 'group')
+})
 ```
 
 #### Transcriptome
 ```{r}
 dataP <- '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv'
 designP <- '/multiomics/results/design_files/lnposvslnneg_lobular_consensus_clustering.tsv'
-outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/LNposvsLNneg/Lobular/'
+outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/LNposvsLNneg/Lobular/Transcriptome/'
 jDEName <- "lnposvslnneg_lobular_transcriptome_cluster"
 
-design <- read_tsv(designP)
+design <- read_tsv(designP) %>% 
+  pivot_wider(names_from = 'CC.RNA',values_from = 'CC.RNA',values_fn = ~if_else(is.numeric(.x),1,0),values_fill = 0,names_prefix = 'CC.RNA.') %>%
+  dplyr::select(-matches('CC.RNA.NA'))
+
 design2 <- read_tsv('/multiomics/results/design_files/design_RNA_lobular.tsv') %>% left_join(.,design,'sample_id')
 designP <- paste0(designP,'_rna.tsv')
 write_tsv(x = design2,file = designP)
 
-comparisons <- design2[["CC.RNA"]] %>% na.omit() %>% unique() %>% combn(.,2) %>% t() %>% apply(.,1,function(x)paste0(x,collapse = '-'))
+compCols <- design2 %>% dplyr::select(contains('CC.RNA')) %>% colnames()
 
-transcriptome <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'CC.RNA',comparisons = comparisons)})
+phosphoPep <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),.x = compCols,.f = function(x){
+  jDEName <- paste0(jDEName,'_',x)
+  normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = x,comparisons = '1-0',batchCol = 'group')
+})
 ```
 
 #### Results
 ```{r}
-results <- list(proteomeProt,phosphoPep,transcriptome)
-future_map(.x = results,.f = value)
 invisible(gc())
 rm(list = ls())
 ```
@@ -278,57 +344,73 @@ rm(list = ls())
 ```{r}
 dataP <- '/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv'
 designP <- '/multiomics/results/design_files/g1vsg2_consensus_clustering.tsv'
-outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/G1vsG2/'
+outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/G1vsG2/Proteome/'
 jDEName <- "g1vsg2_proteome_cluster"
 
-design <- read_tsv(designP)
+design <- read_tsv(designP) %>% 
+  pivot_wider(names_from = 'CC.Prot',values_from = 'CC.Prot',values_fn = ~if_else(is.numeric(.x),1,0),values_fill = 0,names_prefix = 'CC.Prot.') %>%
+  dplyr::select(-matches('CC.Prot.NA'))
+
 design2 <- read_tsv('/multiomics/results/design_files/design_full_g1g2.tsv') %>% left_join(.,design,'sample_id')
 designP <- paste0(designP,'_proteome.tsv')
 write_tsv(x = design2,file = designP)
 
-comparisons <- design2[["CC.Prot"]] %>% na.omit() %>% unique() %>% combn(.,2) %>% t() %>% apply(.,1,function(x)paste0(x,collapse = '-'))
+compCols <- design2 %>% dplyr::select(contains('CC.Prot')) %>% colnames()
 
-proteomeProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'CC.Prot',comparisons = comparisons,batchCol = 'group')})
+proteomeProt <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),.x = compCols,.f = function(x){
+  jDEName <- paste0(jDEName,'_',x)
+  normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = x,comparisons = '1-0',batchCol = 'group')
+})
 ```
 
 ### Phospho
 ```{r}
 dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
 designP <- '/multiomics/results/design_files/g1vsg2_consensus_clustering.tsv'
-outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/G1vsG2/'
+outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/G1vsG2/Phosphoproteome/'
 jDEName <- "g1vsg2_phospho_cluster"
 
-design <- read_tsv(designP)
+design <- read_tsv(designP) %>% 
+  pivot_wider(names_from = 'CC.Phospho',values_from = 'CC.Phospho',values_fn = ~if_else(is.numeric(.x),1,0),values_fill = 0,names_prefix = 'CC.Phospho.') %>%
+  dplyr::select(-matches('CC.Phospho.NA'))
+
 design2 <- read_tsv('/multiomics/results/design_files/design_phospho_g1g2.tsv') %>% left_join(.,design,'sample_id')
 designP <- paste0(designP,'_phospho.tsv')
 write_tsv(x = design2,file = designP)
 
-comparisons <- design2[["CC.Phospho"]] %>% na.omit() %>% unique() %>% combn(.,2) %>% t() %>% apply(.,1,function(x)paste0(x,collapse = '-'))
+compCols <- design2 %>% dplyr::select(contains('CC.Phospho')) %>% colnames()
 
-phosphoPep <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'CC.Phospho',comparisons = comparisons,batchCol = 'group')})
+phosphoPep <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),.x = compCols,.f = function(x){
+  jDEName <- paste0(jDEName,'_',x)
+  normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = x,comparisons = '1-0',batchCol = 'group')
+})
 ```
 
 ### Transcriptome
 ```{r}
 dataP <- '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv'
 designP <- '/multiomics/results/design_files/g1vsg2_consensus_clustering.tsv'
-outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/G1vsG2/'
+outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/G1vsG2/Transcriptome/'
 jDEName <- "g1vsg2_transcriptome_cluster"
 
-design <- read_tsv(designP)
+design <- read_tsv(designP) %>% 
+  pivot_wider(names_from = 'CC.RNA',values_from = 'CC.RNA',values_fn = ~if_else(is.numeric(.x),1,0),values_fill = 0,names_prefix = 'CC.RNA.') %>%
+  dplyr::select(-matches('CC.RNA.NA'))
+
 design2 <- read_tsv('/multiomics/results/design_files/design_RNA_g1g2.tsv') %>% left_join(.,design,'sample_id')
 designP <- paste0(designP,'_rna.tsv')
 write_tsv(x = design2,file = designP)
 
-comparisons <- design2[["CC.RNA"]] %>% na.omit() %>% unique() %>% combn(.,2) %>% t() %>% apply(.,1,function(x)paste0(x,collapse = '-'))
+compCols <- design2 %>% dplyr::select(contains('CC.RNA')) %>% colnames()
 
-transcriptome <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'CC.RNA',comparisons = comparisons)})
+phosphoPep <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),.x = compCols,.f = function(x){
+  jDEName <- paste0(jDEName,'_',x)
+  normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = x,comparisons = '1-0',batchCol = 'group')
+})
 ```
 
 ### Results
 ```{r}
-results <- list(proteomeProt,phosphoPep,transcriptome)
-future_map(.x = results,.f = value)
 invisible(gc())
 rm(list = ls())
 ```
@@ -339,57 +421,73 @@ rm(list = ls())
 ```{r}
 dataP <- '/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv'
 designP <- '/multiomics/results/design_files/g3vsg4_consensus_clustering.tsv'
-outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/G3vsG4/'
+outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/G3vsG4/Proteome/'
 jDEName <- "g3vsg4_proteome_cluster"
 
-design <- read_tsv(designP)
+design <- read_tsv(designP) %>% 
+  pivot_wider(names_from = 'CC.Prot',values_from = 'CC.Prot',values_fn = ~if_else(is.numeric(.x),1,0),values_fill = 0,names_prefix = 'CC.Prot.') %>%
+  dplyr::select(-matches('CC.Prot.NA'))
+
 design2 <- read_tsv('/multiomics/results/design_files/design_full_g3g4.tsv') %>% left_join(.,design,'sample_id')
 designP <- paste0(designP,'_proteome.tsv')
 write_tsv(x = design2,file = designP)
 
-comparisons <- design2[["CC.Prot"]] %>% na.omit() %>% unique() %>% combn(.,2) %>% t() %>% apply(.,1,function(x)paste0(x,collapse = '-'))
+compCols <- design2 %>% dplyr::select(contains('CC.Prot')) %>% colnames()
 
-proteomeProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'CC.Prot',comparisons = comparisons,batchCol = 'group')})
+proteomeProt <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),.x = compCols,.f = function(x){
+  jDEName <- paste0(jDEName,'_',x)
+  normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = x,comparisons = '1-0',batchCol = 'group')
+})
 ```
 
 ### Phospho
 ```{r}
 dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
 designP <- '/multiomics/results/design_files/g3vsg4_consensus_clustering.tsv'
-outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/G3vsG4/'
+outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/G3vsG4/Phosphoproteome/'
 jDEName <- "g3vsg4_phospho_cluster"
 
-design <- read_tsv(designP)
+design <- read_tsv(designP) %>% 
+  pivot_wider(names_from = 'CC.Phospho',values_from = 'CC.Phospho',values_fn = ~if_else(is.numeric(.x),1,0),values_fill = 0,names_prefix = 'CC.Phospho.') %>%
+  dplyr::select(-matches('CC.Phospho.NA'))
+
 design2 <- read_tsv('/multiomics/results/design_files/design_phospho_g3g4.tsv') %>% left_join(.,design,'sample_id')
 designP <- paste0(designP,'_phospho.tsv')
 write_tsv(x = design2,file = designP)
 
-comparisons <- design2[["CC.Phospho"]] %>% na.omit() %>% unique() %>% combn(.,2) %>% t() %>% apply(.,1,function(x)paste0(x,collapse = '-'))
+compCols <- design2 %>% dplyr::select(contains('CC.Phospho')) %>% colnames()
 
-phosphoPep <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'CC.Phospho',comparisons = comparisons,batchCol = 'group')})
+phosphoPep <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),.x = compCols,.f = function(x){
+  jDEName <- paste0(jDEName,'_',x)
+  normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = x,comparisons = '1-0',batchCol = 'group')
+})
 ```
 
 ### Transcriptome
 ```{r}
 dataP <- '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv'
 designP <- '/multiomics/results/design_files/g3vsg4_consensus_clustering.tsv'
-outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/G3vsG4/'
+outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/G3vsG4/Transcriptome/'
 jDEName <- "g3vsg4_transcriptome_cluster"
 
-design <- read_tsv(designP)
+design <- read_tsv(designP) %>% 
+  pivot_wider(names_from = 'CC.RNA',values_from = 'CC.RNA',values_fn = ~if_else(is.numeric(.x),1,0),values_fill = 0,names_prefix = 'CC.RNA.') %>%
+  dplyr::select(-matches('CC.RNA.NA'))
+
 design2 <- read_tsv('/multiomics/results/design_files/design_RNA_g3g4.tsv') %>% left_join(.,design,'sample_id')
 designP <- paste0(designP,'_rna.tsv')
 write_tsv(x = design2,file = designP)
 
-comparisons <- design2[["CC.RNA"]] %>% na.omit() %>% unique() %>% combn(.,2) %>% t() %>% apply(.,1,function(x)paste0(x,collapse = '-'))
+compCols <- design2 %>% dplyr::select(contains('CC.RNA')) %>% colnames()
 
-transcriptome <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'CC.RNA',comparisons = comparisons)})
+phosphoPep <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),.x = compCols,.f = function(x){
+  jDEName <- paste0(jDEName,'_',x)
+  normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = x,comparisons = '1-0',batchCol = 'group')
+})
 ```
 
 ### Results
 ```{r}
-results <- list(proteomeProt,phosphoPep,transcriptome)
-future_map(.x = results,.f = value)
 invisible(gc())
 rm(list = ls())
 ```

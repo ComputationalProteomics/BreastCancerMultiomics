@@ -67,6 +67,11 @@ workflow  {
       ch_notebook_multiomics.filter {it.name == 'differentialexpression_consensus_cluster.qmd'},
       CLUSTERING.out.collect()
     )
+
+    GSEA_CONSENSUS_CLUSTER(
+      ch_notebook_multiomics.filter {it.name == 'GSEA_consensus_cluster.qmd'},
+      DIFFERENTIAL_EXPRESSION_CLUSTER.out.collect()
+    )
 }
 
 // Process definition
@@ -307,6 +312,26 @@ process SURVIVAL_DE{
 }
 
 process DIFFERENTIAL_EXPRESSION_CLUSTER{
+    publishDir "./results/rendered_notebooks",
+        mode: "copy"
+
+    input:
+        path(notebook)
+        path(html)
+
+    when:
+        html.exists()
+
+    output:
+        path("*.html"), emit: html
+
+    script:
+    """
+    quarto render ${notebook} --to html > .html
+    """
+}
+
+process GSEA_CONSENSUS_CLUSTER{
     publishDir "./results/rendered_notebooks",
         mode: "copy"
 

@@ -49,6 +49,7 @@ if(!dir.exists(paths = '/multiomics/results/MOFA/all_samples/infiltration')) {
 design <- read_tsv('/multiomics/results/design_files/design_multiomics_mofa.tsv')
 proteindata <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
 prot <- proteindata %>% 
+  NAFiltering(design = design,sampleCol = 'sample_id',cutoff = 0.3) %>% 
   madFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 prot$Unique.Ids <- make.names(names = prot$Protein.Names,unique = TRUE)
 protFeatures <- prot$Unique.Ids
@@ -59,6 +60,7 @@ rownames(prot) <- protFeatures
 
 phosphodata <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv')
 phospho <- phosphodata %>%
+  NAFiltering(design = design,sampleCol = 'sample_id',cutoff = 0.3) %>% 
   madFiltering(design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.75)
 phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
 phosphoFeatures <- phospho$Unique.Ids
@@ -70,8 +72,10 @@ rownames(phospho) <- phosphoFeatures
 
 genedata <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv')
 gene <- genedata %>% 
+  NAFiltering(design = design,sampleCol = 'sample_id',cutoff = 0.3) %>% 
   madFiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
-geneFeatures <- gene$Gene.ID
+gene$Unique.Ids <- make.names(names = gene$Gene.Name,unique = TRUE)
+geneFeatures <- gene$Unique.Ids
 gene <- gene %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix
@@ -122,12 +126,16 @@ plot_data_overview(MOFAobject)
 
 ```{r}
 data_opts <- get_default_data_options(MOFAobject)
+data_opts$scale_views <- TRUE
 ```
 
 #### Model options
 
 ```{r}
 model_opts <- get_default_model_options(MOFAobject)
+model_opts$num_factors <- 20
+model_opts$spikeslab_weights <- TRUE
+model_opts$ard_weights <- TRUE
 ```
 
 #### Training options
@@ -331,6 +339,7 @@ if(!dir.exists(paths = '/multiomics/results/MOFA/all_samples/no_infiltration')) 
 design <- read_tsv('/multiomics/results/design_files/design_multiomics_mofa.tsv')
 proteindata <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
 prot <- proteindata %>% 
+  NAFiltering(design = design,sampleCol = 'sample_id',cutoff = 0.3) %>% 
   madFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 prot$Unique.Ids <- make.names(names = prot$Protein.Names,unique = TRUE)
 protFeatures <- prot$Unique.Ids
@@ -341,6 +350,7 @@ rownames(prot) <- protFeatures
 
 phosphodata <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv')
 phospho <- phosphodata %>%
+  NAFiltering(design = design,sampleCol = 'sample_id',cutoff = 0.3) %>% 
   madFiltering(design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.75)
 phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
 phosphoFeatures <- phospho$Unique.Ids
@@ -351,8 +361,10 @@ rownames(phospho) <- phosphoFeatures
 
 genedata <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv')
 gene <- genedata %>% 
+  NAFiltering(design = design,sampleCol = 'sample_id',cutoff = 0.3) %>% 
   madFiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
-geneFeatures <- gene$Gene.ID
+gene$Unique.Ids <- make.names(names = gene$Gene.Name,unique = TRUE)
+geneFeatures <- gene$Unique.Ids
 gene <- gene %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix
@@ -388,12 +400,16 @@ plot_data_overview(MOFAobject)
 
 ```{r}
 data_opts <- get_default_data_options(MOFAobject)
+data_opts$scale_views <- TRUE
 ```
 
 #### Model options
 
 ```{r}
 model_opts <- get_default_model_options(MOFAobject)
+model_opts$num_factors <- 20
+model_opts$spikeslab_weights <- TRUE
+model_opts$ard_weights <- TRUE
 ```
 
 #### Training options
@@ -562,6 +578,7 @@ design <- read_tsv('/multiomics/results/design_files/design_multiomics_mofa.tsv'
     filter(str_detect(string = Group.Info,pattern = 'Group1|Group2'))
 proteindata <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
 prot <- proteindata %>% 
+  NAFiltering(design = design,sampleCol = 'sample_id',cutoff = 0.3) %>% 
   madFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 prot$Unique.Ids <- make.names(names = prot$Protein.Names,unique = TRUE)
 protFeatures <- prot$Unique.Ids
@@ -572,6 +589,7 @@ rownames(prot) <- protFeatures
 
 phosphodata <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv')
 phospho <- phosphodata %>%
+  NAFiltering(design = design,sampleCol = 'sample_id',cutoff = 0.3) %>% 
   madFiltering(design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.75)
 phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
 phosphoFeatures <- phospho$Unique.Ids
@@ -582,8 +600,10 @@ rownames(phospho) <- phosphoFeatures
 
 genedata <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv')
 gene <- genedata %>% 
+  NAFiltering(design = design,sampleCol = 'sample_id',cutoff = 0.3) %>% 
   madFiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
-geneFeatures <- gene$Gene.ID
+gene$Unique.Ids <- make.names(names = gene$Gene.Name,unique = TRUE)
+geneFeatures <- gene$Unique.Ids
 gene <- gene %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix
@@ -633,12 +653,16 @@ plot_data_overview(MOFAobject)
 
 ```{r}
 data_opts <- get_default_data_options(MOFAobject)
+data_opts$scale_views <- TRUE
 ```
 
 #### Model options
 
 ```{r}
 model_opts <- get_default_model_options(MOFAobject)
+model_opts$num_factors <- 20
+model_opts$spikeslab_weights <- TRUE
+model_opts$ard_weights <- TRUE
 ```
 
 #### Training options
@@ -844,6 +868,7 @@ design <- read_tsv('/multiomics/results/design_files/design_multiomics_mofa.tsv'
     filter(str_detect(string = Group.Info,pattern = 'Group3|Group4'))
 proteindata <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
 prot <- proteindata %>% 
+  NAFiltering(design = design,sampleCol = 'sample_id',cutoff = 0.3) %>% 
   madFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 prot$Unique.Ids <- make.names(names = prot$Protein.Names,unique = TRUE)
 protFeatures <- prot$Unique.Ids
@@ -854,6 +879,7 @@ rownames(prot) <- protFeatures
 
 phosphodata <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv')
 phospho <- phosphodata %>%
+  NAFiltering(design = design,sampleCol = 'sample_id',cutoff = 0.3) %>% 
   madFiltering(design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.75)
 phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
 phosphoFeatures <- phospho$Unique.Ids
@@ -864,8 +890,10 @@ rownames(phospho) <- phosphoFeatures
 
 genedata <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv')
 gene <- genedata %>% 
+  NAFiltering(design = design,sampleCol = 'sample_id',cutoff = 0.3) %>% 
   madFiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
-geneFeatures <- gene$Gene.ID
+gene$Unique.Ids <- make.names(names = gene$Gene.Name,unique = TRUE)
+geneFeatures <- gene$Unique.Ids
 gene <- gene %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix
@@ -916,12 +944,16 @@ plot_data_overview(MOFAobject)
 
 ```{r}
 data_opts <- get_default_data_options(MOFAobject)
+data_opts$scale_views <- TRUE
 ```
 
 #### Model options
 
 ```{r}
 model_opts <- get_default_model_options(MOFAobject)
+model_opts$num_factors <- 20
+model_opts$spikeslab_weights <- TRUE
+model_opts$ard_weights <- TRUE
 ```
 
 #### Training options
@@ -1126,6 +1158,7 @@ design <- read_tsv('/multiomics/results/design_files/design_multiomics_mofa.tsv'
     filter(str_detect(string = InvCa.type,pattern = 'Ductal'))
 proteindata <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
 prot <- proteindata %>% 
+  NAFiltering(design = design,sampleCol = 'sample_id',cutoff = 0.3) %>% 
   madFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 prot$Unique.Ids <- make.names(names = prot$Protein.Names,unique = TRUE)
 protFeatures <- prot$Unique.Ids
@@ -1136,6 +1169,7 @@ rownames(prot) <- protFeatures
 
 phosphodata <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv')
 phospho <- phosphodata %>%
+  NAFiltering(design = design,sampleCol = 'sample_id',cutoff = 0.3) %>% 
   madFiltering(design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.75)
 phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
 phosphoFeatures <- phospho$Unique.Ids
@@ -1146,8 +1180,10 @@ rownames(phospho) <- phosphoFeatures
 
 genedata <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv')
 gene <- genedata %>% 
+  NAFiltering(design = design,sampleCol = 'sample_id',cutoff = 0.3) %>% 
   madFiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
-geneFeatures <- gene$Gene.ID
+gene$Unique.Ids <- make.names(names = gene$Gene.Name,unique = TRUE)
+geneFeatures <- gene$Unique.Ids
 gene <- gene %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix
@@ -1198,12 +1234,16 @@ plot_data_overview(MOFAobject)
 
 ```{r}
 data_opts <- get_default_data_options(MOFAobject)
+data_opts$scale_views <- TRUE
 ```
 
 #### Model options
 
 ```{r}
 model_opts <- get_default_model_options(MOFAobject)
+model_opts$num_factors <- 20
+model_opts$spikeslab_weights <- TRUE
+model_opts$ard_weights <- TRUE
 ```
 
 #### Training options
@@ -1408,6 +1448,7 @@ design <- read_tsv('/multiomics/results/design_files/design_multiomics_mofa.tsv'
     filter(str_detect(string = InvCa.type,pattern = 'Lobular'))
 proteindata <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
 prot <- proteindata %>% 
+  NAFiltering(design = design,sampleCol = 'sample_id',cutoff = 0.3) %>% 
   madFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 prot$Unique.Ids <- make.names(names = prot$Protein.Names,unique = TRUE)
 protFeatures <- prot$Unique.Ids
@@ -1418,6 +1459,7 @@ rownames(prot) <- protFeatures
 
 phosphodata <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv')
 phospho <- phosphodata %>%
+  NAFiltering(design = design,sampleCol = 'sample_id',cutoff = 0.3) %>% 
   madFiltering(design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.75)
 phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
 phosphoFeatures <- phospho$Unique.Ids
@@ -1428,8 +1470,10 @@ rownames(phospho) <- phosphoFeatures
 
 genedata <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv')
 gene <- genedata %>% 
+  NAFiltering(design = design,sampleCol = 'sample_id',cutoff = 0.3) %>% 
   madFiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
-geneFeatures <- gene$Gene.ID
+gene$Unique.Ids <- make.names(names = gene$Gene.Name,unique = TRUE)
+geneFeatures <- gene$Unique.Ids
 gene <- gene %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix
@@ -1480,12 +1524,16 @@ plot_data_overview(MOFAobject)
 
 ```{r}
 data_opts <- get_default_data_options(MOFAobject)
+data_opts$scale_views <- TRUE
 ```
 
 #### Model options
 
 ```{r}
 model_opts <- get_default_model_options(MOFAobject)
+model_opts$num_factors <- 20
+model_opts$spikeslab_weights <- TRUE
+model_opts$ard_weights <- TRUE
 ```
 
 #### Training options
@@ -1688,6 +1736,7 @@ design <- read_tsv('/multiomics/results/design_files/design_multiomics_mofa.tsv'
 
 proteindata <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
 prot <- proteindata %>% 
+  NAFiltering(design = design,sampleCol = 'sample_id',cutoff = 0.3) %>% 
   madFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 prot$Unique.Ids <- make.names(names = prot$Protein.Names,unique = TRUE)
 protFeatures <- prot$Unique.Ids
@@ -1698,6 +1747,7 @@ rownames(prot) <- protFeatures
 
 phosphodata <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv')
 phospho <- phosphodata %>%
+  NAFiltering(design = design,sampleCol = 'sample_id',cutoff = 0.3) %>% 
   madFiltering(design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.75)
 phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
 phosphoFeatures <- phospho$Unique.Ids
@@ -1709,8 +1759,10 @@ rownames(phospho) <- phosphoFeatures
 
 genedata <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv')
 gene <- genedata %>% 
+  NAFiltering(design = design,sampleCol = 'sample_id',cutoff = 0.3) %>% 
   madFiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
-geneFeatures <- gene$Gene.ID
+gene$Unique.Ids <- make.names(names = gene$Gene.Name,unique = TRUE)
+geneFeatures <- gene$Unique.Ids
 gene <- gene %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix
@@ -1761,12 +1813,16 @@ plot_data_overview(MOFAobject)
 
 ```{r}
 data_opts <- get_default_data_options(MOFAobject)
+data_opts$scale_views <- TRUE
 ```
 
 #### Model options
 
 ```{r}
 model_opts <- get_default_model_options(MOFAobject)
+model_opts$num_factors <- 20
+model_opts$spikeslab_weights <- TRUE
+model_opts$ard_weights <- TRUE
 ```
 
 #### Training options

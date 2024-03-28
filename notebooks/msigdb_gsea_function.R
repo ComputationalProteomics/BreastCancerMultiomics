@@ -115,7 +115,7 @@ gseaMsigMOFA <- function(model, factor=1, qvaluecutoff, padjustmethod='fdr', spe
   genelistRNA <- sort(x = genelistRNA,decreasing = TRUE)
   
   term2gene <- msigdbr::msigdbr(species = 'Homo sapiens',category = 'H') %>% dplyr::select(gs_name,human_gene_symbol)
-  term2geneRNA <- msigdbr::msigdbr(species = 'Homo sapiens',category = 'H') %>% dplyr::select(gs_name,human_ensembl_gene)
+  term2geneRNA <- msigdbr::msigdbr(species = 'Homo sapiens',category = 'H') %>% dplyr::select(gs_name,human_gene_symbol)
   
   gseResultsProteome <- clusterProfiler::GSEA(geneList = genelistProteome,
                                               pAdjustMethod = 'fdr',

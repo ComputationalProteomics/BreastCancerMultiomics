@@ -12,7 +12,7 @@ format:
 engine: knitr
 params:
   model: '/multiomics/results/MOFA/AllSamples_noG2/model.RDS'
-  factor: 2
+  outcome: 'LN'
 ---
 
 # Requires Packages:
@@ -64,6 +64,11 @@ data <- model@samples_metadata %>%
   mutate(surv=Surv(time=time,event=event)) %>% 
   left_join(factors)
 ```
+#### Factors associated with outcome
+```{r}
+
+```
+
 
 ### Fit Cox Model
   This creates a survival object with distant recurrence free interval as time and DRFi_event (death) as the event.
@@ -151,44 +156,86 @@ invisible(gc())
 
 
 ## MOFA - Cox Single Features
+#### Factors associated with outcome
+
 ```{r}
 model <- readRDS(file = params$model)
 modelMeta <- model@samples_metadata
 
-features <- MOFA2::get_weights(object = model,views = 'all',factors = c(params$factor),as.data.frame = TRUE,scale = TRUE)
+associated.factors <- correlate_factors_with_covariates(model, 
+                                                   covariates = c('Group.Info',
+                                                                  'Size.mm',
+                                                                  'NCN.PAM50',
+                                                                  'DRFi_event',
+                                                                  "TreatGroup",
+                                                                  "Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)",
+                                                                  "NCN.ROR.risk.cat",
+                                                                  "PR",
+                                                                  'SSP.PAM50',
+                                                                  "NHG",
+                                                                  'BCFi_event',
+                                                                  'tumor_mutational_burden',
+                                                                  'LN',
+                                                                  'LN.spec',
+                                                                  "HisScoreFat",
+                                                                  "HisScoreInsituCancer",
+                                                                  "HisScoreInvasiveCancer",
+                                                                  "HisScoreLymphocytes",
+                                                                  "HisScoreNormal",
+                                                                  "HisScoreStroma",
+                                                                  parse_character(params$outcome)), 
+                                                   plot="log_pval",
+                                                   abs = TRUE,
+                                                   alpha = 0.05,
+                                                   return_data = TRUE) %>% 
+  as.data.frame() %>% 
+  dplyr::mutate(across(everything(),~if_else(.x==0,NA_integer_,.x))) %>% 
+  reframe(Factor=rownames(.),Outcome=.[[params$outcome]]) %>% 
+  drop_na() %>% 
+  arrange(desc(Outcome))
+```
+
+#### Features from selected factors
+```{r}
+features <- MOFA2::get_weights(object = model,views = 'all',factors = associated.factors[['Factor']],as.data.frame = TRUE,scale = TRUE)
 featFactors <- features %>% 
   dplyr::group_by(factor,view) %>% 
-  filter(abs(value)>=0.8) %>% 
+  filter(abs(value)>=0.5) %>% 
   as_tibble
 
-featList <- list(proteomics={featFactors %>%dplyr::filter(view=='proteomics',factor==paste0('Factor',params$factor)) %>% select(feature) %>% unlist %>% as.character %>% unique},
-              phosphoproteomics={featFactors %>% dplyr::filter(view=='phosphoproteomics',factor==paste0('Factor',params$factor)) %>% select(feature) %>% unlist %>% as.character %>% unique},
-              transcriptomics={featFactors %>% dplyr::filter(view=='transcriptomics',factor==paste0('Factor',params$factor)) %>% select(feature) %>% unlist %>% as.character %>% unique},
-              epic={featFactors %>% dplyr::filter(view=='EPIC',factor==paste0('Factor',params$factor)) %>% select(feature) %>% unlist %>% as.character %>% unique},
-              cibersort={featFactors %>% dplyr::filter(view=='cibersortx',factor==paste0('Factor',params$factor)) %>% select(feature) %>% unlist %>% as.character %>% unique}) 
+featList <- list(proteomics={featFactors %>%dplyr::filter(view=='proteomics') %>% select(feature) %>% unlist %>% as.character %>% unique},
+              phosphoproteomics={featFactors %>% dplyr::filter(view=='phosphoproteomics') %>% select(feature) %>% unlist %>% as.character %>% unique},
+              transcriptomics={featFactors %>% dplyr::filter(view=='transcriptomics') %>% select(feature) %>% unlist %>% as.character %>% unique},
+              epic={featFactors %>% dplyr::filter(view=='EPIC') %>% select(feature) %>% unlist %>% as.character %>% unique},
+              cibersort={featFactors %>% dplyr::filter(view=='cibersortx') %>% select(feature) %>% unlist %>% as.character %>% unique}) 
 
 if(!is_empty(featList[['proteomics']])){
   protFeatures <- get_data(object = model,features = list(proteomics=featList$proteomics),as.data.frame = TRUE) %>% 
+    mutate(feature=paste0(feature,'.',view)) %>% 
     pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
   }else{protFeatures <- data_frame(sample=modelMeta[['sample']])}
 
 if(!is_empty(featList[['phosphoproteomics']])){
   phosphoFeatures <- get_data(object = model,features = list(phosphoproteomics=featList$phosphoproteomics),as.data.frame = TRUE) %>% 
+    mutate(feature=paste0(feature,'.',view)) %>% 
     pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
   }else{phosphoFeatures <- data_frame(sample=modelMeta[['sample']])}
 
 if(!is_empty(featList[['transcriptomics']])){
   rnaFeatures <- get_data(object = model,features = list(transcriptomics=featList$transcriptomics),as.data.frame = TRUE) %>% 
+    mutate(feature=paste0(feature,'.',view)) %>% 
     pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
   }else{rnaFeatures <- data_frame(sample=modelMeta[['sample']])}
 
 if(!is_empty(featList[['epic']])){
   epicFeatures <- get_data(object = model,features = list(EPIC=featList$epic),as.data.frame = TRUE) %>% 
+    mutate(feature=paste0(feature,'.',view)) %>% 
     pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
   }else{epicFeatures <- data_frame(sample=modelMeta[['sample']])}
 
 if(!is_empty(featList[['cibersort']])){
   cibersortFeatures <- get_data(object = model,features = list(cibersortx=featList$cibersort),as.data.frame = TRUE) %>% 
+    mutate(feature=paste0(feature,'.',view)) %>% 
     pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
   }else{cibersortFeatures <- data_frame(sample=modelMeta[['sample']])}
 
@@ -211,11 +258,10 @@ clinicalFeatures <- modelMeta %>%
     HisScoreStroma,
     HisScoreInsituCancer,
     HisScoreInvasiveCancer,
-    LN,
     NHG,
     PR,
     SSP.PAM50,
-    InvCa.type) %>% 
+    params$outcome) %>% 
   mutate(across(SSP.PAM50,~if_else(str_detect(.x,'Lum',negate=TRUE),'Other',.x))) %>% 
   mutate(Age=if_else(Age<50,'<50','≥50'),
          NHG=if_else(NHG=='3','3','1|2'),
@@ -281,13 +327,13 @@ cox_models_clinical <- map(.x = clinical_variables,.f = function(x){
 })
 
 signif_omics <- map(.x = seq_len(length(cox_models_omics)),function(x){
-  pluck(cox_models_omics[[x]],'coefficients') %>% as.data.frame() %>% filter(.[['Pr(>|z|)']]<0.1) %>% rownames(.)
+  pluck(cox_models_omics[[x]],'coefficients') %>% as.data.frame() %>% filter(.[['Pr(>|z|)']]<0.05) %>% rownames(.)
 }) %>% 
   as_vector() %>% 
   unique
 
 signif_clinical <- map(.x = seq_len(length(cox_models_clinical)),function(x){
-  pluck(cox_models_clinical[[x]],'coefficients') %>% as.data.frame() %>% filter(.[['Pr(>|z|)']]<0.1) %>% rownames(.)
+  pluck(cox_models_clinical[[x]],'coefficients') %>% as.data.frame() %>% filter(.[['Pr(>|z|)']]<0.05) %>% rownames(.)
 }) %>% 
   as_vector() %>% 
   unique
@@ -343,18 +389,18 @@ variables <- finalFeatures %>%
 
 featCut <- surv_cutpoint(data = finalFeatures,variables = variables)
 
-finalFeaturesFactors <- surv_categorize(x = featCut,labels = c('Low','High')) %>% as_tibble() %>% mutate(surv=Surv(time=time,event=event),LN=finalFeatures$LN,PR=finalFeatures$PR)
+finalFeaturesFactors <- surv_categorize(x = featCut,labels = c('Low','High')) %>% as_tibble() %>% mutate(surv=Surv(time=time,event=event),!!params$outcome:=finalFeatures[[params$outcome]])
 
-featCutMedian <- finalFeatures %>% mutate(across(c(signif_omics),~if_else(.x<median(.x,na.rm=TRUE),true = 'Low',false = 'High'))) %>% mutate(surv=Surv(time=time,event=event),LN=finalFeatures$LN,PR=finalFeatures$PR)
+featCutMedian <- finalFeatures %>% mutate(across(all_of(signif_omics),~if_else(.x<median(.x,na.rm=TRUE),true = 'Low',false = 'High'))) %>% mutate(surv=Surv(time=time,event=event))
 ```
 
 #### Kaplan-Meier plots
 ```{r}
 #| warning: false
 kmPlots <- map(.x = variables,.f = function(x){
-  survFormula <- reformulate(termlabels = c(x),response = 'surv')
-  fit <- surv_fit(formula = survFormula,data = finalFeaturesFactors)
-  ggsurvplot(fit = fit,data = finalFeaturesFactors,conf.int = TRUE,pval = TRUE,pval.method = TRUE,surv.median.line = 'hv',risk.table = TRUE)
+  survFormula <- reformulate(termlabels = c(x,parse_character(params$outcome)),response = 'surv')
+  fit <- surv_fit(formula = survFormula,data = featCutMedian)
+  ggsurvplot(fit = fit,data = featCutMedian,conf.int = TRUE,pval = TRUE,pval.method = TRUE,surv.median.line = 'hv',risk.table = TRUE)
   })
 ```
 ```{r}
@@ -362,12 +408,12 @@ invisible(pdf(file = paste0(outputdir,'kaplan_meier_cox.pdf'),width = 20,height 
 invisible(map(1:length(kmPlots),~print(kmPlots[[.x]])))
 invisible(dev.off())
 
-varKeep <- list('params','varKeep','outputdir')
+varKeep <- list('params','varKeep','outputdir','associated.factors')
 rm(list = setdiff(ls(),varKeep))
 invisible(gc())
 ```
 
-# Fit Elastic Net Model
+# Fit Penalized Cox Regression Model
   This creates a survival object with distant recurrence free interval as time and DRFi_event (death) as the event.
   A Cox Propotional Hazards model is fit with all factors as variables followed by evaluating the model with the scaled Schoenfeld test which tests the null hypothesis that the variable is stable over time, therefore respecting the Cox test assumptions. A graphical representation of the scaled Schoenfeld residuals can also be seen.
   
@@ -376,40 +422,45 @@ set.seed(123)
 model <- readRDS(file = params$model)
 modelMeta <- model@samples_metadata
 
-features <- MOFA2::get_weights(object = model,views = 'all',factors = c(params$factor),as.data.frame = TRUE,scale = TRUE)
+features <- MOFA2::get_weights(object = model,views = 'all',factors = associated.factors[['Factor']],as.data.frame = TRUE,scale = TRUE)
 featFactors <- features %>% 
   dplyr::group_by(factor,view) %>% 
   filter(abs(value)>=0.5) %>% 
   as_tibble
 
-featList <- list(proteomics={featFactors %>%dplyr::filter(view=='proteomics',factor==paste0('Factor',params$factor)) %>% select(feature) %>% unlist %>% as.character %>% unique},
-              phosphoproteomics={featFactors %>% dplyr::filter(view=='phosphoproteomics',factor==paste0('Factor',params$factor)) %>% select(feature) %>% unlist %>% as.character %>% unique},
-              transcriptomics={featFactors %>% dplyr::filter(view=='transcriptomics',factor==paste0('Factor',params$factor)) %>% select(feature) %>% unlist %>% as.character %>% unique},
-              epic={featFactors %>% dplyr::filter(view=='EPIC',factor==paste0('Factor',params$factor)) %>% select(feature) %>% unlist %>% as.character %>% unique},
-              cibersort={featFactors %>% dplyr::filter(view=='cibersortx',factor==paste0('Factor',params$factor)) %>% select(feature) %>% unlist %>% as.character %>% unique}) 
+featList <- list(proteomics={featFactors %>%dplyr::filter(view=='proteomics') %>% select(feature) %>% unlist %>% as.character %>% unique},
+              phosphoproteomics={featFactors %>% dplyr::filter(view=='phosphoproteomics') %>% select(feature) %>% unlist %>% as.character %>% unique},
+              transcriptomics={featFactors %>% dplyr::filter(view=='transcriptomics') %>% select(feature) %>% unlist %>% as.character %>% unique},
+              epic={featFactors %>% dplyr::filter(view=='EPIC') %>% select(feature) %>% unlist %>% as.character %>% unique},
+              cibersort={featFactors %>% dplyr::filter(view=='cibersortx') %>% select(feature) %>% unlist %>% as.character %>% unique}) 
 
 if(!is_empty(featList[['proteomics']])){
   protFeatures <- get_data(object = model,features = list(proteomics=featList$proteomics),as.data.frame = TRUE) %>% 
+    mutate(feature=paste0(feature,'.',view)) %>% 
     pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
   }else{protFeatures <- data_frame(sample=modelMeta[['sample']])}
 
 if(!is_empty(featList[['phosphoproteomics']])){
   phosphoFeatures <- get_data(object = model,features = list(phosphoproteomics=featList$phosphoproteomics),as.data.frame = TRUE) %>% 
+    mutate(feature=paste0(feature,'.',view)) %>% 
     pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
   }else{phosphoFeatures <- data_frame(sample=modelMeta[['sample']])}
 
 if(!is_empty(featList[['transcriptomics']])){
   rnaFeatures <- get_data(object = model,features = list(transcriptomics=featList$transcriptomics),as.data.frame = TRUE) %>% 
+    mutate(feature=paste0(feature,'.',view)) %>% 
     pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
   }else{rnaFeatures <- data_frame(sample=modelMeta[['sample']])}
 
 if(!is_empty(featList[['epic']])){
   epicFeatures <- get_data(object = model,features = list(EPIC=featList$epic),as.data.frame = TRUE) %>% 
+    mutate(feature=paste0(feature,'.',view)) %>% 
     pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
   }else{epicFeatures <- data_frame(sample=modelMeta[['sample']])}
 
 if(!is_empty(featList[['cibersort']])){
   cibersortFeatures <- get_data(object = model,features = list(cibersortx=featList$cibersort),as.data.frame = TRUE) %>% 
+    mutate(feature=paste0(feature,'.',view)) %>% 
     pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
   }else{cibersortFeatures <- data_frame(sample=modelMeta[['sample']])}
 
@@ -432,14 +483,13 @@ clinicalFeatures <- modelMeta %>%
     HisScoreStroma,
     HisScoreInsituCancer,
     HisScoreInvasiveCancer,
-    LN,
     NHG,
     PR,
     SSP.PAM50,
-    InvCa.type) %>% 
+    params$outcome) %>% 
   mutate(Age=if_else(Age<50,'<50','≥50'),
          NHG=if_else(NHG=='3','3','1|2'),
-         LN=as.factor(LN)) 
+         !!params$outcome:=as.factor(.[[params$outcome]])) 
 
 colnames(clinicalFeatures) <- colnames(clinicalFeatures) %>% str_replace_all(.,'\\_','\\.')
 
@@ -506,7 +556,7 @@ selectedFeat[which(!(selectedFeat %in% colnames(finalFeatures)))] <- str_split_i
 
 featCut <- surv_cutpoint(data = finalFeatures,variables = selectedFeat)
 
-finalFeaturesFactors <- surv_categorize(x = featCut,labels = c('Low','High')) %>% as_tibble() %>% mutate(surv=Surv(time=time,event=event),group=finalFeatures[['group']])
+finalFeaturesFactors <- surv_categorize(x = featCut,labels = c('Low','High')) %>% as_tibble() %>% mutate(surv=Surv(time=time,event=event),!!params$outcome:=finalFeatures[[params$outcome]])
 
 featCutMedian <- finalFeatures %>% 
   select(selectedFeat) %>% 
@@ -519,9 +569,9 @@ featCutMedian <- finalFeatures %>%
 ```{r}
 #| warning: false
 kmPlots <- map(.x = selectedFeat,.f = function(x){
-  survFormula <- reformulate(termlabels = c(x),response = 'surv')
-  fit <- surv_fit(formula = survFormula,data = finalFeaturesFactors)
-  ggsurvplot(fit = fit,data = finalFeaturesFactors,conf.int = TRUE,pval = TRUE,pval.method = TRUE,surv.median.line = 'hv',risk.table = TRUE)
+  survFormula <- reformulate(termlabels = c(x,parse_character(params$outcome)),response = 'surv')
+  fit <- surv_fit(formula = survFormula,data = featCutMedian)
+  ggsurvplot(fit = fit,data = featCutMedian,conf.int = TRUE,pval = TRUE,pval.method = TRUE,surv.median.line = 'hv',risk.table = TRUE)
   })
 ```
 ```{r}

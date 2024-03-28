@@ -284,11 +284,13 @@ process SURVIVAL_MOFA{
         path("*.html"),emit: html
     script:
     """
-    quarto render ${notebook} -P model:'/multiomics/results/MOFA/all_samples/infiltration/model.RDS' -P factor:3 > .html
+    quarto render ${notebook} -P model:'/multiomics/results/MOFA/all_samples/infiltration/model.RDS' -P outcome:'InvCa.type' > .html
 
-    quarto render ${notebook} -P model:'/multiomics/results/MOFA/AllSamples_noG2/model.RDS' -P factor:2 > .html
+    quarto render ${notebook} -P model:'/multiomics/results/MOFA/AllSamples_noG2/model.RDS' -P outcome:'LN' > .html
 
-    #quarto render ${notebook} -P model:'/multiomics/results/MOFA/LNposvsLNneg/Lobular/model.RDS' -P factor:13 > .html
+    quarto render ${notebook} -P model:'/multiomics/results/MOFA/LNposvsLNneg/Ductal/model.RDS' -P outcome:'LN' > .html
+
+    #quarto render ${notebook} -P model:'/multiomics/results/MOFA/Group1vsGroup2/model.RDS' -P outcome:'LN' > .html
     """
 }
 

@@ -12,6 +12,8 @@ format:
 engine: knitr
 params:
   comparison: 'DuctalvsLobular_noG2'
+  time: 'RFi_days'
+  event: 'RFi_event'
 ---
 
 # Requires Packages:
@@ -29,7 +31,7 @@ library(censored)
 
 
 ```{r Output Directory}
-outputdir <- paste0('/multiomics/results/figures/survival_analysis/DE/',params$comparison,'/')
+outputdir <- paste0('/multiomics/results/figures/survival_analysis/DE/',params$comparison,'/',params$comparison,'_',params$event,'/')
 
 if(!dir.exists(paths = outputdir)) {
   dir.create(path = outputdir,recursive = TRUE)
@@ -48,8 +50,8 @@ data <- list(proteomics=read_tsv(file = files[str_detect(files,'full')]),
              phosphoproteomics=read_tsv(file = files[str_detect(files,'aggModSeq')]),
              transcriptomics=read_tsv(file = files[str_detect(files,'transcript')]))
 
-idCol <- list(proteomics='Protein.Names',phosphoproteomics='Protein.Names',transcriptomics='Gene.ID')
-omics_type <- list('_proteomics','_phosphoproteomics','')
+idCol <- list(proteomics='Protein.Names',phosphoproteomics='Protein.Names',transcriptomics='Gene.Name')
+omics_type <- list('_proteomics','_phosphoproteomics','_transcriptomics')
 ```
 
 ### Filter significant features and prep data
@@ -82,8 +84,8 @@ omics_variables <- features %>%
 clinical <- design %>% 
   select(
     sample_id,
-    time=DRFi_days,
-    event=DRFi_event,
+    time=params$time,
+    event=params$event,
     Age=`Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)`,
     tumor_mutational_burden,
     HisScoreLymphocytes,

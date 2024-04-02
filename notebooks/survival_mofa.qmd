@@ -13,6 +13,8 @@ engine: knitr
 params:
   model: '/multiomics/results/MOFA/AllSamples_noG2/model.RDS'
   outcome: 'LN'
+  event: 'RFi_event'
+  time: 'RFi_days'
 ---
 
 # Requires Packages:
@@ -44,7 +46,7 @@ outputdir <- str_split(string = params$model,pattern = '/',n = 4)[[1]][4] %>%
   str_split_1(pattern = '/') %>% 
   .[1:length(.)-1] %>% 
   paste0(.,collapse = '/')
-outputdir <- paste0('/multiomics/results/figures/survival_analysis/',outputdir,'/')
+outputdir <- paste0('/multiomics/results/figures/survival_analysis/',outputdir,'/',str_split_i(outputdir,'/',2),'_',params$event,'/')
 
 
 if(!dir.exists(paths = outputdir)) {
@@ -60,7 +62,7 @@ factors <- get_factors(model)[[1]]
 factors <- tibble(sample=rownames(factors)) %>% bind_cols(.,factors)
 
 data <- model@samples_metadata %>% 
-  dplyr::select(sample,time=DRFi_days,event=DRFi_event) %>% 
+  dplyr::select(sample,time=params$time,event=params$event) %>% 
   mutate(surv=Surv(time=time,event=event)) %>% 
   left_join(factors)
 ```
@@ -166,14 +168,12 @@ associated.factors <- correlate_factors_with_covariates(model,
                                                    covariates = c('Group.Info',
                                                                   'Size.mm',
                                                                   'NCN.PAM50',
-                                                                  'DRFi_event',
                                                                   "TreatGroup",
                                                                   "Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)",
                                                                   "NCN.ROR.risk.cat",
                                                                   "PR",
                                                                   'SSP.PAM50',
                                                                   "NHG",
-                                                                  'BCFi_event',
                                                                   'tumor_mutational_burden',
                                                                   'LN',
                                                                   'LN.spec',
@@ -250,8 +250,8 @@ omics_variables <- omicFeatures %>%
 clinicalFeatures <- modelMeta %>% 
   select(
     sample,
-    time=DRFi_days,
-    event=DRFi_event,
+    time=params$time,
+    event=params$event,
     Age=`Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)`,
     tumor_mutational_burden,
     HisScoreLymphocytes,
@@ -327,7 +327,7 @@ cox_models_clinical <- map(.x = clinical_variables,.f = function(x){
 })
 
 signif_omics <- map(.x = seq_len(length(cox_models_omics)),function(x){
-  pluck(cox_models_omics[[x]],'coefficients') %>% as.data.frame() %>% filter(.[['Pr(>|z|)']]<0.05) %>% rownames(.)
+  pluck(cox_models_omics[[x]],'coefficients') %>% as.data.frame() %>% filter(.[['Pr(>|z|)']]<0.01) %>% rownames(.)
 }) %>% 
   as_vector() %>% 
   unique
@@ -475,8 +475,8 @@ omics_variables <- omicFeatures %>%
 clinicalFeatures <- modelMeta %>% 
   select(
     sample,
-    time=DRFi_days,
-    event=DRFi_event,
+    time=params$time,
+    event=params$event,
     Age=`Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)`,
     tumor_mutational_burden,
     HisScoreLymphocytes,

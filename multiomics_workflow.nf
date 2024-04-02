@@ -311,9 +311,9 @@ process SURVIVAL_DE{
         path("*.html"),emit: html
     script:
     """
-    quarto render ${notebook} -P comparison:'DuctalvsLobular_noG2' -P time:'RFi_days' -P event:'RFi_event' > .html
-    quarto render ${notebook} -P comparison:'DuctalvsLobular_noG2' -P time:'OS_days' -P event:'OS_event' > .html
-    quarto render ${notebook} -P comparison:'DuctalvsLobular_noG2' -P time:'DRFi_days' -P event:'DRFi_event' > .html
+    quarto render ${notebook} -P comparison:'DuctalvsLobular_noG2' -P time:'RFi_days' -P event:'RFi_event' -P lambda:'lambda_min' > .html
+    quarto render ${notebook} -P comparison:'DuctalvsLobular_noG2' -P time:'OS_days' -P event:'OS_event' -P lambda:'lambda_1se' > .html
+    quarto render ${notebook} -P comparison:'DuctalvsLobular_noG2' -P time:'DRFi_days' -P event:'DRFi_event' -P lambda:'lambda_min' > .html
 
     #quarto render ${notebook} -P comparison:'LNposvsLNneg/Ductal/' > .html
 

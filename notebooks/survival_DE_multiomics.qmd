@@ -14,6 +14,7 @@ params:
   comparison: 'DuctalvsLobular_noG2'
   time: 'RFi_days'
   event: 'RFi_event'
+  lambda: 'lambda_min'
 ---
 
 # Requires Packages:
@@ -163,7 +164,7 @@ cIndexPlot <- cv.fit %>% plot()
 print(lassoPlot)
 dev.off()
 
-featSparse <- coef(cv.fit,s = lambda_min) %>% as.matrix() %>% as.data.frame() %>% filter(`1`!=0) %>% arrange(desc(abs(`1`)))
+featSparse <- coef(cv.fit,s = get(params$lambda)) %>% as.matrix() %>% as.data.frame() %>% filter(`1`!=0) %>% arrange(desc(abs(`1`)))
 selectedFeat <- rownames(featSparse)
 ```
 

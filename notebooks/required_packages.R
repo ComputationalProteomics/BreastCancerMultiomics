@@ -1,4 +1,7 @@
 # Required packages
+
+install.packages(pkgs = 'pak',clean = TRUE,quiet = TRUE,dependencies = TRUE)
+
 packages <- c(
   'quarto',
   'igraph',
@@ -20,30 +23,41 @@ packages <- c(
   'censored',
   'glmnet',
   'survival',
-  'survminer')
+  'survminer',
+  'enrichplot',
+  'AnnotationDbi',
+  'NormalyzerDE',
+  'clusterProfiler',
+  'MOFA2',
+  'org.Hs.eg.db',
+  'ConsensusClusterPlus',
+  'ComplexHeatmap',
+  'mixOmics')
 
-packages_bioconductor <- c('enrichplot',
-                           'AnnotationDbi',
-                           'NormalyzerDE',
-                           'clusterProfiler',
-                           'MOFA2',
-                           'org.Hs.eg.db',
-                           'ConsensusClusterPlus',
-                           'ComplexHeatmap',
-                           'mixOmics')
+# packages_bioconductor <- c('enrichplot',
+#                            'AnnotationDbi',
+#                            'NormalyzerDE',
+#                            'clusterProfiler',
+#                            'MOFA2',
+#                            'org.Hs.eg.db',
+#                            'ConsensusClusterPlus',
+#                            'ComplexHeatmap',
+#                            'mixOmics')
 
 packageCheckInstall <- function(x){
   if(!require(x,quietly = FALSE,character.only = TRUE)){
-    install.packages(pkgs = x,clean = TRUE,quiet = TRUE,dependencies = TRUE)
+    pak::pkg_install(pkg = x,ask = FALSE,dependencies = TRUE)
   }
 }
 
-packageCheckBioconductor <- function(x){
-  if(!require(x,quietly = FALSE,character.only = TRUE)){
-    BiocManager::install(pkgs = x,update = TRUE,ask = FALSE,force = TRUE)
-  }
-}
+# packageCheckBioconductor <- function(x){
+#   if(!require(x,quietly = FALSE,character.only = TRUE)){
+#     BiocManager::install(pkgs = x,update = TRUE,ask = FALSE,force = TRUE)
+#   }
+# }
 
 lapply(X = packages,FUN = packageCheckInstall)
-lapply(X = packages_bioconductor,FUN = packageCheckBioconductor)
+# lapply(X = packages_bioconductor,FUN = packageCheckBioconductor)
 BiocManager::install("preprocessCore", configure.args = c(preprocessCore = "--disable-threading"), force= TRUE, update=TRUE, type = "source")
+
+pak::pak_cleanup(package_cache = TRUE,metadata_cache = TRUE,force = TRUE)

@@ -46,7 +46,7 @@ outputdir <- str_split(string = params$model,pattern = '/',n = 4)[[1]][4] %>%
   str_split_1(pattern = '/') %>% 
   .[1:length(.)-1] %>% 
   paste0(.,collapse = '/')
-outputdir <- paste0('/multiomics/results/figures/survival_analysis/',outputdir,'/',str_split_i(outputdir,'/',2),'_',params$event,'/')
+outputdir <- paste0('/multiomics/results/figures/survival_analysis/',outputdir,'/',str_split_i(outputdir,'/',2),'_',params$outcome,'_',params$event,'/')
 
 
 if(!dir.exists(paths = outputdir)) {

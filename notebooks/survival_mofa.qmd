@@ -391,7 +391,7 @@ featCut <- surv_cutpoint(data = finalFeatures,variables = variables)
 
 finalFeaturesFactors <- surv_categorize(x = featCut,labels = c('Low','High')) %>% as_tibble() %>% mutate(surv=Surv(time=time,event=event),!!params$outcome:=finalFeatures[[params$outcome]])
 
-featCutMedian <- finalFeatures %>% mutate(across(all_of(signif_omics),~if_else(.x<median(.x,na.rm=TRUE),true = 'Low',false = 'High'))) %>% mutate(surv=Surv(time=time,event=event,!!params$outcome:=finalFeatures[[params$outcome]]))
+featCutMedian <- finalFeatures %>% mutate(across(all_of(signif_omics),~if_else(.x<median(.x,na.rm=TRUE),true = 'Low',false = 'High'))) %>% mutate(surv=Surv(time=time,event=event),!!params$outcome:=finalFeatures[[params$outcome]])
 ```
 
 #### Kaplan-Meier plots
@@ -562,7 +562,7 @@ featCutMedian <- finalFeatures %>%
   select(selectedFeat) %>% 
   mutate(across(where(is.numeric),~if_else(.x<median(.x,na.rm=TRUE),true = 'Low',false = 'High'))) %>% 
   bind_cols(finalFeatures[,c('sample','time','event')],.) %>% 
-  mutate(surv=Surv(time=time,event=event,!!params$outcome:=finalFeatures[[params$outcome]]))
+  mutate(surv=Surv(time=time,event=event),!!params$outcome:=finalFeatures[[params$outcome]])
 ```
 
 #### Kaplan-Meier plots

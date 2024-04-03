@@ -289,7 +289,6 @@ process SURVIVAL_MOFA{
     quarto render ${notebook} -P model:'/multiomics/results/MOFA/all_samples/infiltration/model.RDS' -P outcome:'InvCa.type' -P time:'OS_days' -P event:'OS_event' > .html
 
     quarto render ${notebook} -P model:'/multiomics/results/MOFA/all_samples/infiltration/model.RDS' -P outcome:'LN' -P time:'RFi_days' -P event:'RFi_event' > .html
-    quarto render ${notebook} -P model:'/multiomics/results/MOFA/all_samples/infiltration/model.RDS' -P outcome:'LN' -P time:'DRFi_days' -P event:'DRFi_event' > .html
     quarto render ${notebook} -P model:'/multiomics/results/MOFA/all_samples/infiltration/model.RDS' -P outcome:'LN' -P time:'OS_days' -P event:'OS_event' > .html
 
     quarto render ${notebook} -P model:'/multiomics/results/MOFA/AllSamples_noG2/model.RDS' -P outcome:'LN' -P time:'RFi_days' -P event:'RFi_event' > .html

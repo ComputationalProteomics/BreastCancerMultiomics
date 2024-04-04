@@ -15,6 +15,7 @@ params:
   time: 'RFi_days'
   event: 'RFi_event'
   lambda: 'lambda_min'
+  outcome: 'InvCa.type'
 ---
 
 # Requires Packages:
@@ -46,6 +47,11 @@ if(!dir.exists(paths = outputdir)) {
 files <- list.files(path = '/multiomics',pattern = 'stats.tsv',recursive = TRUE,include.dirs = TRUE,full.names = TRUE) %>% .[str_detect(.,params$comparison)]
 
 design <- read_tsv(file = '/multiomics/results/design_files/design_multiomics_mofa.tsv')
+
+if(str_detect(params$comparison,'noG2')){
+  design <- design %>% 
+    filter(str_detect(Group.Info,'Group2',negate=TRUE))
+}
 
 data <- list(proteomics=read_tsv(file = files[str_detect(files,'full')]),
              phosphoproteomics=read_tsv(file = files[str_detect(files,'aggModSeq')]),
@@ -91,17 +97,17 @@ clinical <- design %>%
     tumor_mutational_burden,
     HisScoreLymphocytes,
     HisScoreStroma,
-    HisScoreInsituCancer,
-    HisScoreInvasiveCancer,
     NHG,
     PR,
     SSP.PAM50,
-    InvCa.type,
-    LN
+    params$outcome
     ) %>%   
   mutate(Age=if_else(Age<50,'<50','≥50'),
          NHG=if_else(NHG=='3','3','1|2'),
-         LN=as.factor(LN)) %>% 
+         !!params$outcome:=as.factor(.[[params$outcome]])) %>% 
+  mutate(across(contains('HisScore'),~case_when(.x>=50~'High',
+                                                between(.x,10,50)~'Intermediate',
+                                                .x<10~'Low'))) %>% 
   drop_na()
 
 clinical_variables <- clinical %>%
@@ -127,7 +133,7 @@ dataPreprocess <- basic_recipe %>%
   bake(NULL)
 ```
 
-## Fit Elastic net survival model
+## Fit Penalized Cox model
 ```{r}
 #| tbl-column: margin
 # I have to fit the model within the glmnet pakcage because there is some error when fitting many predictors using censored
@@ -157,7 +163,7 @@ stopImplicitCluster()
 lambda_min <- cv.fit$lambda.min
 lambda_1se <- cv.fit$lambda.1se
 
-lassoPlot <- cv.fit[["glmnet.fit"]] %>% autoplot(best_penalty = lambda_min,top_n = 5)
+lassoPlot <- cv.fit[["glmnet.fit"]] %>% autoplot(best_penalty = get(params$lambda),top_n = 5)
 
 pdf(file = paste0(outputdir,'plot_lasso.pdf'))
 cIndexPlot <- cv.fit %>% plot()
@@ -165,25 +171,53 @@ print(lassoPlot)
 dev.off()
 
 featSparse <- coef(cv.fit,s = get(params$lambda)) %>% as.matrix() %>% as.data.frame() %>% filter(`1`!=0) %>% arrange(desc(abs(`1`)))
+
 selectedFeat <- rownames(featSparse)
 ```
 
 
 ### Multivariate Model
 ```{r}
+catchWarning <- function(expr){
+  warning_message <- NULL
+  warnHandler <- function(warning){
+    warning_message <<- c(warning_message,list(warning))
+    invokeRestart('muffleWarning')
+  }
+  res <- withCallingHandlers(expr = expr, warning = warnHandler)
+  list(result=res,warning=warning_message)
+}
+
 hr_factors <- proportional_hazards() %>% 
   set_engine('survival') %>% 
   set_mode('censored regression')
 
-wf <- workflow() %>%
+wf <- catchWarning({workflow() %>%
   add_model(hr_factors,formula = surv~.) %>%
   add_variables(outcomes = surv,predictors = all_of(selectedFeat)) %>% 
-  fit(data=dataPreprocess)
+  fit(data=dataPreprocess)})
 
+counter <- 0
+
+while(!is.null(wf[["warning"]])){
+lambda <- get(params$lambda)+(get(params$lambda)*counter)
+featSparse <- coef(cv.fit,s = lambda) %>% as.matrix() %>% as.data.frame() %>% filter(`1`!=0) %>% arrange(desc(abs(`1`)))
+counter <- counter+1
+
+selectedFeat <- rownames(featSparse)
+hr_factors <- proportional_hazards() %>% 
+  set_engine('survival') %>% 
+  set_mode('censored regression')
+
+wf <- catchWarning({workflow() %>%
+  add_model(hr_factors,formula = surv~.) %>%
+  add_variables(outcomes = surv,predictors = all_of(selectedFeat)) %>% 
+  fit(data=dataPreprocess)})
+}
 ```
 ```{r}
 ##### Check fit
-fitcheck <- cox.zph(fit = extract_fit_engine(wf))
+fitcheck <- cox.zph(fit = extract_fit_engine(wf[["result"]]))
 # pdf(file = paste0(params$outputdir,'plot_coxzph.pdf'),width = 20,height = 20,onefile = TRUE)
 # ggcoxzph(fitcheck)
 # dev.off()
@@ -191,9 +225,10 @@ fitcheck <- cox.zph(fit = extract_fit_engine(wf))
 
 #### Plot Hazard Ratios
 ```{r}
-plotPH <- ggforest(model = extract_fit_engine(wf),data = dataPreprocess)
+plotPH <- ggforest(model = extract_fit_engine(wf[["result"]]),data = dataPreprocess)
 ggsave(filename = 'plot_forest_features.pdf',plot = plotPH,device = 'pdf',path = outputdir,dpi = 300)
 ```
+
 ### Calculate cut points and fit model to high vs low
 ```{r}
 featCut <- surv_cutpoint(data = dataPreprocess,variables = selectedFeat)
@@ -207,17 +242,17 @@ featCutMedian <- finalFeatures %>% mutate(across(all_of(selectedFeat),~if_else(.
 ```{r}
 #| warning: false
 kmPlots <- map(.x = selectedFeat,.f = function(x){
-  survFormula <- reformulate(termlabels = c(x),response = 'surv')
+  survFormula <- reformulate(termlabels = c(x,parse_character(params$outcome)),response = 'surv')
   fit <- surv_fit(formula = survFormula,data = featCutMedian)
-  ggsurvplot(fit = fit,data = featCutMedian,conf.int = TRUE,pval = TRUE,pval.method = TRUE,surv.median.line = 'hv',risk.table = TRUE)
+  ggsurvplot(fit = fit,data = featCutMedian,conf.int = FALSE,pval = TRUE,pval.method = TRUE,surv.median.line = 'hv',risk.table = TRUE)
   })
 ```
 ```{r}
-invisible(pdf(file = paste0(outputdir,'kaplan_meier.pdf'),width = 20,height = 10,onefile = TRUE))
+invisible(pdf(file = paste0(outputdir,'kaplan_meier_lasso.pdf'),width = 20,height = 10,onefile = TRUE))
 invisible(map(1:length(kmPlots),~print(kmPlots[[.x]])))
 invisible(dev.off())
 
-varKeep <- list('params','varKeep')
+varKeep <- list('params','varKeep','catchWarning')
 rm(list = setdiff(ls(),varKeep))
 invisible(gc())
 ```

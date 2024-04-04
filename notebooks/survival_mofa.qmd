@@ -66,11 +66,6 @@ data <- model@samples_metadata %>%
   mutate(surv=Surv(time=time,event=event)) %>% 
   left_join(factors)
 ```
-#### Factors associated with outcome
-```{r}
-
-```
-
 
 ### Fit Cox Model
   This creates a survival object with distant recurrence free interval as time and DRFi_event (death) as the event.
@@ -256,8 +251,6 @@ clinicalFeatures <- modelMeta %>%
     tumor_mutational_burden,
     HisScoreLymphocytes,
     HisScoreStroma,
-    HisScoreInsituCancer,
-    HisScoreInvasiveCancer,
     NHG,
     PR,
     SSP.PAM50,
@@ -265,7 +258,11 @@ clinicalFeatures <- modelMeta %>%
   mutate(across(SSP.PAM50,~if_else(str_detect(.x,'Lum',negate=TRUE),'Other',.x))) %>% 
   mutate(Age=if_else(Age<50,'<50','≥50'),
          NHG=if_else(NHG=='3','3','1|2'),
-         SSP.PAM50=as.factor(SSP.PAM50))
+         SSP.PAM50=as.factor(SSP.PAM50),
+         !!params$outcome:=as.factor(.[[params$outcome]])) %>% 
+  mutate(across(contains('HisScore'),~case_when(.x>=50~'High',
+                                                between(.x,10,50)~'Intermediate',
+                                                .x<10~'Low')))
 
 colnames(clinicalFeatures) <- colnames(clinicalFeatures) %>% str_replace_all(.,'\\_','\\.')
 
@@ -327,14 +324,22 @@ cox_models_clinical <- map(.x = clinical_variables,.f = function(x){
 })
 
 signif_omics <- map(.x = seq_len(length(cox_models_omics)),function(x){
-  pluck(cox_models_omics[[x]],'coefficients') %>% as.data.frame() %>% filter(.[['Pr(>|z|)']]<0.01) %>% rownames(.)
+  pluck(cox_models_omics[[x]],'coefficients') %>% as.data.frame()
 }) %>% 
+  list_rbind() %>% 
+  mutate(PValue.Adj=p.adjust(.[['Pr(>|z|)']],method = 'fdr')) %>% 
+  filter(PValue.Adj<0.1) %>% 
+  rownames() %>% 
   as_vector() %>% 
   unique
 
 signif_clinical <- map(.x = seq_len(length(cox_models_clinical)),function(x){
-  pluck(cox_models_clinical[[x]],'coefficients') %>% as.data.frame() %>% filter(.[['Pr(>|z|)']]<0.05) %>% rownames(.)
+  pluck(cox_models_clinical[[x]],'coefficients') %>% as.data.frame() 
 }) %>% 
+  list_rbind() %>% 
+  mutate(PValue.Adj=p.adjust(.[['Pr(>|z|)']],method = 'fdr')) %>% 
+  filter(PValue.Adj<0.1) %>% 
+  rownames() %>% 
   as_vector() %>% 
   unique
 
@@ -400,7 +405,7 @@ featCutMedian <- finalFeatures %>% mutate(across(all_of(signif_omics),~if_else(.
 kmPlots <- map(.x = variables,.f = function(x){
   survFormula <- reformulate(termlabels = c(x,parse_character(params$outcome)),response = 'surv')
   fit <- surv_fit(formula = survFormula,data = featCutMedian)
-  ggsurvplot(fit = fit,data = featCutMedian,conf.int = TRUE,pval = TRUE,pval.method = TRUE,surv.median.line = 'hv',risk.table = TRUE)
+  ggsurvplot(fit = fit,data = featCutMedian,conf.int = FALSE,pval = TRUE,pval.method = TRUE,surv.median.line = 'hv',risk.table = TRUE)
   })
 ```
 ```{r}
@@ -481,15 +486,16 @@ clinicalFeatures <- modelMeta %>%
     tumor_mutational_burden,
     HisScoreLymphocytes,
     HisScoreStroma,
-    HisScoreInsituCancer,
-    HisScoreInvasiveCancer,
     NHG,
     PR,
     SSP.PAM50,
     params$outcome) %>% 
   mutate(Age=if_else(Age<50,'<50','≥50'),
          NHG=if_else(NHG=='3','3','1|2'),
-         !!params$outcome:=as.factor(.[[params$outcome]])) 
+         !!params$outcome:=as.factor(.[[params$outcome]])) %>% 
+  mutate(across(contains('HisScore'),~case_when(.x>=50~'High',
+                                                between(.x,10,50)~'Intermediate',
+                                                .x<10~'Low')))
 
 colnames(clinicalFeatures) <- colnames(clinicalFeatures) %>% str_replace_all(.,'\\_','\\.')
 
@@ -571,7 +577,7 @@ featCutMedian <- finalFeatures %>%
 kmPlots <- map(.x = selectedFeat,.f = function(x){
   survFormula <- reformulate(termlabels = c(x,parse_character(params$outcome)),response = 'surv')
   fit <- surv_fit(formula = survFormula,data = featCutMedian)
-  ggsurvplot(fit = fit,data = featCutMedian,conf.int = TRUE,pval = TRUE,pval.method = TRUE,surv.median.line = 'hv',risk.table = TRUE)
+  ggsurvplot(fit = fit,data = featCutMedian,conf.int = FALSE,pval = TRUE,pval.method = TRUE,surv.median.line = 'hv',risk.table = TRUE)
   })
 ```
 ```{r}

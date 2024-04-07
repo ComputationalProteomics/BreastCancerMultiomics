@@ -347,6 +347,16 @@ signif_clinical <- map(.x = seq_len(length(cox_models_clinical)),function(x){
 
 ### Multivariate Model
 ```{r}
+catchWarning <- function(expr){
+  warning_message <- NULL
+  warnHandler <- function(warning){
+    warning_message <<- c(warning_message,list(warning))
+    invokeRestart('muffleWarning')
+  }
+  res <- withCallingHandlers(expr = expr, warning = warnHandler)
+  list(result=res,warning=warning_message)
+}
+
 data <- finalFeatures %>% 
   dplyr::select(sample,time,event,surv,all_of(signif_omics),all_of(str_split_i(signif_clinical,'\\_',i = 1)))
 
@@ -366,15 +376,63 @@ hr_factors <- proportional_hazards() %>%
   set_engine('survival') %>% 
   set_mode('censored regression')
 
-wf <- workflow() %>%
+wf <- catchWarning({workflow() %>%
   add_recipe(basic_recipe) %>% 
   add_model(hr_factors,formula = surv~.) %>% 
-  fit(data=data)
+  fit(data=data)})
 
+counter <- 0
+while(!is.null(wf[["warning"]])){
+signif_omics <- map(.x = seq_len(length(cox_models_omics)),function(x){
+  pluck(cox_models_omics[[x]],'coefficients') %>% as.data.frame()
+}) %>% 
+  list_rbind() %>% 
+  mutate(PValue.Adj=p.adjust(.[['Pr(>|z|)']],method = 'fdr')) %>% 
+  filter(PValue.Adj<0.1-(counter/100)) %>% 
+  rownames() %>% 
+  as_vector() %>% 
+  unique
+
+signif_clinical <- map(.x = seq_len(length(cox_models_clinical)),function(x){
+  pluck(cox_models_clinical[[x]],'coefficients') %>% as.data.frame() 
+}) %>% 
+  list_rbind() %>% 
+  mutate(PValue.Adj=p.adjust(.[['Pr(>|z|)']],method = 'fdr')) %>% 
+  filter(PValue.Adj<0.1-(counter/100)) %>% 
+  rownames() %>% 
+  as_vector() %>% 
+  unique
+
+counter <- counter+1
+
+data <- finalFeatures %>% 
+  dplyr::select(sample,time,event,surv,all_of(signif_omics),all_of(str_split_i(signif_clinical,'\\_',i = 1)))
+
+basic_recipe <- recipe(x =  data) %>%
+  update_role(any_of(signif_omics),any_of(str_split_i(signif_clinical,'\\_',i = 1)),new_role = 'predictor') %>%
+  update_role(sample,new_role = 'ID') %>%
+  update_role(surv, new_role = 'outcome') %>% 
+  step_string2factor(all_string_predictors()) %>% 
+  step_dummy(all_factor_predictors()) %>% 
+  step_normalize(all_numeric_predictors())
+
+data_feat_baked <- basic_recipe %>% 
+  prep() %>% 
+  bake(new_data = NULL)
+
+hr_factors <- proportional_hazards() %>% 
+  set_engine('survival') %>% 
+  set_mode('censored regression')
+
+wf <- catchWarning({workflow() %>%
+  add_recipe(basic_recipe) %>% 
+  add_model(hr_factors,formula = surv~.) %>% 
+  fit(data=data)})
+}
 ```
 ```{r}
 ##### Check fit
-fitcheck <- cox.zph(fit = extract_fit_engine(wf))
+fitcheck <- cox.zph(fit = extract_fit_engine(wf[['result']]))
 # pdf(file = paste0(outputdir,'plot_coxzph.pdf'),width = 20,height = 20,onefile = TRUE)
 # ggcoxzph(fitcheck)
 # dev.off()
@@ -382,7 +440,7 @@ fitcheck <- cox.zph(fit = extract_fit_engine(wf))
 
 #### Plot Hazard Ratios
 ```{r}
-plotPH <- ggforest(model = extract_fit_engine(wf),data = data)
+plotPH <- ggforest(model = extract_fit_engine(wf[["result"]]),data = data)
 ggsave(filename = 'plot_forest_features_cox.pdf',plot = plotPH,device = 'pdf',path = outputdir,dpi = 300)
 ```
 
@@ -396,7 +454,11 @@ variables <- finalFeatures %>%
 # 
 # finalFeaturesFactors <- surv_categorize(x = featCut,labels = c('Low','High')) %>% as_tibble() %>% mutate(surv=Surv(time=time,event=event),!!params$outcome:=finalFeatures[[params$outcome]])
 
-featCutMedian <- finalFeatures %>% mutate(across(all_of(signif_omics),~if_else(.x<median(.x,na.rm=TRUE),true = 'Low',false = 'High'))) %>% mutate(surv=Surv(time=time,event=event),!!params$outcome:=finalFeatures[[params$outcome]])
+featCutMedian <- finalFeatures %>% 
+  select(variables) %>% 
+  mutate(across(where(is.numeric),~if_else(.x<median(.x,na.rm=TRUE),true = 'Low',false = 'High'))) %>% 
+  bind_cols(finalFeatures[,c('sample','time','event')],.) %>% 
+  mutate(surv=Surv(time=time,event=event),!!params$outcome:=finalFeatures[[params$outcome]])
 ```
 
 #### Kaplan-Meier plots

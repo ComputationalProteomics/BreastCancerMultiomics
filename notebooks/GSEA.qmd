@@ -72,6 +72,7 @@ p <- ggplot(resultsAll, aes(Experiment, ID, fill= NES)) +
   coord_fixed()+
   geom_tile(color='black',lwd=0.1,linetype=1) +
   scale_fill_gradient2(low="blue", high="red",na.value = 'white',mid = '#FFFFCC') + 
+  geom_text(mapping = aes(label = ifelse(p.adjust<0.01,"*","")),color='white',size=5,alpha=0.9)+
   theme_bw() +
   theme(axis.text.x = element_text(angle = 30,hjust = 1),
         panel.grid.major = element_blank(),
@@ -132,6 +133,7 @@ p <- ggplot(resultsAll, aes(Experiment, ID, fill= NES)) +
   coord_fixed()+
   geom_tile(color='black',lwd=0.1,linetype=1) +
   scale_fill_gradient2(low="blue", high="red",na.value = 'white',mid = '#FFFFCC') + 
+  geom_text(mapping = aes(label = ifelse(p.adjust<0.01,"*","")),color='white',size=5,alpha=0.9)+
   theme_bw() +
   theme(axis.text.x = element_text(angle = 30,hjust = 1),
         panel.grid.major = element_blank(),
@@ -189,6 +191,7 @@ p <- ggplot(resultsAll, aes(Experiment, ID, fill= NES)) +
   coord_fixed()+
   geom_tile(color='black',lwd=0.1,linetype=1) +
   scale_fill_gradient2(low="blue", high="red",na.value = 'white',mid = '#FFFFCC') + 
+  geom_text(mapping = aes(label = ifelse(p.adjust<0.01,"*","")),color='white',size=5,alpha=0.9)+
   theme_bw() +
   theme(axis.text.x = element_text(angle = 30,hjust = 1),
         panel.grid.major = element_blank(),
@@ -246,6 +249,7 @@ p <- ggplot(resultsAll, aes(Experiment, ID, fill= NES)) +
   coord_fixed()+
   geom_tile(color='black',lwd=0.1,linetype=1) +
   scale_fill_gradient2(low="blue", high="red",na.value = 'white',mid = '#FFFFCC') + 
+  geom_text(mapping = aes(label = ifelse(p.adjust<0.01,"*","")),color='white',size=5,alpha=0.9)+
   theme_bw() +
   theme(axis.text.x = element_text(angle = 30,hjust = 1),
         panel.grid.major = element_blank(),
@@ -303,6 +307,7 @@ p <- ggplot(resultsAll, aes(Experiment, ID, fill= NES)) +
   coord_fixed()+
   geom_tile(color='black',lwd=0.1,linetype=1) +
   scale_fill_gradient2(low="blue", high="red",na.value = 'white',mid = '#FFFFCC') + 
+  geom_text(mapping = aes(label = ifelse(p.adjust<0.01,"*","")),color='white',size=5,alpha=0.9)+
   theme_bw() +
   theme(axis.text.x = element_text(angle = 30,hjust = 1),
         panel.grid.major = element_blank(),
@@ -360,6 +365,7 @@ p <- ggplot(resultsAll, aes(Experiment, ID, fill= NES)) +
   coord_fixed()+
   geom_tile(color='black',lwd=0.1,linetype=1) +
   scale_fill_gradient2(low="blue", high="red",na.value = 'white',mid = '#FFFFCC') + 
+  geom_text(mapping = aes(label = ifelse(p.adjust<0.01,"*","")),color='white',size=5,alpha=0.9)+
   theme_bw() +
   theme(axis.text.x = element_text(angle = 30,hjust = 1),
         panel.grid.major = element_blank(),

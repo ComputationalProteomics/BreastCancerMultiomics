@@ -99,6 +99,8 @@ groupCol <- colorspace::divergex_hcl(n = 6) %>% setNames(nm = paste0('Group',1:6
 nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
 dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
 clusterCol <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6))
+subtypeCol <- colorspace::divergex_hcl(n = 5,palette = 'Spectral') %>% setNames(nm = c('Basal','Her2','LumA','LumB','Normal'))
+treatCol <- colorspace::divergex_hcl(n = 4,palette = 'Zissou 1',alpha = 0.8) %>% setNames(nm = c(c('Endo','ChemoEndo','Chemo','None')))
 ```
 
 ```{r}
@@ -124,11 +126,27 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        gp = gpar(title='InvasiveType')),
                                       LN=anno_simple(x = design$LN,col = dfrCol,
                                                      na_col = 'white'),
+                                      Subtype=anno_simple(x = design$SSP.PAM50,
+                                                          na_col = 'white',
+                                                          col=subtypeCol),
+                                      Size = anno_simple(x = design$Size.mm,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                                                    median(design$Size.mm,na.rm=T),
+                                                                                    max(design$Size.mm,na.rm = T)),hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      TILs = anno_simple(x = design$HisScoreLymphocytes,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                                                    max(design$HisScoreLymphocytes,na.rm = T)),
+                                                                                  hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      Treatment = anno_simple(x = design$TreatGroup,
+                                                              na_col = 'white',
+                                                              col=treatCol),
                                       Proteome.Cluster=anno_simple(x = design$CC.Prot,
-                                                                   col = clusterCol,na_col = 'red'),
+                                                                   col = clusterCol,na_col = 'white'),
                                       Phospho.Cluster=anno_simple(x=design$CC.Phospho,
-                                                                  col=clusterCol,na_col='red'),
-                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
+                                                                  col=clusterCol,na_col='white'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='white'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -165,8 +183,31 @@ legendLN <- Legend(labels = levels(factor(design$LN)),
                    title = 'LN',
                    border = 'black',
                    legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+legendPam50 <- Legend(labels = c('Basal','Her2','LumA','LumB','Normal'),
+                      title = 'PAM50 Subtype',
+                      border = 'black',
+                      legend_gp = gpar(fill=subtypeCol))
+legendSize <- Legend(at = c(min(design$Size.mm,na.rm = T),
+                            median(design$Size.mm,na.rm = T),
+                            max(design$Size.mm,na.rm = T),
+                            length.out=5),
+                     title = 'Size(mm)',
+                     col_fun = circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                      median(design$Size.mm,na.rm = T),
+                                                      max(design$Size.mm,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTILs <- Legend(at = c(min(design$HisScoreLymphocytes,na.rm = T),
+                            max(design$HisScoreLymphocytes,na.rm = T),
+                            length.out=5),
+                     title = 'TILs',
+                     col_fun = circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                      max(design$HisScoreLymphocytes,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTreatment <- Legend(labels = names(treatCol),
+                          title = 'Treatment',border = 'black',
+                          legend_gp = gpar(fill=treatCol))
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendLN,legendCluster)
+allLegends <- packLegend(list = list(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendTreatment,legendLN,legendCluster,legendSize,legendTILs,legendPam50),max_height = unit(20,'cm'))
 
 set.seed(123)
 proteinHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
@@ -251,6 +292,8 @@ groupCol <- colorspace::divergex_hcl(n = 6) %>% setNames(nm = paste0('Group',1:6
 nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
 dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
 clusterCol <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6))
+subtypeCol <- colorspace::divergex_hcl(n = 5,palette = 'Spectral') %>% setNames(nm = c('Basal','Her2','LumA','LumB','Normal'))
+treatCol <- colorspace::divergex_hcl(n = 4,palette = 'Zissou 1',alpha = 0.8) %>% setNames(nm = c(c('Endo','ChemoEndo','Chemo','None')))
 ```
 
 ```{r}
@@ -274,13 +317,29 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
-                                      LN=anno_simple(x = design$LN,
-                                                     col = dfrCol,na_col = 'white'),
+                                      LN=anno_simple(x = design$LN,col = dfrCol,
+                                                     na_col = 'white'),
+                                      Subtype=anno_simple(x = design$SSP.PAM50,
+                                                          na_col = 'white',
+                                                          col=subtypeCol),
+                                      Size = anno_simple(x = design$Size.mm,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                                                    median(design$Size.mm,na.rm=T),
+                                                                                    max(design$Size.mm,na.rm = T)),hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      TILs = anno_simple(x = design$HisScoreLymphocytes,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                                                    max(design$HisScoreLymphocytes,na.rm = T)),
+                                                                                  hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      Treatment = anno_simple(x = design$TreatGroup,
+                                                              na_col = 'white',
+                                                              col=treatCol),
                                       Proteome.Cluster=anno_simple(x = design$CC.Prot,
-                                                                   col = clusterCol,na_col = 'red'),
+                                                                   col = clusterCol,na_col = 'white'),
                                       Phospho.Cluster=anno_simple(x=design$CC.Phospho,
-                                                                  col=clusterCol,na_col='red'),
-                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
+                                                                  col=clusterCol,na_col='white'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='white'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -308,8 +367,8 @@ legendInvType <- Legend(labels = c('Ductal','Lobular'),
                    title = 'Invasive Type',
                    border = 'black',
                    legend_gp = gpar(fill=setNames(dfrCol,c('Ductal','Lobular'))))
-legendCluster <- Legend(labels = levels(factor(design$CC.Phospho)),
-                        title = 'Phophoproteome Cluster',
+legendCluster <- Legend(labels = levels(factor(design$CC.Prot)),
+                        title = 'Proteome Cluster',
                         legend_gp = gpar(fill=clusterCol),
                         border = 'black')
 
@@ -317,11 +376,34 @@ legendLN <- Legend(labels = levels(factor(design$LN)),
                    title = 'LN',
                    border = 'black',
                    legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+legendPam50 <- Legend(labels = c('Basal','Her2','LumA','LumB','Normal'),
+                      title = 'PAM50 Subtype',
+                      border = 'black',
+                      legend_gp = gpar(fill=subtypeCol))
+legendSize <- Legend(at = c(min(design$Size.mm,na.rm = T),
+                            median(design$Size.mm,na.rm = T),
+                            max(design$Size.mm,na.rm = T),
+                            length.out=5),
+                     title = 'Size(mm)',
+                     col_fun = circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                      median(design$Size.mm,na.rm = T),
+                                                      max(design$Size.mm,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTILs <- Legend(at = c(min(design$HisScoreLymphocytes,na.rm = T),
+                            max(design$HisScoreLymphocytes,na.rm = T),
+                            length.out=5),
+                     title = 'TILs',
+                     col_fun = circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                      max(design$HisScoreLymphocytes,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTreatment <- Legend(labels = names(treatCol),
+                          title = 'Treatment',border = 'black',
+                          legend_gp = gpar(fill=treatCol))
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendLN,legendCluster)
+allLegends <- packLegend(list = list(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendTreatment,legendLN,legendCluster,legendSize,legendTILs,legendPam50),max_height = unit(20,'cm'))
 
 set.seed(123)
-phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Phospho)})
+phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
 ```
 
 ##### Functional enrichment per protein cluster
@@ -392,6 +474,8 @@ groupCol <- colorspace::divergex_hcl(n = 6) %>% setNames(nm = paste0('Group',1:6
 nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
 dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
 clusterCol <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6))
+subtypeCol <- colorspace::divergex_hcl(n = 5,palette = 'Spectral') %>% setNames(nm = c('Basal','Her2','LumA','LumB','Normal'))
+treatCol <- colorspace::divergex_hcl(n = 4,palette = 'Zissou 1',alpha = 0.8) %>% setNames(nm = c(c('Endo','ChemoEndo','Chemo','None')))
 ```
 
 ```{r}
@@ -415,13 +499,29 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
-                                      LN=anno_simple(x = design$LN,
-                                                     col = dfrCol,na_col = 'white'),
+                                      LN=anno_simple(x = design$LN,col = dfrCol,
+                                                     na_col = 'white'),
+                                      Subtype=anno_simple(x = design$SSP.PAM50,
+                                                          na_col = 'white',
+                                                          col=subtypeCol),
+                                      Size = anno_simple(x = design$Size.mm,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                                                    median(design$Size.mm,na.rm=T),
+                                                                                    max(design$Size.mm,na.rm = T)),hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      TILs = anno_simple(x = design$HisScoreLymphocytes,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                                                    max(design$HisScoreLymphocytes,na.rm = T)),
+                                                                                  hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      Treatment = anno_simple(x = design$TreatGroup,
+                                                              na_col = 'white',
+                                                              col=treatCol),
                                       Proteome.Cluster=anno_simple(x = design$CC.Prot,
-                                                                   col = clusterCol,na_col = 'red'),
+                                                                   col = clusterCol,na_col = 'white'),
                                       Phospho.Cluster=anno_simple(x=design$CC.Phospho,
-                                                                  col=clusterCol,na_col='red'),
-                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
+                                                                  col=clusterCol,na_col='white'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='white'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -449,8 +549,8 @@ legendInvType <- Legend(labels = c('Ductal','Lobular'),
                    title = 'Invasive Type',
                    border = 'black',
                    legend_gp = gpar(fill=setNames(dfrCol,c('Ductal','Lobular'))))
-legendCluster <- Legend(labels = levels(factor(design$CC.RNA)),
-                        title = 'Transcriptome Cluster',
+legendCluster <- Legend(labels = levels(factor(design$CC.Prot)),
+                        title = 'Proteome Cluster',
                         legend_gp = gpar(fill=clusterCol),
                         border = 'black')
 
@@ -458,11 +558,34 @@ legendLN <- Legend(labels = levels(factor(design$LN)),
                    title = 'LN',
                    border = 'black',
                    legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+legendPam50 <- Legend(labels = c('Basal','Her2','LumA','LumB','Normal'),
+                      title = 'PAM50 Subtype',
+                      border = 'black',
+                      legend_gp = gpar(fill=subtypeCol))
+legendSize <- Legend(at = c(min(design$Size.mm,na.rm = T),
+                            median(design$Size.mm,na.rm = T),
+                            max(design$Size.mm,na.rm = T),
+                            length.out=5),
+                     title = 'Size(mm)',
+                     col_fun = circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                      median(design$Size.mm,na.rm = T),
+                                                      max(design$Size.mm,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTILs <- Legend(at = c(min(design$HisScoreLymphocytes,na.rm = T),
+                            max(design$HisScoreLymphocytes,na.rm = T),
+                            length.out=5),
+                     title = 'TILs',
+                     col_fun = circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                      max(design$HisScoreLymphocytes,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTreatment <- Legend(labels = names(treatCol),
+                          title = 'Treatment',border = 'black',
+                          legend_gp = gpar(fill=treatCol))
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendLN,legendCluster)
+allLegends <- packLegend(list = list(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendTreatment,legendLN,legendCluster,legendSize,legendTILs,legendPam50),max_height = unit(20,'cm'))
 
 set.seed(123)
-rnaHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Gene Expression',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.RNA)})
+rnaHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
 ```
 
 ##### Functional enrichment per protein cluster
@@ -556,6 +679,8 @@ groupCol <- colorspace::divergex_hcl(n = 6) %>% setNames(nm = paste0('Group',1:6
 nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
 dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
 clusterCol <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6))
+subtypeCol <- colorspace::divergex_hcl(n = 5,palette = 'Spectral') %>% setNames(nm = c('Basal','Her2','LumA','LumB','Normal'))
+treatCol <- colorspace::divergex_hcl(n = 4,palette = 'Zissou 1',alpha = 0.8) %>% setNames(nm = c(c('Endo','ChemoEndo','Chemo','None')))
 ```
 
 ```{r}
@@ -579,13 +704,29 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
-                                      LN=anno_simple(x = design$LN,
-                                                     col = dfrCol,na_col = 'white'),
+                                      LN=anno_simple(x = design$LN,col = dfrCol,
+                                                     na_col = 'white'),
+                                      Subtype=anno_simple(x = design$SSP.PAM50,
+                                                          na_col = 'white',
+                                                          col=subtypeCol),
+                                      Size = anno_simple(x = design$Size.mm,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                                                    median(design$Size.mm,na.rm=T),
+                                                                                    max(design$Size.mm,na.rm = T)),hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      TILs = anno_simple(x = design$HisScoreLymphocytes,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                                                    max(design$HisScoreLymphocytes,na.rm = T)),
+                                                                                  hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      Treatment = anno_simple(x = design$TreatGroup,
+                                                              na_col = 'white',
+                                                              col=treatCol),
                                       Proteome.Cluster=anno_simple(x = design$CC.Prot,
-                                                                   col = clusterCol,na_col = 'red'),
+                                                                   col = clusterCol,na_col = 'white'),
                                       Phospho.Cluster=anno_simple(x=design$CC.Phospho,
-                                                                  col=clusterCol,na_col='red'),
-                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
+                                                                  col=clusterCol,na_col='white'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='white'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -622,8 +763,31 @@ legendLN <- Legend(labels = levels(factor(design$LN)),
                    title = 'LN',
                    border = 'black',
                    legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+legendPam50 <- Legend(labels = c('Basal','Her2','LumA','LumB','Normal'),
+                      title = 'PAM50 Subtype',
+                      border = 'black',
+                      legend_gp = gpar(fill=subtypeCol))
+legendSize <- Legend(at = c(min(design$Size.mm,na.rm = T),
+                            median(design$Size.mm,na.rm = T),
+                            max(design$Size.mm,na.rm = T),
+                            length.out=5),
+                     title = 'Size(mm)',
+                     col_fun = circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                      median(design$Size.mm,na.rm = T),
+                                                      max(design$Size.mm,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTILs <- Legend(at = c(min(design$HisScoreLymphocytes,na.rm = T),
+                            max(design$HisScoreLymphocytes,na.rm = T),
+                            length.out=5),
+                     title = 'TILs',
+                     col_fun = circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                      max(design$HisScoreLymphocytes,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTreatment <- Legend(labels = names(treatCol),
+                          title = 'Treatment',border = 'black',
+                          legend_gp = gpar(fill=treatCol))
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendLN,legendCluster)
+allLegends <- packLegend(list = list(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendTreatment,legendLN,legendCluster,legendSize,legendTILs,legendPam50),max_height = unit(20,'cm'))
 
 set.seed(123)
 proteinHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
@@ -708,6 +872,8 @@ groupCol <- colorspace::divergex_hcl(n = 6) %>% setNames(nm = paste0('Group',1:6
 nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
 dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
 clusterCol <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6))
+subtypeCol <- colorspace::divergex_hcl(n = 5,palette = 'Spectral') %>% setNames(nm = c('Basal','Her2','LumA','LumB','Normal'))
+treatCol <- colorspace::divergex_hcl(n = 4,palette = 'Zissou 1',alpha = 0.8) %>% setNames(nm = c(c('Endo','ChemoEndo','Chemo','None')))
 ```
 
 ```{r}
@@ -731,13 +897,29 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
-                                      LN=anno_simple(x = design$LN,
-                                                     col = dfrCol,na_col = 'white'),
+                                      LN=anno_simple(x = design$LN,col = dfrCol,
+                                                     na_col = 'white'),
+                                      Subtype=anno_simple(x = design$SSP.PAM50,
+                                                          na_col = 'white',
+                                                          col=subtypeCol),
+                                      Size = anno_simple(x = design$Size.mm,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                                                    median(design$Size.mm,na.rm=T),
+                                                                                    max(design$Size.mm,na.rm = T)),hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      TILs = anno_simple(x = design$HisScoreLymphocytes,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                                                    max(design$HisScoreLymphocytes,na.rm = T)),
+                                                                                  hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      Treatment = anno_simple(x = design$TreatGroup,
+                                                              na_col = 'white',
+                                                              col=treatCol),
                                       Proteome.Cluster=anno_simple(x = design$CC.Prot,
-                                                                   col = clusterCol,na_col = 'red'),
+                                                                   col = clusterCol,na_col = 'white'),
                                       Phospho.Cluster=anno_simple(x=design$CC.Phospho,
-                                                                  col=clusterCol,na_col='red'),
-                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
+                                                                  col=clusterCol,na_col='white'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='white'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -765,8 +947,8 @@ legendInvType <- Legend(labels = c('Ductal','Lobular'),
                    title = 'Invasive Type',
                    border = 'black',
                    legend_gp = gpar(fill=setNames(dfrCol,c('Ductal','Lobular'))))
-legendCluster <- Legend(labels = levels(factor(design$CC.Phospho)),
-                        title = 'Phophoproteome Cluster',
+legendCluster <- Legend(labels = levels(factor(design$CC.Prot)),
+                        title = 'Proteome Cluster',
                         legend_gp = gpar(fill=clusterCol),
                         border = 'black')
 
@@ -774,11 +956,34 @@ legendLN <- Legend(labels = levels(factor(design$LN)),
                    title = 'LN',
                    border = 'black',
                    legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+legendPam50 <- Legend(labels = c('Basal','Her2','LumA','LumB','Normal'),
+                      title = 'PAM50 Subtype',
+                      border = 'black',
+                      legend_gp = gpar(fill=subtypeCol))
+legendSize <- Legend(at = c(min(design$Size.mm,na.rm = T),
+                            median(design$Size.mm,na.rm = T),
+                            max(design$Size.mm,na.rm = T),
+                            length.out=5),
+                     title = 'Size(mm)',
+                     col_fun = circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                      median(design$Size.mm,na.rm = T),
+                                                      max(design$Size.mm,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTILs <- Legend(at = c(min(design$HisScoreLymphocytes,na.rm = T),
+                            max(design$HisScoreLymphocytes,na.rm = T),
+                            length.out=5),
+                     title = 'TILs',
+                     col_fun = circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                      max(design$HisScoreLymphocytes,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTreatment <- Legend(labels = names(treatCol),
+                          title = 'Treatment',border = 'black',
+                          legend_gp = gpar(fill=treatCol))
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendLN,legendCluster)
+allLegends <- packLegend(list = list(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendTreatment,legendLN,legendCluster,legendSize,legendTILs,legendPam50),max_height = unit(20,'cm'))
 
 set.seed(123)
-phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Phospho)})
+phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
 ```
 
 ##### Functional enrichment per protein cluster
@@ -849,6 +1054,8 @@ groupCol <- colorspace::divergex_hcl(n = 6) %>% setNames(nm = paste0('Group',1:6
 nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
 dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
 clusterCol <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6))
+subtypeCol <- colorspace::divergex_hcl(n = 5,palette = 'Spectral') %>% setNames(nm = c('Basal','Her2','LumA','LumB','Normal'))
+treatCol <- colorspace::divergex_hcl(n = 4,palette = 'Zissou 1',alpha = 0.8) %>% setNames(nm = c(c('Endo','ChemoEndo','Chemo','None')))
 ```
 
 ```{r}
@@ -872,13 +1079,29 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
-                                      LN=anno_simple(x = design$LN,
-                                                     col = dfrCol,na_col = 'white'),
+                                      LN=anno_simple(x = design$LN,col = dfrCol,
+                                                     na_col = 'white'),
+                                      Subtype=anno_simple(x = design$SSP.PAM50,
+                                                          na_col = 'white',
+                                                          col=subtypeCol),
+                                      Size = anno_simple(x = design$Size.mm,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                                                    median(design$Size.mm,na.rm=T),
+                                                                                    max(design$Size.mm,na.rm = T)),hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      TILs = anno_simple(x = design$HisScoreLymphocytes,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                                                    max(design$HisScoreLymphocytes,na.rm = T)),
+                                                                                  hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      Treatment = anno_simple(x = design$TreatGroup,
+                                                              na_col = 'white',
+                                                              col=treatCol),
                                       Proteome.Cluster=anno_simple(x = design$CC.Prot,
-                                                                   col = clusterCol,na_col = 'red'),
+                                                                   col = clusterCol,na_col = 'white'),
                                       Phospho.Cluster=anno_simple(x=design$CC.Phospho,
-                                                                  col=clusterCol,na_col='red'),
-                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
+                                                                  col=clusterCol,na_col='white'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='white'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -906,8 +1129,8 @@ legendInvType <- Legend(labels = c('Ductal','Lobular'),
                    title = 'Invasive Type',
                    border = 'black',
                    legend_gp = gpar(fill=setNames(dfrCol,c('Ductal','Lobular'))))
-legendCluster <- Legend(labels = levels(factor(design$CC.RNA)),
-                        title = 'Transcriptome Cluster',
+legendCluster <- Legend(labels = levels(factor(design$CC.Prot)),
+                        title = 'Proteome Cluster',
                         legend_gp = gpar(fill=clusterCol),
                         border = 'black')
 
@@ -915,11 +1138,34 @@ legendLN <- Legend(labels = levels(factor(design$LN)),
                    title = 'LN',
                    border = 'black',
                    legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+legendPam50 <- Legend(labels = c('Basal','Her2','LumA','LumB','Normal'),
+                      title = 'PAM50 Subtype',
+                      border = 'black',
+                      legend_gp = gpar(fill=subtypeCol))
+legendSize <- Legend(at = c(min(design$Size.mm,na.rm = T),
+                            median(design$Size.mm,na.rm = T),
+                            max(design$Size.mm,na.rm = T),
+                            length.out=5),
+                     title = 'Size(mm)',
+                     col_fun = circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                      median(design$Size.mm,na.rm = T),
+                                                      max(design$Size.mm,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTILs <- Legend(at = c(min(design$HisScoreLymphocytes,na.rm = T),
+                            max(design$HisScoreLymphocytes,na.rm = T),
+                            length.out=5),
+                     title = 'TILs',
+                     col_fun = circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                      max(design$HisScoreLymphocytes,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTreatment <- Legend(labels = names(treatCol),
+                          title = 'Treatment',border = 'black',
+                          legend_gp = gpar(fill=treatCol))
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendLN,legendCluster)
+allLegends <- packLegend(list = list(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendTreatment,legendLN,legendCluster,legendSize,legendTILs,legendPam50),max_height = unit(20,'cm'))
 
 set.seed(123)
-rnaHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Gene Expression',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.RNA)})
+rnaHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
 ```
 
 ##### Functional enrichment per protein cluster
@@ -1010,6 +1256,8 @@ groupCol <- colorspace::divergex_hcl(n = 4) %>% setNames(nm = paste0('Group',1:4
 nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
 dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
 clusterCol <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6))
+subtypeCol <- colorspace::divergex_hcl(n = 5,palette = 'Spectral') %>% setNames(nm = c('Basal','Her2','LumA','LumB','Normal'))
+treatCol <- colorspace::divergex_hcl(n = 4,palette = 'Zissou 1',alpha = 0.8) %>% setNames(nm = c(c('Endo','ChemoEndo','Chemo','None')))
 ```
 
 ```{r}
@@ -1033,14 +1281,29 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
-                                      LN=anno_simple(x = design$LN,
-                                                     col = dfrCol,
+                                      LN=anno_simple(x = design$LN,col = dfrCol,
                                                      na_col = 'white'),
+                                      Subtype=anno_simple(x = design$SSP.PAM50,
+                                                          na_col = 'white',
+                                                          col=subtypeCol),
+                                      Size = anno_simple(x = design$Size.mm,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                                                    median(design$Size.mm,na.rm=T),
+                                                                                    max(design$Size.mm,na.rm = T)),hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      TILs = anno_simple(x = design$HisScoreLymphocytes,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                                                    max(design$HisScoreLymphocytes,na.rm = T)),
+                                                                                  hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      Treatment = anno_simple(x = design$TreatGroup,
+                                                              na_col = 'white',
+                                                              col=treatCol),
                                       Proteome.Cluster=anno_simple(x = design$CC.Prot,
-                                                                   col = clusterCol,na_col = 'red'),
+                                                                   col = clusterCol,na_col = 'white'),
                                       Phospho.Cluster=anno_simple(x=design$CC.Phospho,
-                                                                  col=clusterCol,na_col='red'),
-                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
+                                                                  col=clusterCol,na_col='white'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='white'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -1072,12 +1335,36 @@ legendCluster <- Legend(labels = levels(factor(design$CC.Prot)),
                         title = 'Proteome Cluster',
                         legend_gp = gpar(fill=clusterCol),
                         border = 'black')
-legendLN <- Legend(labels = levels(factor(design$LN)),
-                      title = 'LN',
-                      border = 'black',
-                      legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendLN,legendCluster)
+legendLN <- Legend(labels = levels(factor(design$LN)),
+                   title = 'LN',
+                   border = 'black',
+                   legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+legendPam50 <- Legend(labels = c('Basal','Her2','LumA','LumB','Normal'),
+                      title = 'PAM50 Subtype',
+                      border = 'black',
+                      legend_gp = gpar(fill=subtypeCol))
+legendSize <- Legend(at = c(min(design$Size.mm,na.rm = T),
+                            median(design$Size.mm,na.rm = T),
+                            max(design$Size.mm,na.rm = T),
+                            length.out=5),
+                     title = 'Size(mm)',
+                     col_fun = circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                      median(design$Size.mm,na.rm = T),
+                                                      max(design$Size.mm,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTILs <- Legend(at = c(min(design$HisScoreLymphocytes,na.rm = T),
+                            max(design$HisScoreLymphocytes,na.rm = T),
+                            length.out=5),
+                     title = 'TILs',
+                     col_fun = circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                      max(design$HisScoreLymphocytes,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTreatment <- Legend(labels = names(treatCol),
+                          title = 'Treatment',border = 'black',
+                          legend_gp = gpar(fill=treatCol))
+
+allLegends <- packLegend(list = list(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendTreatment,legendLN,legendCluster,legendSize,legendTILs,legendPam50),max_height = unit(20,'cm'))
 
 set.seed(123)
 proteinHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
@@ -1162,6 +1449,8 @@ groupCol <- colorspace::divergex_hcl(n = 4) %>% setNames(nm = paste0('Group',1:4
 nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
 dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
 clusterCol <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6))
+subtypeCol <- colorspace::divergex_hcl(n = 5,palette = 'Spectral') %>% setNames(nm = c('Basal','Her2','LumA','LumB','Normal'))
+treatCol <- colorspace::divergex_hcl(n = 4,palette = 'Zissou 1',alpha = 0.8) %>% setNames(nm = c(c('Endo','ChemoEndo','Chemo','None')))
 ```
 
 ```{r}
@@ -1185,14 +1474,29 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
-                                      LN=anno_simple(x = design$LN,
-                                                     col = dfrCol,
+                                      LN=anno_simple(x = design$LN,col = dfrCol,
                                                      na_col = 'white'),
+                                      Subtype=anno_simple(x = design$SSP.PAM50,
+                                                          na_col = 'white',
+                                                          col=subtypeCol),
+                                      Size = anno_simple(x = design$Size.mm,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                                                    median(design$Size.mm,na.rm=T),
+                                                                                    max(design$Size.mm,na.rm = T)),hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      TILs = anno_simple(x = design$HisScoreLymphocytes,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                                                    max(design$HisScoreLymphocytes,na.rm = T)),
+                                                                                  hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      Treatment = anno_simple(x = design$TreatGroup,
+                                                              na_col = 'white',
+                                                              col=treatCol),
                                       Proteome.Cluster=anno_simple(x = design$CC.Prot,
-                                                                   col = clusterCol,na_col = 'red'),
+                                                                   col = clusterCol,na_col = 'white'),
                                       Phospho.Cluster=anno_simple(x=design$CC.Phospho,
-                                                                  col=clusterCol,na_col='red'),
-                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
+                                                                  col=clusterCol,na_col='white'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='white'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -1220,19 +1524,43 @@ legendInvType <- Legend(labels = c('Ductal','Lobular'),
                    title = 'Invasive Type',
                    border = 'black',
                    legend_gp = gpar(fill=setNames(dfrCol,c('Ductal','Lobular'))))
-legendCluster <- Legend(labels = levels(factor(design$CC.Phospho)),
-                        title = 'Phophoproteome Cluster',
+legendCluster <- Legend(labels = levels(factor(design$CC.Prot)),
+                        title = 'Proteome Cluster',
                         legend_gp = gpar(fill=clusterCol),
                         border = 'black')
-legendLN <- Legend(labels = levels(factor(design$LN)),
-                      title = 'LN',
-                      border = 'black',
-                      legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendLN,legendCluster)
+legendLN <- Legend(labels = levels(factor(design$LN)),
+                   title = 'LN',
+                   border = 'black',
+                   legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+legendPam50 <- Legend(labels = c('Basal','Her2','LumA','LumB','Normal'),
+                      title = 'PAM50 Subtype',
+                      border = 'black',
+                      legend_gp = gpar(fill=subtypeCol))
+legendSize <- Legend(at = c(min(design$Size.mm,na.rm = T),
+                            median(design$Size.mm,na.rm = T),
+                            max(design$Size.mm,na.rm = T),
+                            length.out=5),
+                     title = 'Size(mm)',
+                     col_fun = circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                      median(design$Size.mm,na.rm = T),
+                                                      max(design$Size.mm,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTILs <- Legend(at = c(min(design$HisScoreLymphocytes,na.rm = T),
+                            max(design$HisScoreLymphocytes,na.rm = T),
+                            length.out=5),
+                     title = 'TILs',
+                     col_fun = circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                      max(design$HisScoreLymphocytes,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTreatment <- Legend(labels = names(treatCol),
+                          title = 'Treatment',border = 'black',
+                          legend_gp = gpar(fill=treatCol))
+
+allLegends <- packLegend(list = list(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendTreatment,legendLN,legendCluster,legendSize,legendTILs,legendPam50),max_height = unit(20,'cm'))
 
 set.seed(123)
-phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Phospho)})
+phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
 ```
 
 ###### Functional enrichment per protein cluster
@@ -1304,6 +1632,8 @@ groupCol <- colorspace::divergex_hcl(n = 4) %>% setNames(nm = paste0('Group',1:4
 nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
 dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
 clusterCol <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6))
+subtypeCol <- colorspace::divergex_hcl(n = 5,palette = 'Spectral') %>% setNames(nm = c('Basal','Her2','LumA','LumB','Normal'))
+treatCol <- colorspace::divergex_hcl(n = 4,palette = 'Zissou 1',alpha = 0.8) %>% setNames(nm = c(c('Endo','ChemoEndo','Chemo','None')))
 ```
 
 ```{r}
@@ -1327,14 +1657,29 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
-                                      LN=anno_simple(x = design$LN,
-                                                     col = dfrCol,
+                                      LN=anno_simple(x = design$LN,col = dfrCol,
                                                      na_col = 'white'),
+                                      Subtype=anno_simple(x = design$SSP.PAM50,
+                                                          na_col = 'white',
+                                                          col=subtypeCol),
+                                      Size = anno_simple(x = design$Size.mm,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                                                    median(design$Size.mm,na.rm=T),
+                                                                                    max(design$Size.mm,na.rm = T)),hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      TILs = anno_simple(x = design$HisScoreLymphocytes,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                                                    max(design$HisScoreLymphocytes,na.rm = T)),
+                                                                                  hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      Treatment = anno_simple(x = design$TreatGroup,
+                                                              na_col = 'white',
+                                                              col=treatCol),
                                       Proteome.Cluster=anno_simple(x = design$CC.Prot,
-                                                                   col = clusterCol,na_col = 'red'),
+                                                                   col = clusterCol,na_col = 'white'),
                                       Phospho.Cluster=anno_simple(x=design$CC.Phospho,
-                                                                  col=clusterCol,na_col='red'),
-                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
+                                                                  col=clusterCol,na_col='white'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='white'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -1362,19 +1707,43 @@ legendInvType <- Legend(labels = c('Ductal','Lobular'),
                    title = 'Invasive Type',
                    border = 'black',
                    legend_gp = gpar(fill=setNames(dfrCol,c('Ductal','Lobular'))))
-legendCluster <- Legend(labels = levels(factor(design$CC.RNA)),
-                        title = 'Transcriptome Cluster',
+legendCluster <- Legend(labels = levels(factor(design$CC.Prot)),
+                        title = 'Proteome Cluster',
                         legend_gp = gpar(fill=clusterCol),
                         border = 'black')
-legendLN <- Legend(labels = levels(factor(design$LN)),
-                      title = 'LN',
-                      border = 'black',
-                      legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendLN,legendCluster)
+legendLN <- Legend(labels = levels(factor(design$LN)),
+                   title = 'LN',
+                   border = 'black',
+                   legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+legendPam50 <- Legend(labels = c('Basal','Her2','LumA','LumB','Normal'),
+                      title = 'PAM50 Subtype',
+                      border = 'black',
+                      legend_gp = gpar(fill=subtypeCol))
+legendSize <- Legend(at = c(min(design$Size.mm,na.rm = T),
+                            median(design$Size.mm,na.rm = T),
+                            max(design$Size.mm,na.rm = T),
+                            length.out=5),
+                     title = 'Size(mm)',
+                     col_fun = circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                      median(design$Size.mm,na.rm = T),
+                                                      max(design$Size.mm,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTILs <- Legend(at = c(min(design$HisScoreLymphocytes,na.rm = T),
+                            max(design$HisScoreLymphocytes,na.rm = T),
+                            length.out=5),
+                     title = 'TILs',
+                     col_fun = circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                      max(design$HisScoreLymphocytes,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTreatment <- Legend(labels = names(treatCol),
+                          title = 'Treatment',border = 'black',
+                          legend_gp = gpar(fill=treatCol))
+
+allLegends <- packLegend(list = list(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendTreatment,legendLN,legendCluster,legendSize,legendTILs,legendPam50),max_height = unit(20,'cm'))
 
 set.seed(123)
-rnaHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Gene Expression',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.RNA)})
+rnaHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
 ```
 
 ###### Functional enrichment per protein cluster
@@ -1465,6 +1834,8 @@ groupCol <- colorspace::divergex_hcl(n = 4) %>% setNames(nm = paste0('Group',1:4
 nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
 dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
 clusterCol <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6))
+subtypeCol <- colorspace::divergex_hcl(n = 5,palette = 'Spectral') %>% setNames(nm = c('Basal','Her2','LumA','LumB','Normal'))
+treatCol <- colorspace::divergex_hcl(n = 4,palette = 'Zissou 1',alpha = 0.8) %>% setNames(nm = c(c('Endo','ChemoEndo','Chemo','None')))
 ```
 
 ```{r}
@@ -1488,14 +1859,29 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
-                                      LN=anno_simple(x = design$LN,
-                                                     col = dfrCol,
+                                      LN=anno_simple(x = design$LN,col = dfrCol,
                                                      na_col = 'white'),
+                                      Subtype=anno_simple(x = design$SSP.PAM50,
+                                                          na_col = 'white',
+                                                          col=subtypeCol),
+                                      Size = anno_simple(x = design$Size.mm,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                                                    median(design$Size.mm,na.rm=T),
+                                                                                    max(design$Size.mm,na.rm = T)),hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      TILs = anno_simple(x = design$HisScoreLymphocytes,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                                                    max(design$HisScoreLymphocytes,na.rm = T)),
+                                                                                  hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      Treatment = anno_simple(x = design$TreatGroup,
+                                                              na_col = 'white',
+                                                              col=treatCol),
                                       Proteome.Cluster=anno_simple(x = design$CC.Prot,
-                                                                   col = clusterCol,na_col = 'red'),
+                                                                   col = clusterCol,na_col = 'white'),
                                       Phospho.Cluster=anno_simple(x=design$CC.Phospho,
-                                                                  col=clusterCol,na_col='red'),
-                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
+                                                                  col=clusterCol,na_col='white'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='white'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -1527,12 +1913,36 @@ legendCluster <- Legend(labels = levels(factor(design$CC.Prot)),
                         title = 'Proteome Cluster',
                         legend_gp = gpar(fill=clusterCol),
                         border = 'black')
-legendLN <- Legend(labels = levels(factor(design$LN)),
-                      title = 'LN',
-                      border = 'black',
-                      legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendLN,legendCluster)
+legendLN <- Legend(labels = levels(factor(design$LN)),
+                   title = 'LN',
+                   border = 'black',
+                   legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+legendPam50 <- Legend(labels = c('Basal','Her2','LumA','LumB','Normal'),
+                      title = 'PAM50 Subtype',
+                      border = 'black',
+                      legend_gp = gpar(fill=subtypeCol))
+legendSize <- Legend(at = c(min(design$Size.mm,na.rm = T),
+                            median(design$Size.mm,na.rm = T),
+                            max(design$Size.mm,na.rm = T),
+                            length.out=5),
+                     title = 'Size(mm)',
+                     col_fun = circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                      median(design$Size.mm,na.rm = T),
+                                                      max(design$Size.mm,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTILs <- Legend(at = c(min(design$HisScoreLymphocytes,na.rm = T),
+                            max(design$HisScoreLymphocytes,na.rm = T),
+                            length.out=5),
+                     title = 'TILs',
+                     col_fun = circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                      max(design$HisScoreLymphocytes,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTreatment <- Legend(labels = names(treatCol),
+                          title = 'Treatment',border = 'black',
+                          legend_gp = gpar(fill=treatCol))
+
+allLegends <- packLegend(list = list(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendTreatment,legendLN,legendCluster,legendSize,legendTILs,legendPam50),max_height = unit(20,'cm'))
 
 set.seed(123)
 proteinHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
@@ -1617,6 +2027,8 @@ groupCol <- colorspace::divergex_hcl(n = 4) %>% setNames(nm = paste0('Group',1:4
 nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
 dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
 clusterCol <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6))
+subtypeCol <- colorspace::divergex_hcl(n = 5,palette = 'Spectral') %>% setNames(nm = c('Basal','Her2','LumA','LumB','Normal'))
+treatCol <- colorspace::divergex_hcl(n = 4,palette = 'Zissou 1',alpha = 0.8) %>% setNames(nm = c(c('Endo','ChemoEndo','Chemo','None')))
 ```
 
 ```{r}
@@ -1640,14 +2052,29 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
-                                      LN=anno_simple(x = design$LN,
-                                                     col = dfrCol,
+                                      LN=anno_simple(x = design$LN,col = dfrCol,
                                                      na_col = 'white'),
+                                      Subtype=anno_simple(x = design$SSP.PAM50,
+                                                          na_col = 'white',
+                                                          col=subtypeCol),
+                                      Size = anno_simple(x = design$Size.mm,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                                                    median(design$Size.mm,na.rm=T),
+                                                                                    max(design$Size.mm,na.rm = T)),hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      TILs = anno_simple(x = design$HisScoreLymphocytes,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                                                    max(design$HisScoreLymphocytes,na.rm = T)),
+                                                                                  hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      Treatment = anno_simple(x = design$TreatGroup,
+                                                              na_col = 'white',
+                                                              col=treatCol),
                                       Proteome.Cluster=anno_simple(x = design$CC.Prot,
-                                                                   col = clusterCol,na_col = 'red'),
+                                                                   col = clusterCol,na_col = 'white'),
                                       Phospho.Cluster=anno_simple(x=design$CC.Phospho,
-                                                                  col=clusterCol,na_col='red'),
-                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
+                                                                  col=clusterCol,na_col='white'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='white'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -1675,19 +2102,43 @@ legendInvType <- Legend(labels = c('Ductal','Lobular'),
                    title = 'Invasive Type',
                    border = 'black',
                    legend_gp = gpar(fill=setNames(dfrCol,c('Ductal','Lobular'))))
-legendCluster <- Legend(labels = levels(factor(design$CC.Phospho)),
-                        title = 'Phophoproteome Cluster',
+legendCluster <- Legend(labels = levels(factor(design$CC.Prot)),
+                        title = 'Proteome Cluster',
                         legend_gp = gpar(fill=clusterCol),
                         border = 'black')
-legendLN <- Legend(labels = levels(factor(design$LN)),
-                      title = 'LN',
-                      border = 'black',
-                      legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendLN,legendCluster)
+legendLN <- Legend(labels = levels(factor(design$LN)),
+                   title = 'LN',
+                   border = 'black',
+                   legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+legendPam50 <- Legend(labels = c('Basal','Her2','LumA','LumB','Normal'),
+                      title = 'PAM50 Subtype',
+                      border = 'black',
+                      legend_gp = gpar(fill=subtypeCol))
+legendSize <- Legend(at = c(min(design$Size.mm,na.rm = T),
+                            median(design$Size.mm,na.rm = T),
+                            max(design$Size.mm,na.rm = T),
+                            length.out=5),
+                     title = 'Size(mm)',
+                     col_fun = circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                      median(design$Size.mm,na.rm = T),
+                                                      max(design$Size.mm,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTILs <- Legend(at = c(min(design$HisScoreLymphocytes,na.rm = T),
+                            max(design$HisScoreLymphocytes,na.rm = T),
+                            length.out=5),
+                     title = 'TILs',
+                     col_fun = circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                      max(design$HisScoreLymphocytes,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTreatment <- Legend(labels = names(treatCol),
+                          title = 'Treatment',border = 'black',
+                          legend_gp = gpar(fill=treatCol))
+
+allLegends <- packLegend(list = list(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendTreatment,legendLN,legendCluster,legendSize,legendTILs,legendPam50),max_height = unit(20,'cm'))
 
 set.seed(123)
-phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Phospho)})
+phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
 ```
 
 ###### Functional enrichment per protein cluster
@@ -1759,6 +2210,8 @@ groupCol <- colorspace::divergex_hcl(n = 4) %>% setNames(nm = paste0('Group',1:4
 nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
 dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
 clusterCol <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6))
+subtypeCol <- colorspace::divergex_hcl(n = 5,palette = 'Spectral') %>% setNames(nm = c('Basal','Her2','LumA','LumB','Normal'))
+treatCol <- colorspace::divergex_hcl(n = 4,palette = 'Zissou 1',alpha = 0.8) %>% setNames(nm = c(c('Endo','ChemoEndo','Chemo','None')))
 ```
 
 ```{r}
@@ -1782,14 +2235,29 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
-                                      LN=anno_simple(x = design$LN,
-                                                     col = dfrCol,
+                                      LN=anno_simple(x = design$LN,col = dfrCol,
                                                      na_col = 'white'),
+                                      Subtype=anno_simple(x = design$SSP.PAM50,
+                                                          na_col = 'white',
+                                                          col=subtypeCol),
+                                      Size = anno_simple(x = design$Size.mm,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                                                    median(design$Size.mm,na.rm=T),
+                                                                                    max(design$Size.mm,na.rm = T)),hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      TILs = anno_simple(x = design$HisScoreLymphocytes,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                                                    max(design$HisScoreLymphocytes,na.rm = T)),
+                                                                                  hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      Treatment = anno_simple(x = design$TreatGroup,
+                                                              na_col = 'white',
+                                                              col=treatCol),
                                       Proteome.Cluster=anno_simple(x = design$CC.Prot,
-                                                                   col = clusterCol,na_col = 'red'),
+                                                                   col = clusterCol,na_col = 'white'),
                                       Phospho.Cluster=anno_simple(x=design$CC.Phospho,
-                                                                  col=clusterCol,na_col='red'),
-                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
+                                                                  col=clusterCol,na_col='white'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='white'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -1817,19 +2285,43 @@ legendInvType <- Legend(labels = c('Ductal','Lobular'),
                    title = 'Invasive Type',
                    border = 'black',
                    legend_gp = gpar(fill=setNames(dfrCol,c('Ductal','Lobular'))))
-legendCluster <- Legend(labels = levels(factor(design$CC.RNA)),
-                        title = 'Transcriptome Cluster',
+legendCluster <- Legend(labels = levels(factor(design$CC.Prot)),
+                        title = 'Proteome Cluster',
                         legend_gp = gpar(fill=clusterCol),
                         border = 'black')
-legendLN <- Legend(labels = levels(factor(design$LN)),
-                      title = 'LN',
-                      border = 'black',
-                      legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendLN,legendCluster)
+legendLN <- Legend(labels = levels(factor(design$LN)),
+                   title = 'LN',
+                   border = 'black',
+                   legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+legendPam50 <- Legend(labels = c('Basal','Her2','LumA','LumB','Normal'),
+                      title = 'PAM50 Subtype',
+                      border = 'black',
+                      legend_gp = gpar(fill=subtypeCol))
+legendSize <- Legend(at = c(min(design$Size.mm,na.rm = T),
+                            median(design$Size.mm,na.rm = T),
+                            max(design$Size.mm,na.rm = T),
+                            length.out=5),
+                     title = 'Size(mm)',
+                     col_fun = circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                      median(design$Size.mm,na.rm = T),
+                                                      max(design$Size.mm,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTILs <- Legend(at = c(min(design$HisScoreLymphocytes,na.rm = T),
+                            max(design$HisScoreLymphocytes,na.rm = T),
+                            length.out=5),
+                     title = 'TILs',
+                     col_fun = circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                      max(design$HisScoreLymphocytes,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTreatment <- Legend(labels = names(treatCol),
+                          title = 'Treatment',border = 'black',
+                          legend_gp = gpar(fill=treatCol))
+
+allLegends <- packLegend(list = list(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendTreatment,legendLN,legendCluster,legendSize,legendTILs,legendPam50),max_height = unit(20,'cm'))
 
 set.seed(123)
-rnaHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Gene Expression',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.RNA)})
+rnaHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
 ```
 
 ###### Functional enrichment per protein cluster
@@ -1919,6 +2411,8 @@ groupCol <- colorspace::divergex_hcl(n = 2) %>% setNames(nm = paste0('Group',5:6
 nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
 dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
 clusterCol <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6))
+subtypeCol <- colorspace::divergex_hcl(n = 5,palette = 'Spectral') %>% setNames(nm = c('Basal','Her2','LumA','LumB','Normal'))
+treatCol <- colorspace::divergex_hcl(n = 4,palette = 'Zissou 1',alpha = 0.8) %>% setNames(nm = c(c('Endo','ChemoEndo','Chemo','None')))
 ```
 
 ```{r}
@@ -1942,14 +2436,29 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
-                                      LN=anno_simple(x = design$LN,
-                                                     col = dfrCol,
+                                      LN=anno_simple(x = design$LN,col = dfrCol,
                                                      na_col = 'white'),
+                                      Subtype=anno_simple(x = design$SSP.PAM50,
+                                                          na_col = 'white',
+                                                          col=subtypeCol),
+                                      Size = anno_simple(x = design$Size.mm,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                                                    median(design$Size.mm,na.rm=T),
+                                                                                    max(design$Size.mm,na.rm = T)),hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      TILs = anno_simple(x = design$HisScoreLymphocytes,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                                                    max(design$HisScoreLymphocytes,na.rm = T)),
+                                                                                  hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      Treatment = anno_simple(x = design$TreatGroup,
+                                                              na_col = 'white',
+                                                              col=treatCol),
                                       Proteome.Cluster=anno_simple(x = design$CC.Prot,
-                                                                   col = clusterCol,na_col = 'red'),
+                                                                   col = clusterCol,na_col = 'white'),
                                       Phospho.Cluster=anno_simple(x=design$CC.Phospho,
-                                                                  col=clusterCol,na_col='red'),
-                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
+                                                                  col=clusterCol,na_col='white'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='white'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -1981,12 +2490,36 @@ legendCluster <- Legend(labels = levels(factor(design$CC.Prot)),
                         title = 'Proteome Cluster',
                         legend_gp = gpar(fill=clusterCol),
                         border = 'black')
-legendLN <- Legend(labels = levels(factor(design$LN)),
-                      title = 'LN',
-                      border = 'black',
-                      legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendLN,legendCluster)
+legendLN <- Legend(labels = levels(factor(design$LN)),
+                   title = 'LN',
+                   border = 'black',
+                   legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+legendPam50 <- Legend(labels = c('Basal','Her2','LumA','LumB','Normal'),
+                      title = 'PAM50 Subtype',
+                      border = 'black',
+                      legend_gp = gpar(fill=subtypeCol))
+legendSize <- Legend(at = c(min(design$Size.mm,na.rm = T),
+                            median(design$Size.mm,na.rm = T),
+                            max(design$Size.mm,na.rm = T),
+                            length.out=5),
+                     title = 'Size(mm)',
+                     col_fun = circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                      median(design$Size.mm,na.rm = T),
+                                                      max(design$Size.mm,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTILs <- Legend(at = c(min(design$HisScoreLymphocytes,na.rm = T),
+                            max(design$HisScoreLymphocytes,na.rm = T),
+                            length.out=5),
+                     title = 'TILs',
+                     col_fun = circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                      max(design$HisScoreLymphocytes,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTreatment <- Legend(labels = names(treatCol),
+                          title = 'Treatment',border = 'black',
+                          legend_gp = gpar(fill=treatCol))
+
+allLegends <- packLegend(list = list(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendTreatment,legendLN,legendCluster,legendSize,legendTILs,legendPam50),max_height = unit(20,'cm'))
 
 set.seed(123)
 proteinHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
@@ -2071,6 +2604,8 @@ groupCol <- colorspace::divergex_hcl(n = 2) %>% setNames(nm = paste0('Group',5:6
 nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
 dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
 clusterCol <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6))
+subtypeCol <- colorspace::divergex_hcl(n = 5,palette = 'Spectral') %>% setNames(nm = c('Basal','Her2','LumA','LumB','Normal'))
+treatCol <- colorspace::divergex_hcl(n = 4,palette = 'Zissou 1',alpha = 0.8) %>% setNames(nm = c(c('Endo','ChemoEndo','Chemo','None')))
 ```
 
 ```{r}
@@ -2094,14 +2629,29 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
-                                      LN=anno_simple(x = design$LN,
-                                                     col = dfrCol,
+                                      LN=anno_simple(x = design$LN,col = dfrCol,
                                                      na_col = 'white'),
+                                      Subtype=anno_simple(x = design$SSP.PAM50,
+                                                          na_col = 'white',
+                                                          col=subtypeCol),
+                                      Size = anno_simple(x = design$Size.mm,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                                                    median(design$Size.mm,na.rm=T),
+                                                                                    max(design$Size.mm,na.rm = T)),hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      TILs = anno_simple(x = design$HisScoreLymphocytes,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                                                    max(design$HisScoreLymphocytes,na.rm = T)),
+                                                                                  hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      Treatment = anno_simple(x = design$TreatGroup,
+                                                              na_col = 'white',
+                                                              col=treatCol),
                                       Proteome.Cluster=anno_simple(x = design$CC.Prot,
-                                                                   col = clusterCol,na_col = 'red'),
+                                                                   col = clusterCol,na_col = 'white'),
                                       Phospho.Cluster=anno_simple(x=design$CC.Phospho,
-                                                                  col=clusterCol,na_col='red'),
-                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
+                                                                  col=clusterCol,na_col='white'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='white'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -2129,19 +2679,43 @@ legendInvType <- Legend(labels = c('Ductal','Lobular'),
                    title = 'Invasive Type',
                    border = 'black',
                    legend_gp = gpar(fill=setNames(dfrCol,c('Ductal','Lobular'))))
-legendCluster <- Legend(labels = levels(factor(design$CC.Phospho)),
-                        title = 'Phophoproteome Cluster',
+legendCluster <- Legend(labels = levels(factor(design$CC.Prot)),
+                        title = 'Proteome Cluster',
                         legend_gp = gpar(fill=clusterCol),
                         border = 'black')
-legendLN <- Legend(labels = levels(factor(design$LN)),
-                      title = 'LN',
-                      border = 'black',
-                      legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendLN,legendCluster)
+legendLN <- Legend(labels = levels(factor(design$LN)),
+                   title = 'LN',
+                   border = 'black',
+                   legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+legendPam50 <- Legend(labels = c('Basal','Her2','LumA','LumB','Normal'),
+                      title = 'PAM50 Subtype',
+                      border = 'black',
+                      legend_gp = gpar(fill=subtypeCol))
+legendSize <- Legend(at = c(min(design$Size.mm,na.rm = T),
+                            median(design$Size.mm,na.rm = T),
+                            max(design$Size.mm,na.rm = T),
+                            length.out=5),
+                     title = 'Size(mm)',
+                     col_fun = circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                      median(design$Size.mm,na.rm = T),
+                                                      max(design$Size.mm,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTILs <- Legend(at = c(min(design$HisScoreLymphocytes,na.rm = T),
+                            max(design$HisScoreLymphocytes,na.rm = T),
+                            length.out=5),
+                     title = 'TILs',
+                     col_fun = circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                      max(design$HisScoreLymphocytes,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTreatment <- Legend(labels = names(treatCol),
+                          title = 'Treatment',border = 'black',
+                          legend_gp = gpar(fill=treatCol))
+
+allLegends <- packLegend(list = list(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendTreatment,legendLN,legendCluster,legendSize,legendTILs,legendPam50),max_height = unit(20,'cm'))
 
 set.seed(123)
-phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Phospho)})
+phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
 ```
 
 ###### Functional enrichment per protein cluster
@@ -2212,6 +2786,8 @@ groupCol <- colorspace::divergex_hcl(n = 2) %>% setNames(nm = paste0('Group',5:6
 nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
 dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
 clusterCol <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6))
+subtypeCol <- colorspace::divergex_hcl(n = 5,palette = 'Spectral') %>% setNames(nm = c('Basal','Her2','LumA','LumB','Normal'))
+treatCol <- colorspace::divergex_hcl(n = 4,palette = 'Zissou 1',alpha = 0.8) %>% setNames(nm = c(c('Endo','ChemoEndo','Chemo','None')))
 ```
 
 ```{r}
@@ -2235,14 +2811,29 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
-                                      LN=anno_simple(x = design$LN,
-                                                     col = dfrCol,
+                                      LN=anno_simple(x = design$LN,col = dfrCol,
                                                      na_col = 'white'),
+                                      Subtype=anno_simple(x = design$SSP.PAM50,
+                                                          na_col = 'white',
+                                                          col=subtypeCol),
+                                      Size = anno_simple(x = design$Size.mm,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                                                    median(design$Size.mm,na.rm=T),
+                                                                                    max(design$Size.mm,na.rm = T)),hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      TILs = anno_simple(x = design$HisScoreLymphocytes,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                                                    max(design$HisScoreLymphocytes,na.rm = T)),
+                                                                                  hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      Treatment = anno_simple(x = design$TreatGroup,
+                                                              na_col = 'white',
+                                                              col=treatCol),
                                       Proteome.Cluster=anno_simple(x = design$CC.Prot,
-                                                                   col = clusterCol,na_col = 'red'),
+                                                                   col = clusterCol,na_col = 'white'),
                                       Phospho.Cluster=anno_simple(x=design$CC.Phospho,
-                                                                  col=clusterCol,na_col='red'),
-                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
+                                                                  col=clusterCol,na_col='white'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='white'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -2270,19 +2861,43 @@ legendInvType <- Legend(labels = c('Ductal','Lobular'),
                    title = 'Invasive Type',
                    border = 'black',
                    legend_gp = gpar(fill=setNames(dfrCol,c('Ductal','Lobular'))))
-legendCluster <- Legend(labels = levels(factor(design$CC.RNA)),
-                        title = 'Transcriptome Cluster',
+legendCluster <- Legend(labels = levels(factor(design$CC.Prot)),
+                        title = 'Proteome Cluster',
                         legend_gp = gpar(fill=clusterCol),
                         border = 'black')
-legendLN <- Legend(labels = levels(factor(design$LN)),
-                      title = 'LN',
-                      border = 'black',
-                      legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendLN,legendCluster)
+legendLN <- Legend(labels = levels(factor(design$LN)),
+                   title = 'LN',
+                   border = 'black',
+                   legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+legendPam50 <- Legend(labels = c('Basal','Her2','LumA','LumB','Normal'),
+                      title = 'PAM50 Subtype',
+                      border = 'black',
+                      legend_gp = gpar(fill=subtypeCol))
+legendSize <- Legend(at = c(min(design$Size.mm,na.rm = T),
+                            median(design$Size.mm,na.rm = T),
+                            max(design$Size.mm,na.rm = T),
+                            length.out=5),
+                     title = 'Size(mm)',
+                     col_fun = circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                      median(design$Size.mm,na.rm = T),
+                                                      max(design$Size.mm,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTILs <- Legend(at = c(min(design$HisScoreLymphocytes,na.rm = T),
+                            max(design$HisScoreLymphocytes,na.rm = T),
+                            length.out=5),
+                     title = 'TILs',
+                     col_fun = circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                      max(design$HisScoreLymphocytes,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTreatment <- Legend(labels = names(treatCol),
+                          title = 'Treatment',border = 'black',
+                          legend_gp = gpar(fill=treatCol))
+
+allLegends <- packLegend(list = list(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendTreatment,legendLN,legendCluster,legendSize,legendTILs,legendPam50),max_height = unit(20,'cm'))
 
 set.seed(123)
-rnaHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Gene Expression',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.RNA)})
+rnaHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
 ```
 
 ###### Functional enrichment per protein cluster
@@ -2374,6 +2989,8 @@ groupCol <- colorspace::divergex_hcl(n = 2) %>% setNames(nm = paste0('Group',1:2
 nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
 dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
 clusterCol <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6))
+subtypeCol <- colorspace::divergex_hcl(n = 5,palette = 'Spectral') %>% setNames(nm = c('Basal','Her2','LumA','LumB','Normal'))
+treatCol <- colorspace::divergex_hcl(n = 4,palette = 'Zissou 1',alpha = 0.8) %>% setNames(nm = c(c('Endo','ChemoEndo','Chemo','None')))
 ```
 
 ```{r}
@@ -2397,11 +3014,29 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
+                                      LN=anno_simple(x = design$LN,col = dfrCol,
+                                                     na_col = 'white'),
+                                      Subtype=anno_simple(x = design$SSP.PAM50,
+                                                          na_col = 'white',
+                                                          col=subtypeCol),
+                                      Size = anno_simple(x = design$Size.mm,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                                                    median(design$Size.mm,na.rm=T),
+                                                                                    max(design$Size.mm,na.rm = T)),hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      TILs = anno_simple(x = design$HisScoreLymphocytes,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                                                    max(design$HisScoreLymphocytes,na.rm = T)),
+                                                                                  hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      Treatment = anno_simple(x = design$TreatGroup,
+                                                              na_col = 'white',
+                                                              col=treatCol),
                                       Proteome.Cluster=anno_simple(x = design$CC.Prot,
-                                                                   col = clusterCol,na_col = 'red'),
+                                                                   col = clusterCol,na_col = 'white'),
                                       Phospho.Cluster=anno_simple(x=design$CC.Phospho,
-                                                                  col=clusterCol,na_col='red'),
-                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
+                                                                  col=clusterCol,na_col='white'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='white'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -2434,7 +3069,35 @@ legendCluster <- Legend(labels = levels(factor(design$CC.Prot)),
                         legend_gp = gpar(fill=clusterCol),
                         border = 'black')
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster)
+legendLN <- Legend(labels = levels(factor(design$LN)),
+                   title = 'LN',
+                   border = 'black',
+                   legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+legendPam50 <- Legend(labels = c('Basal','Her2','LumA','LumB','Normal'),
+                      title = 'PAM50 Subtype',
+                      border = 'black',
+                      legend_gp = gpar(fill=subtypeCol))
+legendSize <- Legend(at = c(min(design$Size.mm,na.rm = T),
+                            median(design$Size.mm,na.rm = T),
+                            max(design$Size.mm,na.rm = T),
+                            length.out=5),
+                     title = 'Size(mm)',
+                     col_fun = circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                      median(design$Size.mm,na.rm = T),
+                                                      max(design$Size.mm,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTILs <- Legend(at = c(min(design$HisScoreLymphocytes,na.rm = T),
+                            max(design$HisScoreLymphocytes,na.rm = T),
+                            length.out=5),
+                     title = 'TILs',
+                     col_fun = circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                      max(design$HisScoreLymphocytes,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTreatment <- Legend(labels = names(treatCol),
+                          title = 'Treatment',border = 'black',
+                          legend_gp = gpar(fill=treatCol))
+
+allLegends <- packLegend(list = list(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendTreatment,legendLN,legendCluster,legendSize,legendTILs,legendPam50),max_height = unit(20,'cm'))
 
 set.seed(123)
 proteinHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
@@ -2518,6 +3181,8 @@ groupCol <- colorspace::divergex_hcl(n = 2) %>% setNames(nm = paste0('Group',1:2
 nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
 dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
 clusterCol <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6))
+subtypeCol <- colorspace::divergex_hcl(n = 5,palette = 'Spectral') %>% setNames(nm = c('Basal','Her2','LumA','LumB','Normal'))
+treatCol <- colorspace::divergex_hcl(n = 4,palette = 'Zissou 1',alpha = 0.8) %>% setNames(nm = c(c('Endo','ChemoEndo','Chemo','None')))
 ```
 
 ```{r}
@@ -2541,11 +3206,29 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
+                                      LN=anno_simple(x = design$LN,col = dfrCol,
+                                                     na_col = 'white'),
+                                      Subtype=anno_simple(x = design$SSP.PAM50,
+                                                          na_col = 'white',
+                                                          col=subtypeCol),
+                                      Size = anno_simple(x = design$Size.mm,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                                                    median(design$Size.mm,na.rm=T),
+                                                                                    max(design$Size.mm,na.rm = T)),hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      TILs = anno_simple(x = design$HisScoreLymphocytes,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                                                    max(design$HisScoreLymphocytes,na.rm = T)),
+                                                                                  hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      Treatment = anno_simple(x = design$TreatGroup,
+                                                              na_col = 'white',
+                                                              col=treatCol),
                                       Proteome.Cluster=anno_simple(x = design$CC.Prot,
-                                                                   col = clusterCol,na_col = 'red'),
+                                                                   col = clusterCol,na_col = 'white'),
                                       Phospho.Cluster=anno_simple(x=design$CC.Phospho,
-                                                                  col=clusterCol,na_col='red'),
-                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
+                                                                  col=clusterCol,na_col='white'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='white'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -2573,15 +3256,43 @@ legendInvType <- Legend(labels = c('Ductal','Lobular'),
                    title = 'Invasive Type',
                    border = 'black',
                    legend_gp = gpar(fill=setNames(dfrCol,c('Ductal','Lobular'))))
-legendCluster <- Legend(labels = levels(factor(design$CC.Phospho)),
-                        title = 'Phophoproteome Cluster',
+legendCluster <- Legend(labels = levels(factor(design$CC.Prot)),
+                        title = 'Proteome Cluster',
                         legend_gp = gpar(fill=clusterCol),
                         border = 'black')
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster)
+legendLN <- Legend(labels = levels(factor(design$LN)),
+                   title = 'LN',
+                   border = 'black',
+                   legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+legendPam50 <- Legend(labels = c('Basal','Her2','LumA','LumB','Normal'),
+                      title = 'PAM50 Subtype',
+                      border = 'black',
+                      legend_gp = gpar(fill=subtypeCol))
+legendSize <- Legend(at = c(min(design$Size.mm,na.rm = T),
+                            median(design$Size.mm,na.rm = T),
+                            max(design$Size.mm,na.rm = T),
+                            length.out=5),
+                     title = 'Size(mm)',
+                     col_fun = circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                      median(design$Size.mm,na.rm = T),
+                                                      max(design$Size.mm,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTILs <- Legend(at = c(min(design$HisScoreLymphocytes,na.rm = T),
+                            max(design$HisScoreLymphocytes,na.rm = T),
+                            length.out=5),
+                     title = 'TILs',
+                     col_fun = circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                      max(design$HisScoreLymphocytes,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTreatment <- Legend(labels = names(treatCol),
+                          title = 'Treatment',border = 'black',
+                          legend_gp = gpar(fill=treatCol))
+
+allLegends <- packLegend(list = list(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendTreatment,legendLN,legendCluster,legendSize,legendTILs,legendPam50),max_height = unit(20,'cm'))
 
 set.seed(123)
-phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Phospho)})
+phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
 ```
 
 ##### Functional enrichment per protein cluster
@@ -2652,6 +3363,8 @@ groupCol <- colorspace::divergex_hcl(n = 2) %>% setNames(nm = paste0('Group',1:2
 nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
 dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
 clusterCol <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6))
+subtypeCol <- colorspace::divergex_hcl(n = 5,palette = 'Spectral') %>% setNames(nm = c('Basal','Her2','LumA','LumB','Normal'))
+treatCol <- colorspace::divergex_hcl(n = 4,palette = 'Zissou 1',alpha = 0.8) %>% setNames(nm = c(c('Endo','ChemoEndo','Chemo','None')))
 ```
 
 ```{r}
@@ -2675,11 +3388,29 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
+                                      LN=anno_simple(x = design$LN,col = dfrCol,
+                                                     na_col = 'white'),
+                                      Subtype=anno_simple(x = design$SSP.PAM50,
+                                                          na_col = 'white',
+                                                          col=subtypeCol),
+                                      Size = anno_simple(x = design$Size.mm,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                                                    median(design$Size.mm,na.rm=T),
+                                                                                    max(design$Size.mm,na.rm = T)),hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      TILs = anno_simple(x = design$HisScoreLymphocytes,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                                                    max(design$HisScoreLymphocytes,na.rm = T)),
+                                                                                  hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      Treatment = anno_simple(x = design$TreatGroup,
+                                                              na_col = 'white',
+                                                              col=treatCol),
                                       Proteome.Cluster=anno_simple(x = design$CC.Prot,
-                                                                   col = clusterCol,na_col = 'red'),
+                                                                   col = clusterCol,na_col = 'white'),
                                       Phospho.Cluster=anno_simple(x=design$CC.Phospho,
-                                                                  col=clusterCol,na_col='red'),
-                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
+                                                                  col=clusterCol,na_col='white'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='white'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -2707,15 +3438,43 @@ legendInvType <- Legend(labels = c('Ductal','Lobular'),
                    title = 'Invasive Type',
                    border = 'black',
                    legend_gp = gpar(fill=setNames(dfrCol,c('Ductal','Lobular'))))
-legendCluster <- Legend(labels = levels(factor(design$CC.RNA)),
-                        title = 'Transcriptome Cluster',
+legendCluster <- Legend(labels = levels(factor(design$CC.Prot)),
+                        title = 'Proteome Cluster',
                         legend_gp = gpar(fill=clusterCol),
                         border = 'black')
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster)
+legendLN <- Legend(labels = levels(factor(design$LN)),
+                   title = 'LN',
+                   border = 'black',
+                   legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+legendPam50 <- Legend(labels = c('Basal','Her2','LumA','LumB','Normal'),
+                      title = 'PAM50 Subtype',
+                      border = 'black',
+                      legend_gp = gpar(fill=subtypeCol))
+legendSize <- Legend(at = c(min(design$Size.mm,na.rm = T),
+                            median(design$Size.mm,na.rm = T),
+                            max(design$Size.mm,na.rm = T),
+                            length.out=5),
+                     title = 'Size(mm)',
+                     col_fun = circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                      median(design$Size.mm,na.rm = T),
+                                                      max(design$Size.mm,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTILs <- Legend(at = c(min(design$HisScoreLymphocytes,na.rm = T),
+                            max(design$HisScoreLymphocytes,na.rm = T),
+                            length.out=5),
+                     title = 'TILs',
+                     col_fun = circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                      max(design$HisScoreLymphocytes,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTreatment <- Legend(labels = names(treatCol),
+                          title = 'Treatment',border = 'black',
+                          legend_gp = gpar(fill=treatCol))
+
+allLegends <- packLegend(list = list(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendTreatment,legendLN,legendCluster,legendSize,legendTILs,legendPam50),max_height = unit(20,'cm'))
 
 set.seed(123)
-rnaHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Gene Expression',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.RNA)})
+rnaHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
 ```
 
 ##### Functional enrichment per protein cluster
@@ -2807,6 +3566,8 @@ groupCol <- colorspace::divergex_hcl(n = 2) %>% setNames(nm = paste0('Group',3:4
 nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
 dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
 clusterCol <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6))
+subtypeCol <- colorspace::divergex_hcl(n = 5,palette = 'Spectral') %>% setNames(nm = c('Basal','Her2','LumA','LumB','Normal'))
+treatCol <- colorspace::divergex_hcl(n = 4,palette = 'Zissou 1',alpha = 0.8) %>% setNames(nm = c(c('Endo','ChemoEndo','Chemo','None')))
 ```
 
 ```{r}
@@ -2830,11 +3591,29 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
+                                      LN=anno_simple(x = design$LN,col = dfrCol,
+                                                     na_col = 'white'),
+                                      Subtype=anno_simple(x = design$SSP.PAM50,
+                                                          na_col = 'white',
+                                                          col=subtypeCol),
+                                      Size = anno_simple(x = design$Size.mm,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                                                    median(design$Size.mm,na.rm=T),
+                                                                                    max(design$Size.mm,na.rm = T)),hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      TILs = anno_simple(x = design$HisScoreLymphocytes,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                                                    max(design$HisScoreLymphocytes,na.rm = T)),
+                                                                                  hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      Treatment = anno_simple(x = design$TreatGroup,
+                                                              na_col = 'white',
+                                                              col=treatCol),
                                       Proteome.Cluster=anno_simple(x = design$CC.Prot,
-                                                                   col = clusterCol,na_col = 'red'),
+                                                                   col = clusterCol,na_col = 'white'),
                                       Phospho.Cluster=anno_simple(x=design$CC.Phospho,
-                                                                  col=clusterCol,na_col='red'),
-                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
+                                                                  col=clusterCol,na_col='white'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='white'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -2867,7 +3646,35 @@ legendCluster <- Legend(labels = levels(factor(design$CC.Prot)),
                         legend_gp = gpar(fill=clusterCol),
                         border = 'black')
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster)
+legendLN <- Legend(labels = levels(factor(design$LN)),
+                   title = 'LN',
+                   border = 'black',
+                   legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+legendPam50 <- Legend(labels = c('Basal','Her2','LumA','LumB','Normal'),
+                      title = 'PAM50 Subtype',
+                      border = 'black',
+                      legend_gp = gpar(fill=subtypeCol))
+legendSize <- Legend(at = c(min(design$Size.mm,na.rm = T),
+                            median(design$Size.mm,na.rm = T),
+                            max(design$Size.mm,na.rm = T),
+                            length.out=5),
+                     title = 'Size(mm)',
+                     col_fun = circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                      median(design$Size.mm,na.rm = T),
+                                                      max(design$Size.mm,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTILs <- Legend(at = c(min(design$HisScoreLymphocytes,na.rm = T),
+                            max(design$HisScoreLymphocytes,na.rm = T),
+                            length.out=5),
+                     title = 'TILs',
+                     col_fun = circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                      max(design$HisScoreLymphocytes,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTreatment <- Legend(labels = names(treatCol),
+                          title = 'Treatment',border = 'black',
+                          legend_gp = gpar(fill=treatCol))
+
+allLegends <- packLegend(list = list(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendTreatment,legendLN,legendCluster,legendSize,legendTILs,legendPam50),max_height = unit(20,'cm'))
 
 set.seed(123)
 proteinHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = proteindataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
@@ -2951,6 +3758,8 @@ groupCol <- colorspace::divergex_hcl(n = 2) %>% setNames(nm = paste0('Group',3:4
 nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
 dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
 clusterCol <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6))
+subtypeCol <- colorspace::divergex_hcl(n = 5,palette = 'Spectral') %>% setNames(nm = c('Basal','Her2','LumA','LumB','Normal'))
+treatCol <- colorspace::divergex_hcl(n = 4,palette = 'Zissou 1',alpha = 0.8) %>% setNames(nm = c(c('Endo','ChemoEndo','Chemo','None')))
 ```
 
 ```{r}
@@ -2974,11 +3783,29 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
+                                      LN=anno_simple(x = design$LN,col = dfrCol,
+                                                     na_col = 'white'),
+                                      Subtype=anno_simple(x = design$SSP.PAM50,
+                                                          na_col = 'white',
+                                                          col=subtypeCol),
+                                      Size = anno_simple(x = design$Size.mm,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                                                    median(design$Size.mm,na.rm=T),
+                                                                                    max(design$Size.mm,na.rm = T)),hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      TILs = anno_simple(x = design$HisScoreLymphocytes,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                                                    max(design$HisScoreLymphocytes,na.rm = T)),
+                                                                                  hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      Treatment = anno_simple(x = design$TreatGroup,
+                                                              na_col = 'white',
+                                                              col=treatCol),
                                       Proteome.Cluster=anno_simple(x = design$CC.Prot,
-                                                                   col = clusterCol,na_col = 'red'),
+                                                                   col = clusterCol,na_col = 'white'),
                                       Phospho.Cluster=anno_simple(x=design$CC.Phospho,
-                                                                  col=clusterCol,na_col='red'),
-                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
+                                                                  col=clusterCol,na_col='white'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='white'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -3006,15 +3833,43 @@ legendInvType <- Legend(labels = c('Ductal','Lobular'),
                    title = 'Invasive Type',
                    border = 'black',
                    legend_gp = gpar(fill=setNames(dfrCol,c('Ductal','Lobular'))))
-legendCluster <- Legend(labels = levels(factor(design$CC.Phospho)),
-                        title = 'Phophoproteome Cluster',
+legendCluster <- Legend(labels = levels(factor(design$CC.Prot)),
+                        title = 'Proteome Cluster',
                         legend_gp = gpar(fill=clusterCol),
                         border = 'black')
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster)
+legendLN <- Legend(labels = levels(factor(design$LN)),
+                   title = 'LN',
+                   border = 'black',
+                   legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+legendPam50 <- Legend(labels = c('Basal','Her2','LumA','LumB','Normal'),
+                      title = 'PAM50 Subtype',
+                      border = 'black',
+                      legend_gp = gpar(fill=subtypeCol))
+legendSize <- Legend(at = c(min(design$Size.mm,na.rm = T),
+                            median(design$Size.mm,na.rm = T),
+                            max(design$Size.mm,na.rm = T),
+                            length.out=5),
+                     title = 'Size(mm)',
+                     col_fun = circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                      median(design$Size.mm,na.rm = T),
+                                                      max(design$Size.mm,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTILs <- Legend(at = c(min(design$HisScoreLymphocytes,na.rm = T),
+                            max(design$HisScoreLymphocytes,na.rm = T),
+                            length.out=5),
+                     title = 'TILs',
+                     col_fun = circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                      max(design$HisScoreLymphocytes,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTreatment <- Legend(labels = names(treatCol),
+                          title = 'Treatment',border = 'black',
+                          legend_gp = gpar(fill=treatCol))
+
+allLegends <- packLegend(list = list(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendTreatment,legendLN,legendCluster,legendSize,legendTILs,legendPam50),max_height = unit(20,'cm'))
 
 set.seed(123)
-phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Phospho)})
+phosphoHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
 ```
 
 ##### Functional enrichment per protein cluster
@@ -3085,6 +3940,8 @@ groupCol <- colorspace::divergex_hcl(n = 2) %>% setNames(nm = paste0('Group',3:4
 nhgCol <- colorspace::sequential_hcl(n = 3,palette = 'Light Grays',rev = TRUE) %>% setNames(nm = c(1:3))
 dfrCol <- colorspace::sequential_hcl(n = 2,palette = 'Light Grays',l2 = 80,rev = TRUE) %>% setNames(nm = c(0:1))
 clusterCol <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6))
+subtypeCol <- colorspace::divergex_hcl(n = 5,palette = 'Spectral') %>% setNames(nm = c('Basal','Her2','LumA','LumB','Normal'))
+treatCol <- colorspace::divergex_hcl(n = 4,palette = 'Zissou 1',alpha = 0.8) %>% setNames(nm = c(c('Endo','ChemoEndo','Chemo','None')))
 ```
 
 ```{r}
@@ -3108,11 +3965,29 @@ annotationColumn %<-% HeatmapAnnotation(Group=anno_simple(x = design$Group.Info,
                                                        col = setNames(dfrCol,c('Ductal','Lobular')),
                                                        na_col = 'white',
                                                        gp = gpar(title='InvasiveType')),
+                                      LN=anno_simple(x = design$LN,col = dfrCol,
+                                                     na_col = 'white'),
+                                      Subtype=anno_simple(x = design$SSP.PAM50,
+                                                          na_col = 'white',
+                                                          col=subtypeCol),
+                                      Size = anno_simple(x = design$Size.mm,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                                                    median(design$Size.mm,na.rm=T),
+                                                                                    max(design$Size.mm,na.rm = T)),hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      TILs = anno_simple(x = design$HisScoreLymphocytes,
+                                                         na_col = 'white',
+                                                         col=circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                                                    max(design$HisScoreLymphocytes,na.rm = T)),
+                                                                                  hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3)),
+                                      Treatment = anno_simple(x = design$TreatGroup,
+                                                              na_col = 'white',
+                                                              col=treatCol),
                                       Proteome.Cluster=anno_simple(x = design$CC.Prot,
-                                                                   col = clusterCol,na_col = 'red'),
+                                                                   col = clusterCol,na_col = 'white'),
                                       Phospho.Cluster=anno_simple(x=design$CC.Phospho,
-                                                                  col=clusterCol,na_col='red'),
-                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='red'))
+                                                                  col=clusterCol,na_col='white'),
+                                      Transcriptome.Cluster=anno_simple(x=design$CC.RNA,col=clusterCol,na_col='white'))
 
 legendNHG <- Legend(labels = levels(factor(design$NHG)),
                       title = 'NHG',
@@ -3140,15 +4015,43 @@ legendInvType <- Legend(labels = c('Ductal','Lobular'),
                    title = 'Invasive Type',
                    border = 'black',
                    legend_gp = gpar(fill=setNames(dfrCol,c('Ductal','Lobular'))))
-legendCluster <- Legend(labels = levels(factor(design$CC.RNA)),
-                        title = 'Transcriptome Cluster',
+legendCluster <- Legend(labels = levels(factor(design$CC.Prot)),
+                        title = 'Proteome Cluster',
                         legend_gp = gpar(fill=clusterCol),
                         border = 'black')
 
-allLegends <- packLegend(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendCluster)
+legendLN <- Legend(labels = levels(factor(design$LN)),
+                   title = 'LN',
+                   border = 'black',
+                   legend_gp = gpar(fill=setNames(dfrCol,c('0','1'))))
+legendPam50 <- Legend(labels = c('Basal','Her2','LumA','LumB','Normal'),
+                      title = 'PAM50 Subtype',
+                      border = 'black',
+                      legend_gp = gpar(fill=subtypeCol))
+legendSize <- Legend(at = c(min(design$Size.mm,na.rm = T),
+                            median(design$Size.mm,na.rm = T),
+                            max(design$Size.mm,na.rm = T),
+                            length.out=5),
+                     title = 'Size(mm)',
+                     col_fun = circlize::colorRamp2(c(min(design$Size.mm,na.rm = T),
+                                                      median(design$Size.mm,na.rm = T),
+                                                      max(design$Size.mm,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTILs <- Legend(at = c(min(design$HisScoreLymphocytes,na.rm = T),
+                            max(design$HisScoreLymphocytes,na.rm = T),
+                            length.out=5),
+                     title = 'TILs',
+                     col_fun = circlize::colorRamp2(c(min(design$HisScoreLymphocytes,na.rm = T),
+                                                      max(design$HisScoreLymphocytes,na.rm = T)),
+                                                    hcl_palette = 'plasma',reverse = TRUE,transparency = 0.3))
+legendTreatment <- Legend(labels = names(treatCol),
+                          title = 'Treatment',border = 'black',
+                          legend_gp = gpar(fill=treatCol))
+
+allLegends <- packLegend(list = list(legendGroup,legendNHG,legendRecurrence,legendBatch,legendBCFi,legendInvType,legendTreatment,legendLN,legendCluster,legendSize,legendTILs,legendPam50),max_height = unit(20,'cm'))
 
 set.seed(123)
-rnaHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Gene Expression',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.RNA)})
+rnaHeatmap <- future(seed = TRUE,globals = TRUE,packages = c('ComplexHeatmap'),gc = TRUE, expr = {Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 'Protein intensity',heatmap_legend_param = list(legend_direction = 'horizontal'),cluster_rows = TRUE,cluster_row_slices = TRUE,row_km = 5,row_km_repeats = 1000,column_split = design$CC.Prot)})
 ```
 
 ##### Functional enrichment per protein cluster

@@ -29,37 +29,60 @@ calZScore <- function(data){
   data <- data %>% rowwise() %>% mutate(across(starts_with('S0'),zScore))
   return(data)
 }
+
+# Function to rename the column
+rename_if_exists <- function(df) {
+  if ("S000940" %in% colnames(df)) {
+    df <- rename(df, S000941 = S000940)
+  }
+  return(df)
+}
 ```
 
 ## EPIC
 ```{r}
-epicfiles <- list.files(path = dirP,pattern = 'epic*')
+epicfiles <- list.files(path = dirP,pattern = 'epic*') %>% 
+  .[base::grep(pattern = 'aggregated',x = .,invert = TRUE)]
 dataEpic <- purrr::map(.x = paste0(dirP,epicfiles),.f = read_tsv)
 names(dataEpic) <- str_split_i(string = epicfiles,pattern = '\\_|\\.',i = 2)
 
+dataEpic <- map(dataEpic, rename_if_exists)
+
 epicdata <- purrr::map(dataEpic,calZScore) %>% 
   purrr::map2(.y = names(.),.f = function(x,y){
-    dplyr::mutate(x,cell_type=paste(cell_type,y,sep = '_'))}) %>% 
+    dplyr::mutate(x,cell_type=paste(cell_type,y,'epic',sep = '_'))}) %>% 
   list_rbind() %>% 
-  dplyr::mutate(across(starts_with('S0'),~na_if(.x,NaN)))
+  dplyr::mutate(across(starts_with('S0'),~na_if(.x,NaN))) %>% 
+  dplyr::select(c('cell_type',dplyr::starts_with('S0')))
 
 write_tsv(x = epicdata,file = paste0(dirP,'epic_aggregated.tsv'))
 ```
 
 ## CIBERSORTX
 ```{r}
-cibersortFiles <- list.files(path = dirP,pattern = 'cibersort')
+cibersortFiles <- list.files(path = dirP,pattern = 'cibersort') %>% 
+  .[base::grep(pattern = 'aggregated',x = .,invert = TRUE)]
 dataCibersort <- purrr::map(.x = paste0(dirP,cibersortFiles),.f = read_tsv)
 names(dataCibersort) <- str_split_i(string = cibersortFiles,pattern = '\\_',i = 2)
 
+dataCibersort <- map(dataCibersort, rename_if_exists)
+
 ciberData <- purrr::map(dataCibersort,calZScore) %>% 
   purrr::map2(.y = names(.),.f = function(x,y){
-    dplyr::mutate(x,cell_type=paste(cell_type,y,sep = '_'))}) %>% 
+    dplyr::mutate(x,cell_type=paste(cell_type,y,'cibersortx',sep = '_'))}) %>% 
   list_rbind() %>% 
-  dplyr::mutate(across(starts_with('S0'),~na_if(.x,NaN)))
+  dplyr::mutate(across(starts_with('S0'),~na_if(.x,NaN))) %>% 
+  dplyr::select(c('cell_type',dplyr::starts_with('S0')))
 
 write_tsv(x = ciberData,file = paste0(dirP,'cibersortx_aggregated.tsv'))
 ```
+
+## Combining both datasets
+```{r}
+combinedImmun <- bind_rows(epicdata,ciberData)
+write_tsv(x = combinedImmun,file = paste0(dirP,'combined_immuneinfiltration.tsv'))
+```
+
 
 ## HisScore
 ```{r}

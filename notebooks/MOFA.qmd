@@ -80,15 +80,9 @@ gene <- gene %>%
   dplyr::select(design$sample_id) %>% 
   as.matrix
 
-epicdata <- read_tsv(file = '/multiomics/data/Immune_infiltration/epic_aggregated.tsv')
-epicFeat <- epicdata[['cell_type']]
-epic <- epicdata %>% 
-  dplyr::select(design$sample_id) %>% 
-  as.matrix
-
-ciberdata <- read_tsv(file = '/multiomics/data/Immune_infiltration/cibersortx_aggregated.tsv')
-ciberFeat <- ciberdata[['cell_type']]
-ciber <- ciberdata %>% 
+immuneInfiltration <- read_tsv(file = '/multiomics/data/Immune_infiltration/combined_immuneinfiltration.tsv')
+immuneFeat <- immuneInfiltration[['cell_type']]
+immune <- immuneInfiltration %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix
 
@@ -96,8 +90,7 @@ ciber <- ciberdata %>%
 dataMix <- list(proteomics=prot,
                 phosphoproteomics=phospho,
                 transcriptomics=gene,
-                EPIC=epic,
-                cibersortx=ciber)
+                immuneinfiltration=immune)
 
 response <- design %>% 
   dplyr::select(sample_id,Group.Info)
@@ -177,8 +170,7 @@ updated_features_names <- features_names(bestModel)
 updated_features_names[["proteomics"]] <- protFeatures
 updated_features_names[["phosphoproteomics"]] <- phosphoFeatures
 updated_features_names[["transcriptomics"]] <- geneFeatures
-updated_features_names[["EPIC"]] <- epicFeat
-updated_features_names[["cibersortx"]] <- ciberFeat
+updated_features_names[["immuneinfiltration"]] <- immuneFeat
 
 features_names(bestModel) <- updated_features_names
 ```
@@ -220,16 +212,11 @@ ggsave(filename = 'covariance.pdf',plot = covariatePlot,device = 'pdf',path = '/
 
 #### Plot feature weights
 ```{r}
-epic_weights <- plot_top_weights(object = bestModel,
-                 view = 'EPIC',
-                 factors = 3,
-                 scale = TRUE,
-                 sign = 'all')
-ciber_weights <- plot_top_weights(object = bestModel,
-                 view = 'cibersortx',
-                 factors = 3,
-                 scale = TRUE,
-                 sign = 'all')
+immune_weights <- plot_top_weights(object = bestModel,
+                                   view = 'immuneinfiltration',
+                                   factors = 3,
+                                   scale = TRUE,
+                                   sign = 'all')
 
 prot_weights <- plot_top_weights(bestModel,
                  view = "proteomics",
@@ -251,8 +238,8 @@ rna_weights <- plot_top_weights(bestModel,
                  scale = T           # Scale weights from -1 to 1
 )
 
-figPath <- c('prot_weights.png','phospho_weigths.png','rna_weights.png','epic_weights.png','ciber_weights.png')
-weightPlots <- list(prot_weights,phospho_weigths,rna_weights,epic_weights,ciber_weights)
+figPath <- c('prot_weights.png','phospho_weigths.png','rna_weights.png','immune_weights.png')
+weightPlots <- list(prot_weights,phospho_weigths,rna_weights,immune_weights)
 map2(.x = weightPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '/multiomics/results/figures/MOFA/all_samples/infiltration/',dpi = 300,width = 15,height = 15,units = 'in'))
 ```
 
@@ -291,19 +278,8 @@ phospho_heatmap <- plot_data_heatmap(bestModel,
   annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
-epic_heatmap <- plot_data_heatmap(bestModel, 
-  view = "EPIC",
-  factor = 3,  
-  features = 8,
-  cluster_rows = TRUE, cluster_cols = TRUE,
-  show_rownames = TRUE, show_colnames = FALSE,
-  scale = "row",
-  denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
-)
-
-ciber_heatmap <- plot_data_heatmap(bestModel, 
-  view = "cibersortx",
+immune_heatmap <- plot_data_heatmap(bestModel, 
+  view = "immuneinfiltration",
   factor = 3,  
   features = 8,
   cluster_rows = TRUE, cluster_cols = TRUE,
@@ -314,8 +290,8 @@ ciber_heatmap <- plot_data_heatmap(bestModel,
 )
 
 
-figPath <- c('prot_heatmap.png','phospho_heatmap.png','rna_heatmap.png','epic_heatmap.png','cibersort_heatmap.png')
-heatmapPlots <- list(prot_heatmap,phospho_heatmap,rna_heatmap,epic_heatmap,ciber_heatmap)
+figPath <- c('prot_heatmap.png','phospho_heatmap.png','rna_heatmap.png','immune_heatmap')
+heatmapPlots <- list(prot_heatmap,phospho_heatmap,rna_heatmap,immune_heatmap)
 map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '/multiomics/results/figures/MOFA/all_samples/infiltration/',dpi = 300,width = 15,height = 15,units = 'in'))
 ```
 
@@ -608,23 +584,17 @@ gene <- gene %>%
   dplyr::select(design$sample_id) %>% 
   as.matrix
 
-epicdata <- read_tsv(file = '/multiomics/data/Immune_infiltration/epic_aggregated.tsv')
-epicFeat <- epicdata[['cell_type']]
-epic <- epicdata %>% 
+immuneInfiltration <- read_tsv(file = '/multiomics/data/Immune_infiltration/combined_immuneinfiltration.tsv')
+immuneFeat <- immuneInfiltration[['cell_type']]
+immune <- immuneInfiltration %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix
 
-ciberdata <- read_tsv(file = '/multiomics/data/Immune_infiltration/cibersortx_aggregated.tsv')
-ciberFeat <- ciberdata[['cell_type']]
-ciber <- ciberdata %>% 
-  dplyr::select(design$sample_id) %>% 
-  as.matrix
 
 dataMix <- list(proteomics=prot,
                 phosphoproteomics=phospho,
                 transcriptomics=gene,
-                EPIC=epic,
-                cibersortx=ciber)
+                immuneinfiltration=immune)
 
 response <- design %>% 
   dplyr::select(sample_id,Group.Info)
@@ -704,8 +674,8 @@ updated_features_names <- features_names(bestModel)
 updated_features_names[["proteomics"]] <- protFeatures
 updated_features_names[["phosphoproteomics"]] <- phosphoFeatures
 updated_features_names[["transcriptomics"]] <- geneFeatures
-updated_features_names[["EPIC"]] <- epicFeat
-updated_features_names[["cibersortx"]] <- ciberFeat
+updated_features_names[["immuneinfiltration"]] <- immuneFeat
+
 
 features_names(bestModel) <- updated_features_names
 ```
@@ -747,17 +717,11 @@ ggsave(filename = 'covariance.pdf',plot = covariatePlot,device = 'pdf',path = '/
 
 #### Plot feature weights
 ```{r}
-epic_weights <- plot_top_weights(object = bestModel,
-                 view = 'EPIC',
-                 factors = 3,
-                 scale = TRUE,
-                 sign = 'all')
-ciber_weights <- plot_top_weights(object = bestModel,
-                 view = 'cibersortx',
-                 factors = 3,
-                 scale = TRUE,
-                 sign = 'all')
-
+immune_weights <- plot_top_weights(object = bestModel,
+                                   view = 'immuneinfiltration',
+                                   factors = 3,
+                                   scale = TRUE,
+                                   sign = 'all')
 
 prot_weights <- plot_top_weights(bestModel,
                  view = "proteomics",
@@ -779,8 +743,8 @@ rna_weights <- plot_top_weights(bestModel,
                  scale = T           # Scale weights from -1 to 1
 )
 
-figPath <- c('prot_weights.png','phospho_weigths.png','rna_weights.png','epic_weights.png','ciber_weights.png')
-weightPlots <- list(prot_weights,phospho_weigths,rna_weights,epic_weights,ciber_weights)
+figPath <- c('prot_weights.png','phospho_weigths.png','rna_weights.png','immune_weights.png')
+weightPlots <- list(prot_weights,phospho_weigths,rna_weights,immune_weights)
 map2(.x = weightPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '/multiomics/results/figures/MOFA/Group1vsGroup2/',dpi = 300,width = 15,height = 15,units = 'in'))
 ```
 
@@ -819,19 +783,8 @@ phospho_heatmap <- plot_data_heatmap(bestModel,
   annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
-epic_heatmap <- plot_data_heatmap(bestModel, 
-  view = "EPIC",
-  factor = 3,  
-  features = 8,
-  cluster_rows = TRUE, cluster_cols = TRUE,
-  show_rownames = TRUE, show_colnames = FALSE,
-  scale = "row",
-  denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
-)
-
-ciber_heatmap <- plot_data_heatmap(bestModel, 
-  view = "cibersortx",
+immune_heatmap <- plot_data_heatmap(bestModel, 
+  view = "immuneinfiltration",
   factor = 3,  
   features = 8,
   cluster_rows = TRUE, cluster_cols = TRUE,
@@ -842,8 +795,8 @@ ciber_heatmap <- plot_data_heatmap(bestModel,
 )
 
 
-figPath <- c('prot_heatmap.png','phospho_heatmap.png','rna_heatmap.png','epic_heatmap.png','cibersort_heatmap.png')
-heatmapPlots <- list(prot_heatmap,phospho_heatmap,rna_heatmap,epic_heatmap,ciber_heatmap)
+figPath <- c('prot_heatmap.png','phospho_heatmap.png','rna_heatmap.png','immune_heatmap')
+heatmapPlots <- list(prot_heatmap,phospho_heatmap,rna_heatmap,immune_heatmap)
 map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '/multiomics/results/figures/MOFA/Group1vsGroup2/',dpi = 300,width = 15,height = 15,units = 'in'))
 ```
 
@@ -898,15 +851,9 @@ gene <- gene %>%
   dplyr::select(design$sample_id) %>% 
   as.matrix
 
-epicdata <- read_tsv(file = '/multiomics/data/Immune_infiltration/epic_aggregated.tsv')
-epicFeat <- epicdata[['cell_type']]
-epic <- epicdata %>% 
-  dplyr::select(design$sample_id) %>% 
-  as.matrix
-
-ciberdata <- read_tsv(file = '/multiomics/data/Immune_infiltration/cibersortx_aggregated.tsv')
-ciberFeat <- ciberdata[['cell_type']]
-ciber <- ciberdata %>% 
+immuneInfiltration <- read_tsv(file = '/multiomics/data/Immune_infiltration/combined_immuneinfiltration.tsv')
+immuneFeat <- immuneInfiltration[['cell_type']]
+immune <- immuneInfiltration %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix
 
@@ -914,8 +861,7 @@ ciber <- ciberdata %>%
 dataMix <- list(proteomics=prot,
                 phosphoproteomics=phospho,
                 transcriptomics=gene,
-                EPIC=epic,
-                cibersortx=ciber)
+                immuneinfiltration=immune)
 
 response <- design %>% 
   dplyr::select(sample_id,Group.Info)
@@ -995,8 +941,7 @@ updated_features_names <- features_names(bestModel)
 updated_features_names[["proteomics"]] <- protFeatures
 updated_features_names[["phosphoproteomics"]] <- phosphoFeatures
 updated_features_names[["transcriptomics"]] <- geneFeatures
-updated_features_names[["EPIC"]] <- epicFeat
-updated_features_names[["cibersortx"]] <- ciberFeat
+updated_features_names[["immuneinfiltration"]] <- immuneFeat
 
 features_names(bestModel) <- updated_features_names
 ```
@@ -1038,16 +983,11 @@ ggsave(filename = 'covariance.pdf',plot = covariatePlot,device = 'pdf',path = '/
 
 #### Plot feature weights
 ```{r}
-epic_weights <- plot_top_weights(object = bestModel,
-                 view = 'EPIC',
-                 factors = 3,
-                 scale = TRUE,
-                 sign = 'all')
-ciber_weights <- plot_top_weights(object = bestModel,
-                 view = 'cibersortx',
-                 factors = 3,
-                 scale = TRUE,
-                 sign = 'all')
+immune_weights <- plot_top_weights(object = bestModel,
+                                   view = 'immuneinfiltration',
+                                   factors = 3,
+                                   scale = TRUE,
+                                   sign = 'all')
 
 prot_weights <- plot_top_weights(bestModel,
                  view = "proteomics",
@@ -1069,8 +1009,8 @@ rna_weights <- plot_top_weights(bestModel,
                  scale = T           # Scale weights from -1 to 1
 )
 
-figPath <- c('prot_weights.png','phospho_weigths.png','rna_weights.png','epic_weights.png','ciber_weights.png')
-weightPlots <- list(prot_weights,phospho_weigths,rna_weights,epic_weights,ciber_weights)
+figPath <- c('prot_weights.png','phospho_weigths.png','rna_weights.png','immune_weights.png')
+weightPlots <- list(prot_weights,phospho_weigths,rna_weights,immune_weights)
 map2(.x = weightPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '/multiomics/results/figures/MOFA/Group3vsGroup4/',dpi = 300,width = 15,height = 15,units = 'in'))
 ```
 
@@ -1109,31 +1049,20 @@ phospho_heatmap <- plot_data_heatmap(bestModel,
   annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
-epic_heatmap <- plot_data_heatmap(bestModel, 
-  view = "EPIC",
+immune_heatmap <- plot_data_heatmap(bestModel, 
+  view = "immuneinfiltration",
   factor = 3,  
   features = 8,
   cluster_rows = TRUE, cluster_cols = TRUE,
   show_rownames = TRUE, show_colnames = FALSE,
   scale = "row",
   denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
-)
-
-ciber_heatmap <- plot_data_heatmap(bestModel, 
-  view = "cibersortx",
-  factor = 3,  
-  features = 8,
-  cluster_rows = TRUE, cluster_cols = TRUE,
-  show_rownames = TRUE, show_colnames = FALSE,
-  scale = "row",
-  denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
 
-figPath <- c('prot_heatmap.png','phospho_heatmap.png','rna_heatmap.png','epic_heatmap.png','cibersort_heatmap.png')
-heatmapPlots <- list(prot_heatmap,phospho_heatmap,rna_heatmap,epic_heatmap,ciber_heatmap)
+figPath <- c('prot_heatmap.png','phospho_heatmap.png','rna_heatmap.png','immune_heatmap')
+heatmapPlots <- list(prot_heatmap,phospho_heatmap,rna_heatmap,immune_heatmap)
 map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '/multiomics/results/figures/MOFA/Group3vsGroup4/',dpi = 300,width = 15,height = 15,units = 'in'))
 ```
 
@@ -1188,15 +1117,9 @@ gene <- gene %>%
   dplyr::select(design$sample_id) %>% 
   as.matrix
 
-epicdata <- read_tsv(file = '/multiomics/data/Immune_infiltration/epic_aggregated.tsv')
-epicFeat <- epicdata[['cell_type']]
-epic <- epicdata %>% 
-  dplyr::select(design$sample_id) %>% 
-  as.matrix
-
-ciberdata <- read_tsv(file = '/multiomics/data/Immune_infiltration/cibersortx_aggregated.tsv')
-ciberFeat <- ciberdata[['cell_type']]
-ciber <- ciberdata %>% 
+immuneInfiltration <- read_tsv(file = '/multiomics/data/Immune_infiltration/combined_immuneinfiltration.tsv')
+immuneFeat <- immuneInfiltration[['cell_type']]
+immune <- immuneInfiltration %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix
 
@@ -1204,8 +1127,7 @@ ciber <- ciberdata %>%
 dataMix <- list(proteomics=prot,
                 phosphoproteomics=phospho,
                 transcriptomics=gene,
-                EPIC=epic,
-                cibersortx=ciber)
+                immuneinfiltration=immune)
 
 response <- design %>% 
   dplyr::select(sample_id,LN)
@@ -1285,8 +1207,7 @@ updated_features_names <- features_names(bestModel)
 updated_features_names[["proteomics"]] <- protFeatures
 updated_features_names[["phosphoproteomics"]] <- phosphoFeatures
 updated_features_names[["transcriptomics"]] <- geneFeatures
-updated_features_names[["EPIC"]] <- epicFeat
-updated_features_names[["cibersortx"]] <- ciberFeat
+updated_features_names[["immuneinfiltration"]] <- immuneFeat
 
 features_names(bestModel) <- updated_features_names
 ```
@@ -1328,16 +1249,11 @@ ggsave(filename = 'covariance.pdf',plot = covariatePlot,device = 'pdf',path = '/
 
 #### Plot feature weights
 ```{r}
-epic_weights <- plot_top_weights(object = bestModel,
-                 view = 'EPIC',
-                 factors = 3,
-                 scale = TRUE,
-                 sign = 'all')
-ciber_weights <- plot_top_weights(object = bestModel,
-                 view = 'cibersortx',
-                 factors = 3,
-                 scale = TRUE,
-                 sign = 'all')
+immune_weights <- plot_top_weights(object = bestModel,
+                                   view = 'immuneinfiltration',
+                                   factors = 3,
+                                   scale = TRUE,
+                                   sign = 'all')
 
 prot_weights <- plot_top_weights(bestModel,
                  view = "proteomics",
@@ -1359,8 +1275,8 @@ rna_weights <- plot_top_weights(bestModel,
                  scale = T           # Scale weights from -1 to 1
 )
 
-figPath <- c('prot_weights.png','phospho_weigths.png','rna_weights.png','epic_weights.png','ciber_weights.png')
-weightPlots <- list(prot_weights,phospho_weigths,rna_weights,epic_weights,ciber_weights)
+figPath <- c('prot_weights.png','phospho_weigths.png','rna_weights.png','immune_weights.png')
+weightPlots <- list(prot_weights,phospho_weigths,rna_weights,immune_weights)
 map2(.x = weightPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '/multiomics/results/figures/MOFA/LNposvsLNneg/Ductal/',dpi = 300,width = 15,height = 15,units = 'in'))
 ```
 
@@ -1399,19 +1315,8 @@ phospho_heatmap <- plot_data_heatmap(bestModel,
   annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
-epic_heatmap <- plot_data_heatmap(bestModel, 
-  view = "EPIC",
-  factor = 3,  
-  features = 8,
-  cluster_rows = TRUE, cluster_cols = TRUE,
-  show_rownames = TRUE, show_colnames = FALSE,
-  scale = "row",
-  denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
-)
-
-ciber_heatmap <- plot_data_heatmap(bestModel, 
-  view = "cibersortx",
+immune_heatmap <- plot_data_heatmap(bestModel, 
+  view = "immuneinfiltration",
   factor = 3,  
   features = 8,
   cluster_rows = TRUE, cluster_cols = TRUE,
@@ -1422,8 +1327,8 @@ ciber_heatmap <- plot_data_heatmap(bestModel,
 )
 
 
-figPath <- c('prot_heatmap.png','phospho_heatmap.png','rna_heatmap.png','epic_heatmap.png','cibersort_heatmap.png')
-heatmapPlots <- list(prot_heatmap,phospho_heatmap,rna_heatmap,epic_heatmap,ciber_heatmap)
+figPath <- c('prot_heatmap.png','phospho_heatmap.png','rna_heatmap.png','immune_heatmap')
+heatmapPlots <- list(prot_heatmap,phospho_heatmap,rna_heatmap,immune_heatmap)
 map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '/multiomics/results/figures/MOFA/LNposvsLNneg/Ductal/',dpi = 300,width = 15,height = 15,units = 'in'))
 ```
 
@@ -1478,15 +1383,9 @@ gene <- gene %>%
   dplyr::select(design$sample_id) %>% 
   as.matrix
 
-epicdata <- read_tsv(file = '/multiomics/data/Immune_infiltration/epic_aggregated.tsv')
-epicFeat <- epicdata[['cell_type']]
-epic <- epicdata %>% 
-  dplyr::select(design$sample_id) %>% 
-  as.matrix
-
-ciberdata <- read_tsv(file = '/multiomics/data/Immune_infiltration/cibersortx_aggregated.tsv')
-ciberFeat <- ciberdata[['cell_type']]
-ciber <- ciberdata %>% 
+immuneInfiltration <- read_tsv(file = '/multiomics/data/Immune_infiltration/combined_immuneinfiltration.tsv')
+immuneFeat <- immuneInfiltration[['cell_type']]
+immune <- immuneInfiltration %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix
 
@@ -1494,8 +1393,7 @@ ciber <- ciberdata %>%
 dataMix <- list(proteomics=prot,
                 phosphoproteomics=phospho,
                 transcriptomics=gene,
-                EPIC=epic,
-                cibersortx=ciber)
+                immuneinfiltration=immune)
 
 response <- design %>% 
   dplyr::select(sample_id,LN)
@@ -1575,8 +1473,7 @@ updated_features_names <- features_names(bestModel)
 updated_features_names[["proteomics"]] <- protFeatures
 updated_features_names[["phosphoproteomics"]] <- phosphoFeatures
 updated_features_names[["transcriptomics"]] <- geneFeatures
-updated_features_names[["EPIC"]] <- epicFeat
-updated_features_names[["cibersortx"]] <- ciberFeat
+updated_features_names[["immuneinfiltration"]] <- immuneFeat
 
 features_names(bestModel) <- updated_features_names
 ```
@@ -1618,16 +1515,11 @@ ggsave(filename = 'covariance.pdf',plot = covariatePlot,device = 'pdf',path = '/
 
 #### Plot feature weights
 ```{r}
-epic_weights <- plot_top_weights(object = bestModel,
-                 view = 'EPIC',
-                 factors = 3,
-                 scale = TRUE,
-                 sign = 'all')
-ciber_weights <- plot_top_weights(object = bestModel,
-                 view = 'cibersortx',
-                 factors = 3,
-                 scale = TRUE,
-                 sign = 'all')
+immune_weights <- plot_top_weights(object = bestModel,
+                                   view = 'immuneinfiltration',
+                                   factors = 3,
+                                   scale = TRUE,
+                                   sign = 'all')
 
 prot_weights <- plot_top_weights(bestModel,
                  view = "proteomics",
@@ -1649,8 +1541,8 @@ rna_weights <- plot_top_weights(bestModel,
                  scale = T           # Scale weights from -1 to 1
 )
 
-figPath <- c('prot_weights.png','phospho_weigths.png','rna_weights.png','epic_weights.png','ciber_weights.png')
-weightPlots <- list(prot_weights,phospho_weigths,rna_weights,epic_weights,ciber_weights)
+figPath <- c('prot_weights.png','phospho_weigths.png','rna_weights.png','immune_weights.png')
+weightPlots <- list(prot_weights,phospho_weigths,rna_weights,immune_weights)
 map2(.x = weightPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '/multiomics/results/figures/MOFA/LNposvsLNneg/Lobular/',dpi = 300,width = 15,height = 15,units = 'in'))
 ```
 
@@ -1689,19 +1581,8 @@ phospho_heatmap <- plot_data_heatmap(bestModel,
   annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
-epic_heatmap <- plot_data_heatmap(bestModel, 
-  view = "EPIC",
-  factor = 3,  
-  features = 8,
-  cluster_rows = TRUE, cluster_cols = TRUE,
-  show_rownames = TRUE, show_colnames = FALSE,
-  scale = "row",
-  denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
-)
-
-ciber_heatmap <- plot_data_heatmap(bestModel, 
-  view = "cibersortx",
+immune_heatmap <- plot_data_heatmap(bestModel, 
+  view = "immuneinfiltration",
   factor = 3,  
   features = 8,
   cluster_rows = TRUE, cluster_cols = TRUE,
@@ -1712,8 +1593,8 @@ ciber_heatmap <- plot_data_heatmap(bestModel,
 )
 
 
-figPath <- c('prot_heatmap.png','phospho_heatmap.png','rna_heatmap.png','epic_heatmap.png','cibersort_heatmap.png')
-heatmapPlots <- list(prot_heatmap,phospho_heatmap,rna_heatmap,epic_heatmap,ciber_heatmap)
+figPath <- c('prot_heatmap.png','phospho_heatmap.png','rna_heatmap.png','immune_heatmap')
+heatmapPlots <- list(prot_heatmap,phospho_heatmap,rna_heatmap,immune_heatmap)
 map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '/multiomics/results/figures/MOFA/LNposvsLNneg/Lobular/',dpi = 300,width = 15,height = 15,units = 'in'))
 ```
 
@@ -1767,15 +1648,9 @@ gene <- gene %>%
   dplyr::select(design$sample_id) %>% 
   as.matrix
 
-epicdata <- read_tsv(file = '/multiomics/data/Immune_infiltration/epic_aggregated.tsv')
-epicFeat <- epicdata[['cell_type']]
-epic <- epicdata %>% 
-  dplyr::select(design$sample_id) %>% 
-  as.matrix
-
-ciberdata <- read_tsv(file = '/multiomics/data/Immune_infiltration/cibersortx_aggregated.tsv')
-ciberFeat <- ciberdata[['cell_type']]
-ciber <- ciberdata %>% 
+immuneInfiltration <- read_tsv(file = '/multiomics/data/Immune_infiltration/combined_immuneinfiltration.tsv')
+immuneFeat <- immuneInfiltration[['cell_type']]
+immune <- immuneInfiltration %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix
 
@@ -1783,8 +1658,7 @@ ciber <- ciberdata %>%
 dataMix <- list(proteomics=prot,
                 phosphoproteomics=phospho,
                 transcriptomics=gene,
-                EPIC=epic,
-                cibersortx=ciber)
+                immuneinfiltration=immune)
 
 response <- design %>% 
   dplyr::select(sample_id,LN)
@@ -1864,8 +1738,7 @@ updated_features_names <- features_names(bestModel)
 updated_features_names[["proteomics"]] <- protFeatures
 updated_features_names[["phosphoproteomics"]] <- phosphoFeatures
 updated_features_names[["transcriptomics"]] <- geneFeatures
-updated_features_names[["EPIC"]] <- epicFeat
-updated_features_names[["cibersortx"]] <- ciberFeat
+updated_features_names[["immuneinfiltration"]] <- immuneFeat
 
 features_names(bestModel) <- updated_features_names
 ```
@@ -1907,16 +1780,11 @@ ggsave(filename = 'covariance.pdf',plot = covariatePlot,device = 'pdf',path = '/
 
 #### Plot feature weights
 ```{r}
-epic_weights <- plot_top_weights(object = bestModel,
-                 view = 'EPIC',
-                 factors = 3,
-                 scale = TRUE,
-                 sign = 'all')
-ciber_weights <- plot_top_weights(object = bestModel,
-                 view = 'cibersortx',
-                 factors = 3,
-                 scale = TRUE,
-                 sign = 'all')
+immune_weights <- plot_top_weights(object = bestModel,
+                                   view = 'immuneinfiltration',
+                                   factors = 3,
+                                   scale = TRUE,
+                                   sign = 'all')
 
 prot_weights <- plot_top_weights(bestModel,
                  view = "proteomics",
@@ -1938,8 +1806,8 @@ rna_weights <- plot_top_weights(bestModel,
                  scale = T           # Scale weights from -1 to 1
 )
 
-figPath <- c('prot_weights.png','phospho_weigths.png','rna_weights.png','epic_weights.png','ciber_weights.png')
-weightPlots <- list(prot_weights,phospho_weigths,rna_weights,epic_weights,ciber_weights)
+figPath <- c('prot_weights.png','phospho_weigths.png','rna_weights.png','immune_weights.png')
+weightPlots <- list(prot_weights,phospho_weigths,rna_weights,immune_weights)
 map2(.x = weightPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '/multiomics/results/figures/MOFA/AllSamples_noG2/',dpi = 300,width = 15,height = 15,units = 'in'))
 ```
 
@@ -1978,19 +1846,8 @@ phospho_heatmap <- plot_data_heatmap(bestModel,
   annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
-epic_heatmap <- plot_data_heatmap(bestModel, 
-  view = "EPIC",
-  factor = 3,  
-  features = 8,
-  cluster_rows = TRUE, cluster_cols = TRUE,
-  show_rownames = TRUE, show_colnames = FALSE,
-  scale = "row",
-  denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
-)
-
-ciber_heatmap <- plot_data_heatmap(bestModel, 
-  view = "cibersortx",
+immune_heatmap <- plot_data_heatmap(bestModel, 
+  view = "immuneinfiltration",
   factor = 3,  
   features = 8,
   cluster_rows = TRUE, cluster_cols = TRUE,
@@ -2001,8 +1858,8 @@ ciber_heatmap <- plot_data_heatmap(bestModel,
 )
 
 
-figPath <- c('prot_heatmap.png','phospho_heatmap.png','rna_heatmap.png','epic_heatmap.png','cibersort_heatmap.png')
-heatmapPlots <- list(prot_heatmap,phospho_heatmap,rna_heatmap,epic_heatmap,ciber_heatmap)
+figPath <- c('prot_heatmap.png','phospho_heatmap.png','rna_heatmap.png','immune_heatmap')
+heatmapPlots <- list(prot_heatmap,phospho_heatmap,rna_heatmap,immune_heatmap)
 map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '/multiomics/results/figures/MOFA/AllSamples_noG2/',dpi = 300,width = 15,height = 15,units = 'in'))
 ```
 

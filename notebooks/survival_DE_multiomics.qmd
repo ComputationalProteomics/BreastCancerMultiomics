@@ -314,7 +314,7 @@ multivariate_res <- map(seq_along(multiCoxFilter), function(x) {
   create_safe_forest_plot(fit, finalFeaturesProcessed,index = x)
 })
 
-cairo_pdf(filename = paste0(outputdir,'forestplot_multivariable_mofa.pdf'),onefile = TRUE,width = 9,height = 9)
+cairo_pdf(filename = paste0(outputdir,'forestplot_multivariable_DE.pdf'),onefile = TRUE,width = 9,height = 9)
 plots <- map(seq_along(multivariate_res),function(x){multivariate_res[[x]][[2]] %>% ggplotGrob()})
 gridExtra::marrangeGrob(grobs = plots,ncol = 1,nrow = 1,top = '')
 dev.off()

@@ -242,110 +242,95 @@ omics_variables <- omicFeatures %>%
   dplyr::select(-sample) %>% 
   colnames()
 
-clinicalFeatures <- modelMeta %>% 
+clinical <- modelMeta %>% 
   select(
     sample,
     time=params$time,
     event=params$event,
     Age=`Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)`,
-    tumor_mutational_burden,
-    HisScoreLymphocytes,
-    HisScoreStroma,
+    Size=T.size,
     NHG,
-    PR,
-    SSP.PAM50,
-    params$outcome) %>% 
-  mutate(across(SSP.PAM50,~if_else(str_detect(.x,'Lum',negate=TRUE),'Other',.x))) %>% 
-  mutate(Age=if_else(Age<50,'<50','≥50'),
-         NHG=if_else(NHG=='3','3','1|2'),
-         SSP.PAM50=as.factor(SSP.PAM50),
-         !!params$outcome:=as.factor(.[[params$outcome]])) %>% 
-  mutate(across(contains('HisScore'),~case_when(.x>=50~'High',
-                                                between(.x,10,50)~'Intermediate',
-                                                .x<10~'Low')))
+    # Treatment=TreatGroup,
+    params$outcome
+    ) %>%   
+  mutate(
+    Age=(if_else(Age<50,'<50','≥50')),
+         NHG=(if_else(NHG=='3','3','1|2')),
+         !!params$outcome:=(.[[params$outcome]])) %>% 
+  mutate(
+    Age=factor(Age,levels=c('<50','≥50')),
+         NHG=factor(NHG,levels=c('1|2','3')),
+         Size=factor(Size,levels=c('0','1'),labels=c('<20mm','≥20mm')),
+         # Treatment=factor(Treatment,levels=c('Chemo','ChemoEndo','Endo','None'))
+         ) %>% 
+  drop_na()
 
-colnames(clinicalFeatures) <- colnames(clinicalFeatures) %>% str_replace_all(.,'\\_','\\.')
-
-finalFeatures <- left_join(clinicalFeatures,omicFeatures) %>% 
-  mutate(surv=Surv(time=time,event=event))
-```
-
-### Model fit single feature
-```{r}
-clinical_variables <- clinicalFeatures %>% 
-  dplyr::select(-c(sample,time,event)) %>% 
+clinical_variables <- clinical %>%
+  dplyr::select(-c(sample,time,event)) %>%
   colnames()
 
-cox_models_omics <- map(.x = omics_variables,.f = function(x){
-  data <- finalFeatures %>% dplyr::select(sample,surv,x) 
-  
-  basic_recipe <- recipe(x =  data) %>%
-    update_role(x,new_role = 'predictor') %>%
-    update_role(sample,new_role = 'ID') %>%
-    update_role(surv, new_role = 'outcome') %>% 
-    step_normalize(all_numeric_predictors())
+finalFeatures <- left_join(clinical,omicFeatures) %>% 
+  mutate(surv=Surv(time=time,event=event)) %>% 
+  select(-c(time,event))
 
-  hr_factors <- proportional_hazards() %>% 
-    set_engine('survival') %>% 
-    set_mode('censored regression')
+finalFeaturesProcessed <- recipe(x =  finalFeatures) %>%
+  update_role(all_of(omics_variables),all_of(clinical_variables),new_role = 'predictor') %>%
+  update_role(sample,new_role = 'ID') %>%
+  update_role(surv, new_role = 'outcome') %>% 
+  step_relevel(Age,ref_level = '<50') %>%
+  step_relevel(NHG,ref_level = '1|2') %>% 
+  step_relevel(Size,ref_level = '<20mm') %>% 
+  # step_other(Treatment,threshold = 0.1,other = 'Other') %>% 
+  # step_relevel(Treatment,ref_level = 'Endo') %>% 
+  step_dummy(all_factor_predictors(),naming = function(col,lvl,ord){paste0(col,'_',lvl)}) %>%
+  step_normalize(all_of(omics_variables)) %>% 
+  prep() %>% 
+  bake(new_data=NULL)
 
-  wf <- workflow() %>%
-    add_recipe(basic_recipe) %>% 
-    add_model(hr_factors,formula = surv~.) %>% 
-    fit(data=data)
-
-  res <- extract_fit_engine(wf) %>% summary()
-  return(res)
-})
-
-cox_models_clinical <- map(.x = clinical_variables,.f = function(x){
-  data <- finalFeatures %>% dplyr::select(sample,surv,x) 
-  
-  basic_recipe <- recipe(x =  data) %>%
-    update_role(x,new_role = 'predictor') %>%
-    update_role(sample,new_role = 'ID') %>%
-    update_role(surv, new_role = 'outcome') %>% 
-    step_string2factor(all_string_predictors()) %>% 
-    step_dummy(all_factor_predictors()) %>% 
-    step_normalize(all_numeric_predictors())
-
-
-  hr_factors <- proportional_hazards() %>% 
-    set_engine('survival') %>% 
-    set_mode('censored regression')
-
-  wf <- workflow() %>%
-    add_recipe(basic_recipe) %>% 
-    add_model(hr_factors,formula = surv~.) %>% 
-    fit(data=data)
-
-  res <- extract_fit_engine(wf) %>% summary()
-  return(res)
-})
-
-signif_omics <- map(.x = seq_len(length(cox_models_omics)),function(x){
-  pluck(cox_models_omics[[x]],'coefficients') %>% as.data.frame()
-}) %>% 
-  list_rbind() %>% 
-  mutate(PValue.Adj=p.adjust(.[['Pr(>|z|)']],method = 'fdr')) %>% 
-  filter(PValue.Adj<0.1) %>% 
-  rownames() %>% 
-  as_vector() %>% 
-  unique
-
-signif_clinical <- map(.x = seq_len(length(cox_models_clinical)),function(x){
-  pluck(cox_models_clinical[[x]],'coefficients') %>% as.data.frame() 
-}) %>% 
-  list_rbind() %>% 
-  mutate(PValue.Adj=p.adjust(.[['Pr(>|z|)']],method = 'fdr')) %>% 
-  filter(PValue.Adj<0.1) %>% 
-  rownames() %>% 
-  as_vector() %>% 
-  unique
-
+clinical_variables <- finalFeaturesProcessed %>%
+  dplyr::select(-c(surv,sample,all_of(omics_variables))) %>%
+  colnames()
 ```
 
-### Multivariate Model
+### Fit Univariable Cox Model
+```{r}
+cox_models_omics <- map(.x = omics_variables,.f = function(x){
+  data <- finalFeaturesProcessed %>% dplyr::select(sample,surv,x) 
+  
+  basic_recipe <- recipe(x =  data) %>%
+    update_role(x,new_role = 'predictor') %>%
+    update_role(sample,new_role = 'ID') %>%
+    update_role(surv, new_role = 'outcome') #%>% 
+    # step_normalize(all_numeric_predictors())
+
+  hr_factors <- proportional_hazards() %>% 
+    set_engine('survival') %>% 
+    set_mode('censored regression')
+
+  wf <- workflow() %>%
+    add_recipe(basic_recipe) %>% 
+    add_model(hr_factors,formula = surv~.) %>% 
+    fit(data=data)
+  
+  return(wf)
+})
+
+names(cox_models_omics) <- omics_variables
+
+signif_omics <- map(.x = seq_along(cox_models_omics),function(x){
+  model <- extract_fit_engine(cox_models_omics[[x]]) %>% 
+    summary()
+  pluck(model,'coefficients') %>% as.data.frame()
+}) %>% 
+  list_rbind() %>% 
+  mutate(PValue.Adj=p.adjust(.[['Pr(>|z|)']],method = 'fdr')) %>% 
+  filter(.[['Pr(>|z|)']]<0.05) %>% 
+  rownames() %>% 
+  as_vector() %>% 
+  unique
+```
+
+### Fit Multivariable Cox Model
 ```{r}
 catchWarning <- function(expr){
   warning_message <- NULL
@@ -357,16 +342,14 @@ catchWarning <- function(expr){
   list(result=res,warning=warning_message)
 }
 
-data <- finalFeatures %>% 
-  dplyr::select(sample,time,event,surv,all_of(signif_omics),all_of(str_split_i(signif_clinical,'\\_',i = 1)))
+cox_models_omics_multivariate <- map(.x = signif_omics,.f = function(x){
+data <- finalFeaturesProcessed %>% 
+  dplyr::select(sample,surv,x,all_of(clinical_variables))
 
 basic_recipe <- recipe(x =  data) %>%
-  update_role(any_of(signif_omics),any_of(str_split_i(signif_clinical,'\\_',i = 1)),new_role = 'predictor') %>%
+  update_role(x,all_of(clinical_variables),new_role = 'predictor') %>%
   update_role(sample,new_role = 'ID') %>%
-  update_role(surv, new_role = 'outcome') %>% 
-  step_string2factor(all_string_predictors()) %>% 
-  step_dummy(all_factor_predictors()) %>% 
-  step_normalize(all_numeric_predictors())
+  update_role(surv, new_role = 'outcome') 
 
 data_feat_baked <- basic_recipe %>% 
   prep() %>% 
@@ -380,274 +363,74 @@ wf <- catchWarning({workflow() %>%
   add_recipe(basic_recipe) %>% 
   add_model(hr_factors,formula = surv~.) %>% 
   fit(data=data)})
+})
 
-counter <- 0
-while(!is.null(wf[["warning"]])){
-signif_omics <- map(.x = seq_len(length(cox_models_omics)),function(x){
-  pluck(cox_models_omics[[x]],'coefficients') %>% as.data.frame()
+```
+```{r}
+multiTable <- map(.x = seq_len(length(cox_models_omics_multivariate)),function(x){
+  model <- extract_fit_engine(cox_models_omics_multivariate[[x]][['result']]) %>% 
+    summary()
+  tibble(Feature=pluck(model,'coefficients') %>% as.data.frame() %>% .[1,] %>% rownames(),
+         pluck(model,'coefficients') %>% as_tibble() %>% .[1,],
+         LogTest_pvalue=pluck(model,'logtest') %>% .[3],
+         SCTest_pvalue=pluck(model,'sctest') %>% .[3],
+         WaldTest_pvalue=pluck(model,'waldtest') %>% .[3])
 }) %>% 
   list_rbind() %>% 
-  mutate(PValue.Adj=p.adjust(.[['Pr(>|z|)']],method = 'fdr')) %>% 
-  filter(PValue.Adj<0.1-(counter/100)) %>% 
-  rownames() %>% 
-  as_vector() %>% 
-  unique
+    mutate(PValue.Adj=p.adjust(.[['Pr(>|z|)']],method = 'fdr')) %>% 
+    relocate(PValue.Adj,.after = `Pr(>|z|)`)
 
-signif_clinical <- map(.x = seq_len(length(cox_models_clinical)),function(x){
-  pluck(cox_models_clinical[[x]],'coefficients') %>% as.data.frame() 
-}) %>% 
-  list_rbind() %>% 
-  mutate(PValue.Adj=p.adjust(.[['Pr(>|z|)']],method = 'fdr')) %>% 
-  filter(PValue.Adj<0.1-(counter/100)) %>% 
-  rownames() %>% 
-  as_vector() %>% 
-  unique
+names(cox_models_omics_multivariate) <- multiTable[["Feature"]]
 
-counter <- counter+1
+signifMulti <- multiTable %>% 
+  filter(`Pr(>|z|)`<0.05) %>% 
+  arrange(PValue.Adj)
 
-data <- finalFeatures %>% 
-  dplyr::select(sample,time,event,surv,all_of(signif_omics),all_of(str_split_i(signif_clinical,'\\_',i = 1)))
+multiCoxFilter <- keep(cox_models_omics_multivariate,names(cox_models_omics_multivariate) %in% signifMulti[["Feature"]])
 
-basic_recipe <- recipe(x =  data) %>%
-  update_role(any_of(signif_omics),any_of(str_split_i(signif_clinical,'\\_',i = 1)),new_role = 'predictor') %>%
-  update_role(sample,new_role = 'ID') %>%
-  update_role(surv, new_role = 'outcome') %>% 
-  step_string2factor(all_string_predictors()) %>% 
-  step_dummy(all_factor_predictors()) %>% 
-  step_normalize(all_numeric_predictors())
+# multivariate_res <- map(seq_along(multiCoxFilter),function(x){
+#   fit <- extract_fit_engine(multiCoxFilter[[x]][['result']])
+#   fitcheck <- cox.zph(fit = fit)
+#   plotPH <- ggforest(model = fit,data = finalFeaturesProcessed)
+#   list(fitcheck,plotPH)
+# })
 
-data_feat_baked <- basic_recipe %>% 
-  prep() %>% 
-  bake(new_data = NULL)
-
-hr_factors <- proportional_hazards() %>% 
-  set_engine('survival') %>% 
-  set_mode('censored regression')
-
-wf <- catchWarning({workflow() %>%
-  add_recipe(basic_recipe) %>% 
-  add_model(hr_factors,formula = surv~.) %>% 
-  fit(data=data)})
+# Function to log errors to a file
+log_error <- function(error_message) {
+  writeLines(error_message, con = paste0(outputdir,"error_log.txt"))
 }
-```
-```{r}
-##### Check fit
-fitcheck <- cox.zph(fit = extract_fit_engine(wf[['result']]))
-# pdf(file = paste0(outputdir,'plot_coxzph.pdf'),width = 20,height = 20,onefile = TRUE)
-# ggcoxzph(fitcheck)
-# dev.off()
-```
 
-#### Plot Hazard Ratios
-```{r}
-plotPH <- ggforest(model = extract_fit_engine(wf[["result"]]),data = data)
-ggsave(filename = 'plot_forest_features_cox.pdf',plot = plotPH,device = 'pdf',path = outputdir,dpi = 300)
-```
-
-### Calculate cut points and fit model to high vs low
-```{r}
-variables <- finalFeatures %>% 
-  dplyr::select(all_of(signif_omics),all_of(str_split_i(signif_clinical,'\\_',i = 1))) %>% 
-  colnames()
-
-# featCut <- surv_cutpoint(data = finalFeatures,variables = variables)
-# 
-# finalFeaturesFactors <- surv_categorize(x = featCut,labels = c('Low','High')) %>% as_tibble() %>% mutate(surv=Surv(time=time,event=event),!!params$outcome:=finalFeatures[[params$outcome]])
-
-featCutMedian <- finalFeatures %>% 
-  select(variables) %>% 
-  mutate(across(where(is.numeric),~if_else(.x<median(.x,na.rm=TRUE),true = 'Low',false = 'High'))) %>% 
-  bind_cols(finalFeatures[,c('sample','time','event')],.) %>% 
-  mutate(surv=Surv(time=time,event=event),!!params$outcome:=finalFeatures[[params$outcome]])
-```
-
-#### Kaplan-Meier plots
-```{r}
-#| warning: false
-kmPlots <- map(.x = variables,.f = function(x){
-  survFormula <- reformulate(termlabels = c(x,parse_character(params$outcome)),response = 'surv')
-  fit <- surv_fit(formula = survFormula,data = featCutMedian)
-  ggsurvplot(fit = fit,data = featCutMedian,conf.int = FALSE,pval = TRUE,pval.method = TRUE,surv.median.line = 'hv',risk.table = TRUE)
+create_safe_forest_plot <- function(fit, data,index) {
+  tryCatch({
+    # Check proportional hazards assumption
+    fitcheck <- cox.zph(fit = fit)
+    
+    # Attempt to create the forest plot
+    plotPH <- ggforest(model = fit, data = data)
+    
+    # Return the fitcheck and plot as a list
+    list(fitcheck = fitcheck, plotPH = plotPH)
+  }, error = function(e) {
+    # Handle the error by printing a message and returning default values
+    error_message <- paste(Sys.time(), " - An error occurred while generating the forest plot: ", e$message, sep = "")
+    message(error_message)
+    log_error(error_message)
+    # Return default values (NA for fitcheck and a blank plot for plotPH)
+    # default_plot <- ggplot() + labs(title = "Forest plot could not be generated")
+    fitUni <- extract_fit_engine(cox_models_omics[[names(multiCoxFilter[index])]])
+    default_plot <- ggforest(model = fitUni,data = data)
+    list(fitcheck = NA, plotPH = default_plot)
   })
-```
-```{r}
-invisible(pdf(file = paste0(outputdir,'kaplan_meier_cox.pdf'),width = 20,height = 10,onefile = TRUE))
-invisible(map(1:length(kmPlots),~print(kmPlots[[.x]])))
-invisible(dev.off())
+}
 
-varKeep <- list('params','varKeep','outputdir','associated.factors')
-rm(list = setdiff(ls(),varKeep))
-invisible(gc())
-```
+# Generate list of plots with error handling
+multivariate_res <- map(seq_along(multiCoxFilter), function(x) {
+  fit <- extract_fit_engine(multiCoxFilter[[x]][['result']])
+  create_safe_forest_plot(fit, finalFeaturesProcessed,index = x)
+})
 
-# Fit Penalized Cox Regression Model
-  This creates a survival object with distant recurrence free interval as time and DRFi_event (death) as the event.
-  A Cox Propotional Hazards model is fit with all factors as variables followed by evaluating the model with the scaled Schoenfeld test which tests the null hypothesis that the variable is stable over time, therefore respecting the Cox test assumptions. A graphical representation of the scaled Schoenfeld residuals can also be seen.
-  
-```{r}
-set.seed(123)
-model <- readRDS(file = params$model)
-modelMeta <- model@samples_metadata
-
-features <- MOFA2::get_weights(object = model,views = 'all',factors = associated.factors[['Factor']],as.data.frame = TRUE,scale = TRUE)
-featFactors <- features %>% 
-  dplyr::group_by(factor,view) %>% 
-  filter(abs(value)>=0.5) %>% 
-  as_tibble
-
-featList <- list(proteomics={featFactors %>%dplyr::filter(view=='proteomics') %>% select(feature) %>% unlist %>% as.character %>% unique},
-              phosphoproteomics={featFactors %>% dplyr::filter(view=='phosphoproteomics') %>% select(feature) %>% unlist %>% as.character %>% unique},
-              transcriptomics={featFactors %>% dplyr::filter(view=='transcriptomics') %>% select(feature) %>% unlist %>% as.character %>% unique},
-              epic={featFactors %>% dplyr::filter(view=='EPIC') %>% select(feature) %>% unlist %>% as.character %>% unique},
-              cibersort={featFactors %>% dplyr::filter(view=='cibersortx') %>% select(feature) %>% unlist %>% as.character %>% unique}) 
-
-if(!is_empty(featList[['proteomics']])){
-  protFeatures <- get_data(object = model,features = list(proteomics=featList$proteomics),as.data.frame = TRUE) %>% 
-    mutate(feature=paste0(feature,'.',view)) %>% 
-    pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
-  }else{protFeatures <- data_frame(sample=modelMeta[['sample']])}
-
-if(!is_empty(featList[['phosphoproteomics']])){
-  phosphoFeatures <- get_data(object = model,features = list(phosphoproteomics=featList$phosphoproteomics),as.data.frame = TRUE) %>% 
-    mutate(feature=paste0(feature,'.',view)) %>% 
-    pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
-  }else{phosphoFeatures <- data_frame(sample=modelMeta[['sample']])}
-
-if(!is_empty(featList[['transcriptomics']])){
-  rnaFeatures <- get_data(object = model,features = list(transcriptomics=featList$transcriptomics),as.data.frame = TRUE) %>% 
-    mutate(feature=paste0(feature,'.',view)) %>% 
-    pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
-  }else{rnaFeatures <- data_frame(sample=modelMeta[['sample']])}
-
-if(!is_empty(featList[['epic']])){
-  epicFeatures <- get_data(object = model,features = list(EPIC=featList$epic),as.data.frame = TRUE) %>% 
-    mutate(feature=paste0(feature,'.',view)) %>% 
-    pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
-  }else{epicFeatures <- data_frame(sample=modelMeta[['sample']])}
-
-if(!is_empty(featList[['cibersort']])){
-  cibersortFeatures <- get_data(object = model,features = list(cibersortx=featList$cibersort),as.data.frame = TRUE) %>% 
-    mutate(feature=paste0(feature,'.',view)) %>% 
-    pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
-  }else{cibersortFeatures <- data_frame(sample=modelMeta[['sample']])}
-
-
-omicFeatures <- reduce(.x = list(protFeatures,phosphoFeatures,rnaFeatures,epicFeatures,cibersortFeatures),.f = ~left_join(x = .x,y = .y,by = 'sample'))
-colnames(omicFeatures) <- make.names(names = colnames(omicFeatures),unique = TRUE)
-
-omics_variables <- omicFeatures %>% 
-  dplyr::select(-sample) %>% 
-  colnames()
-
-clinicalFeatures <- modelMeta %>% 
-  select(
-    sample,
-    time=params$time,
-    event=params$event,
-    Age=`Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)`,
-    tumor_mutational_burden,
-    HisScoreLymphocytes,
-    HisScoreStroma,
-    NHG,
-    PR,
-    SSP.PAM50,
-    params$outcome) %>% 
-  mutate(Age=if_else(Age<50,'<50','≥50'),
-         NHG=if_else(NHG=='3','3','1|2'),
-         !!params$outcome:=as.factor(.[[params$outcome]])) %>% 
-  mutate(across(contains('HisScore'),~case_when(.x>=50~'High',
-                                                between(.x,10,50)~'Intermediate',
-                                                .x<10~'Low')))
-
-colnames(clinicalFeatures) <- colnames(clinicalFeatures) %>% str_replace_all(.,'\\_','\\.')
-
-finalFeatures <- left_join(clinicalFeatures,omicFeatures) %>% 
-  mutate(surv=Surv(time=time,event=event))
-```
-
-## Model
-```{r}
-#| tbl-column: margin
-tidymodels_prefer()
-set.seed(234)
-
-clinical <- clinicalFeatures %>%
-  dplyr::select(-c(sample,time,event)) %>%
-  colnames()
-
-basic_recipe <- recipe(x =  finalFeatures) %>%
-  update_role(all_of(omics_variables),all_of(clinical),new_role = 'predictor') %>%
-  update_role(sample,new_role = 'ID') %>%
-  update_role(surv, new_role = 'outcome') %>% 
-  step_other(SSP.PAM50,threshold = 0.1,other = 'Other') %>%
-  step_dummy(all_factor_predictors(),all_string_predictors()) %>%
-  step_rm(all_factor_predictors(),all_string_predictors()) %>% 
-  step_zv(all_predictors()) %>% 
-  step_nzv(all_predictors()) %>%
-  step_normalize(all_predictors()) %>% 
-  step_impute_knn(all_predictors())
-
-dataPreprocess <- basic_recipe %>% 
-  prep() %>% 
-  bake(NULL)
-```
-```{r}
-set.seed(234)
-x <- dataPreprocess %>% 
-  select(-c(sample,time,event,surv)) %>% 
-  as.matrix()
-
-y <- dataPreprocess %>% 
-  select(time,status=event) %>% 
-  as.matrix
-
-cv.fit <- cv.glmnet(x,y, family = "cox", nfolds = 10,type.measure = 'C',parallel = TRUE,grouped = TRUE,maxit=1e+9,nlambda=200,alpha=1,standardize=FALSE)
-```
-```{r}
-lambda_min <- cv.fit$lambda.min
-lambda_1se <- cv.fit$lambda.1se
-
-lassoPlot <- cv.fit[["glmnet.fit"]] %>% autoplot(best_penalty = lambda_min,top_n = 5)
-
-pdf(file = paste0(outputdir,'plot_lasso.pdf'))
-cIndexPlot <- cv.fit %>% plot()
-lassoPlot
+cairo_pdf(filename = paste0(outputdir,'forestplot_multivariable_mofa.pdf'),onefile = TRUE,width = 9,height = 9)
+plots <- map(seq_along(multivariate_res),function(x){multivariate_res[[x]][[2]] %>% ggplotGrob()})
+gridExtra::marrangeGrob(grobs = plots,ncol = 1,nrow = 1,top = '')
 dev.off()
-
-featSparse <- coef(cv.fit,s = lambda_min) %>% as.matrix() %>% as.data.frame() %>% filter(`1`!=0) %>% arrange(desc(abs(`1`)))
-selectedFeat <- rownames(featSparse)
-```
-
-### Calculate cut points and fit model to high vs low
-```{r}
-selectedFeat[which(!(selectedFeat %in% colnames(finalFeatures)))] <- str_split_i(string = selectedFeat[which(!(selectedFeat %in% colnames(finalFeatures)))],pattern = '\\_',i = 1)
-
-# featCut <- surv_cutpoint(data = finalFeatures,variables = selectedFeat)
-# 
-# finalFeaturesFactors <- surv_categorize(x = featCut,labels = c('Low','High')) %>% as_tibble() %>% mutate(surv=Surv(time=time,event=event),!!params$outcome:=finalFeatures[[params$outcome]])
-
-featCutMedian <- finalFeatures %>% 
-  select(selectedFeat) %>% 
-  mutate(across(where(is.numeric),~if_else(.x<median(.x,na.rm=TRUE),true = 'Low',false = 'High'))) %>% 
-  bind_cols(finalFeatures[,c('sample','time','event')],.) %>% 
-  mutate(surv=Surv(time=time,event=event),!!params$outcome:=finalFeatures[[params$outcome]])
-```
-
-#### Kaplan-Meier plots
-```{r}
-#| warning: false
-kmPlots <- map(.x = selectedFeat,.f = function(x){
-  survFormula <- reformulate(termlabels = c(x,parse_character(params$outcome)),response = 'surv')
-  fit <- surv_fit(formula = survFormula,data = featCutMedian)
-  ggsurvplot(fit = fit,data = featCutMedian,conf.int = FALSE,pval = TRUE,pval.method = TRUE,surv.median.line = 'hv',risk.table = TRUE)
-  })
-```
-```{r}
-invisible(pdf(file = paste0(outputdir,'kaplan_meier_Lassocox.pdf'),width = 20,height = 10,onefile = TRUE))
-invisible(map(1:length(kmPlots),~print(kmPlots[[.x]])))
-invisible(dev.off())
-
-varKeep <- list('params','varKeep','outputdir')
-rm(list = setdiff(ls(),varKeep))
-invisible(gc())
 ```

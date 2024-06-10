@@ -15,7 +15,9 @@ params:
   time: 'RFi_days'
   event: 'RFi_event'
   lambda: 'lambda_min'
-  outcome: 'InvCa.type'
+  outcome: 'LN'
+editor_options: 
+  chunk_output_type: console
 ---
 
 # Requires Packages:
@@ -35,7 +37,7 @@ library(grDevices)
 
 
 ```{r Output Directory}
-outputdir <- paste0('/multiomics/results/figures/survival_analysis/DE/',params$comparison,'/',params$comparison,'_',params$event,'/')
+outputdir <- paste0('~/multiomics/results/figures/survival_analysis/DE/',params$comparison,'/',params$comparison,'_',params$event,'/')
 
 if(!dir.exists(paths = outputdir)) {
   dir.create(path = outputdir,recursive = TRUE)
@@ -46,11 +48,11 @@ if(!dir.exists(paths = outputdir)) {
 ```{r}
 #| message: false
 
-files <- list.files(path = '/multiomics',pattern = 'stats.tsv',recursive = TRUE,include.dirs = TRUE,full.names = TRUE) %>% 
+files <- list.files(path = '~/multiomics',pattern = 'stats.tsv',recursive = TRUE,include.dirs = TRUE,full.names = TRUE) %>% 
   .[str_detect(.,params$comparison)] %>% 
   .[!str_detect(.,'cluster')]
 
-design <- read_tsv(file = '/multiomics/results/design_files/design_multiomics_mofa.tsv')
+design <- read_tsv(file = '~/multiomics/results/design_files/design_multiomics_mofa.tsv')
 
 if(str_detect(params$comparison,'noG2')){
   design <- design %>% 
@@ -102,14 +104,16 @@ clinical <- design %>%
     NHG,
     Treatment=TreatGroup,
     params$outcome
-    ) %>%   
-  mutate(Age=(if_else(Age<50,'<50','≥50')),
-         NHG=(if_else(NHG=='3','3','1|2')),
+    ) %>% 
+  mutate(
+    # Age=(if_else(Age<50,'<50','≥50')),
+         # NHG=(if_else(NHG=='3','3','1|2')),
          !!params$outcome:=(.[[params$outcome]])) %>% 
-  mutate(Age=factor(Age,levels=c('<50','≥50')),
-         NHG=factor(NHG,levels=c('1|2','3')),
-         Size=factor(Size,levels=c('0','1'),labels=c('<20mm','≥20mm')),
-         Treatment=factor(Treatment,levels=c('Chemo','ChemoEndo','Endo','None'))) %>% 
+  mutate(
+    # Age=factor(Age,levels=c('<50','≥50')),
+         NHG=factor(NHG,levels=c('1','2','3')),
+         # Size=factor(Size,levels=c('0','1'),labels=c('<20mm','≥20mm')),
+         Treatment=factor(Treatment,levels=c('ChemoEndo','Endo','Chemo','None'),exclude = c('Chemo','None'),ordered = FALSE)) %>%
   drop_na()
 
 clinical_variables <- clinical %>%
@@ -124,11 +128,11 @@ finalFeaturesProcessed <- recipe(x =  finalFeatures) %>%
   update_role(all_of(omics_variables),all_of(clinical_variables),new_role = 'predictor') %>%
   update_role(sample_id,new_role = 'ID') %>%
   update_role(surv, new_role = 'outcome') %>% 
-  step_relevel(Age,ref_level = '<50') %>%
-  step_relevel(NHG,ref_level = '1|2') %>% 
-  step_relevel(Size,ref_level = '<20mm') %>% 
-  step_other(Treatment,threshold = 0.1,other = 'Other') %>% 
-  step_relevel(Treatment,ref_level = 'Endo') %>% 
+  # step_relevel(Age,ref_level = '<50') %>%
+  step_relevel(NHG,ref_level = '1') %>%
+  # step_relevel(Size,ref_level = '<20mm') %>% 
+  # step_other(Treatment,threshold = 0.1,other = 'Other') %>% 
+  step_relevel(Treatment,ref_level = 'Endo') %>%
   step_dummy(all_factor_predictors(),naming = function(col,lvl,ord){paste0(col,'_',lvl)}) %>%
   step_normalize(all_of(omics_variables)) %>% 
   prep() %>% 
@@ -143,55 +147,25 @@ clinical_variables <- finalFeaturesProcessed %>%
 ```{r}
 cox_models_omics <- map(.x = omics_variables,.f = function(x){
   data <- finalFeaturesProcessed %>% dplyr::select(sample_id,surv,x) 
-  
-  basic_recipe <- recipe(x =  data) %>%
-    update_role(x,new_role = 'predictor') %>%
-    update_role(sample_id,new_role = 'ID') %>%
-    update_role(surv, new_role = 'outcome') #%>% 
-    # step_normalize(all_numeric_predictors())
 
   hr_factors <- proportional_hazards() %>% 
     set_engine('survival') %>% 
     set_mode('censored regression')
 
   wf <- workflow() %>%
-    add_recipe(basic_recipe) %>% 
+    add_variables(outcomes = surv,predictors = x) %>% 
     add_model(hr_factors,formula = surv~.) %>% 
     fit(data=data)
-
-  res <- extract_fit_engine(wf) %>% summary()
-  return(res)
+  
+  return(wf)
 })
-
-# cox_models_clinical <- map(.x = clinical_variables,.f = function(x){
-#   data <- finalFeaturesProcessed %>% dplyr::select(sample_id,surv,x) 
-#   
-#   basic_recipe <- recipe(x =  data) %>%
-#     update_role(x,new_role = 'predictor') %>%
-#     update_role(sample_id,new_role = 'ID') %>%
-#     update_role(surv, new_role = 'outcome') #%>% 
-#     # step_string2factor(all_string_predictors()) %>% 
-#     # step_dummy(all_factor_predictors()) %>% 
-#     # step_normalize(all_numeric_predictors())
-# 
-# 
-#   hr_factors <- proportional_hazards() %>% 
-#     set_engine('survival') %>% 
-#     set_mode('censored regression')
-# 
-#   wf <- workflow() %>%
-#     add_recipe(basic_recipe) %>% 
-#     add_model(hr_factors,formula = surv~.) %>% 
-#     fit(data=data)
-# 
-#   res <- extract_fit_engine(wf) %>% summary()
-#   return(res)
-# })
 
 names(cox_models_omics) <- omics_variables
 
-signif_omics <- map(.x = seq_len(length(cox_models_omics)),function(x){
-  pluck(cox_models_omics[[x]],'coefficients') %>% as.data.frame()
+signif_omics <- map(.x = seq_along(cox_models_omics),function(x){
+  model <- extract_fit_engine(cox_models_omics[[x]]) %>% 
+    summary()
+  pluck(model,'coefficients') %>% as.data.frame()
 }) %>% 
   list_rbind() %>% 
   mutate(PValue.Adj=p.adjust(.[['Pr(>|z|)']],method = 'fdr')) %>% 
@@ -199,16 +173,6 @@ signif_omics <- map(.x = seq_len(length(cox_models_omics)),function(x){
   rownames() %>% 
   as_vector() %>% 
   unique
-
-# signif_clinical <- map(.x = seq_len(length(cox_models_clinical)),function(x){
-#   pluck(cox_models_clinical[[x]],'coefficients') %>% as.data.frame() 
-# }) %>% 
-#   list_rbind() %>% 
-#   mutate(PValue.Adj=p.adjust(.[['Pr(>|z|)']],method = 'fdr')) %>% 
-#   filter(.[['Pr(>|z|)']]<0.05) %>% 
-#   rownames() %>% 
-#   as_vector() %>% 
-#   unique
 
 ```
 
@@ -228,29 +192,19 @@ cox_models_omics_multivariate <- map(.x = signif_omics,.f = function(x){
 data <- finalFeaturesProcessed %>% 
   dplyr::select(sample_id,surv,x,all_of(clinical_variables))
 
-basic_recipe <- recipe(x =  data) %>%
-  update_role(x,all_of(clinical_variables),new_role = 'predictor') %>%
-  update_role(sample_id,new_role = 'ID') %>%
-  update_role(surv, new_role = 'outcome') #%>% 
-  # step_string2factor(all_string_predictors()) %>% 
-  # step_dummy(all_factor_predictors()) %>% 
-  # step_normalize(all_numeric_predictors())
-
-data_feat_baked <- basic_recipe %>% 
-  prep() %>% 
-  bake(new_data = NULL)
-
 hr_factors <- proportional_hazards() %>% 
   set_engine('survival') %>% 
   set_mode('censored regression')
 
 wf <- catchWarning({workflow() %>%
-  add_recipe(basic_recipe) %>% 
-  add_model(hr_factors,formula = surv~.) %>% 
-  fit(data=data)})
+    add_variables(outcomes = surv,predictors = c(x,all_of(clinical_variables))) %>% 
+    add_model(hr_factors,formula = surv~.) %>% 
+    fit(data=data)})
 })
 
 ```
+
+### Select significant features and generate forest plots
 ```{r}
 multiTable <- map(.x = seq_len(length(cox_models_omics_multivariate)),function(x){
   model <- extract_fit_engine(cox_models_omics_multivariate[[x]][['result']]) %>% 
@@ -273,16 +227,9 @@ signifMulti <- multiTable %>%
 
 multiCoxFilter <- keep(cox_models_omics_multivariate,names(cox_models_omics_multivariate) %in% signifMulti[["Feature"]])
 
-# multivariate_res <- map(seq_along(multiCoxFilter),function(x){
-#   fit <- extract_fit_engine(multiCoxFilter[[x]][['result']])
-#   fitcheck <- cox.zph(fit = fit)
-#   plotPH <- ggforest(model = fit,data = finalFeaturesProcessed)
-#   list(fitcheck,plotPH)
-# })
-
 # Function to log errors to a file
 log_error <- function(error_message) {
-  writeLines(error_message, con = paste0(outputdir,"error_log.txt"))
+  writeLines(error_message, con = paste0('~/',"error_log.txt"))
 }
 
 create_safe_forest_plot <- function(fit, data,index) {
@@ -301,7 +248,6 @@ create_safe_forest_plot <- function(fit, data,index) {
     message(error_message)
     log_error(error_message)
     # Return default values (NA for fitcheck and a blank plot for plotPH)
-    # default_plot <- ggplot() + labs(title = "Forest plot could not be generated")
     fitUni <- extract_fit_engine(cox_models_omics[[names(multiCoxFilter[index])]])
     default_plot <- ggforest(model = fitUni,data = data)
     list(fitcheck = NA, plotPH = default_plot)
@@ -314,7 +260,7 @@ multivariate_res <- map(seq_along(multiCoxFilter), function(x) {
   create_safe_forest_plot(fit, finalFeaturesProcessed,index = x)
 })
 
-cairo_pdf(filename = paste0(outputdir,'forestplot_multivariable_DE.pdf'),onefile = TRUE,width = 9,height = 9)
+cairo_pdf(filename = paste0('~/','forestplot_multivariable_DE.pdf'),onefile = TRUE,width = 9,height = 9)
 plots <- map(seq_along(multivariate_res),function(x){multivariate_res[[x]][[2]] %>% ggplotGrob()})
 gridExtra::marrangeGrob(grobs = plots,ncol = 1,nrow = 1,top = '')
 dev.off()

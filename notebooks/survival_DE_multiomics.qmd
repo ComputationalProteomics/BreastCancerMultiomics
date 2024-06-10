@@ -37,7 +37,7 @@ library(grDevices)
 
 
 ```{r Output Directory}
-outputdir <- paste0('~/multiomics/results/figures/survival_analysis/DE/',params$comparison,'/',params$comparison,'_',params$event,'/')
+outputdir <- paste0('/multiomics/results/figures/survival_analysis/DE/',params$comparison,'/',params$comparison,'_',params$event,'/')
 
 if(!dir.exists(paths = outputdir)) {
   dir.create(path = outputdir,recursive = TRUE)
@@ -48,11 +48,11 @@ if(!dir.exists(paths = outputdir)) {
 ```{r}
 #| message: false
 
-files <- list.files(path = '~/multiomics',pattern = 'stats.tsv',recursive = TRUE,include.dirs = TRUE,full.names = TRUE) %>% 
+files <- list.files(path = '/multiomics',pattern = 'stats.tsv',recursive = TRUE,include.dirs = TRUE,full.names = TRUE) %>% 
   .[str_detect(.,params$comparison)] %>% 
   .[!str_detect(.,'cluster')]
 
-design <- read_tsv(file = '~/multiomics/results/design_files/design_multiomics_mofa.tsv')
+design <- read_tsv(file = '/multiomics/results/design_files/design_multiomics_mofa.tsv')
 
 if(str_detect(params$comparison,'noG2')){
   design <- design %>% 
@@ -105,14 +105,10 @@ clinical <- design %>%
     Treatment=TreatGroup,
     params$outcome
     ) %>% 
-  mutate(
-    # Age=(if_else(Age<50,'<50','≥50')),
-         # NHG=(if_else(NHG=='3','3','1|2')),
+  mutate(NHG=(if_else(NHG=='3','3','1|2')),
          !!params$outcome:=(.[[params$outcome]])) %>% 
-  mutate(
-    # Age=factor(Age,levels=c('<50','≥50')),
-         NHG=factor(NHG,levels=c('1','2','3')),
-         # Size=factor(Size,levels=c('0','1'),labels=c('<20mm','≥20mm')),
+  mutate(NHG=factor(NHG,levels=c('1|2','3'),ordered = FALSE),
+         Size=factor(Size,levels=c('0','1'),labels=c('≤20mm','>20mm')),
          Treatment=factor(Treatment,levels=c('ChemoEndo','Endo','Chemo','None'),exclude = c('Chemo','None'),ordered = FALSE)) %>%
   drop_na()
 
@@ -128,13 +124,11 @@ finalFeaturesProcessed <- recipe(x =  finalFeatures) %>%
   update_role(all_of(omics_variables),all_of(clinical_variables),new_role = 'predictor') %>%
   update_role(sample_id,new_role = 'ID') %>%
   update_role(surv, new_role = 'outcome') %>% 
-  # step_relevel(Age,ref_level = '<50') %>%
-  step_relevel(NHG,ref_level = '1') %>%
-  # step_relevel(Size,ref_level = '<20mm') %>% 
-  # step_other(Treatment,threshold = 0.1,other = 'Other') %>% 
+  step_relevel(NHG,ref_level = '1|2') %>%
+  step_relevel(Size,ref_level = '≤20mm') %>%
   step_relevel(Treatment,ref_level = 'Endo') %>%
   step_dummy(all_factor_predictors(),naming = function(col,lvl,ord){paste0(col,'_',lvl)}) %>%
-  step_normalize(all_of(omics_variables)) %>% 
+  step_normalize(all_of(omics_variables),Age) %>% 
   prep() %>% 
   bake(new_data=NULL)
 
@@ -229,7 +223,7 @@ multiCoxFilter <- keep(cox_models_omics_multivariate,names(cox_models_omics_mult
 
 # Function to log errors to a file
 log_error <- function(error_message) {
-  writeLines(error_message, con = paste0('~/',"error_log.txt"))
+  writeLines(error_message, con = paste0(outputdir,"error_log.txt"))
 }
 
 create_safe_forest_plot <- function(fit, data,index) {
@@ -260,7 +254,7 @@ multivariate_res <- map(seq_along(multiCoxFilter), function(x) {
   create_safe_forest_plot(fit, finalFeaturesProcessed,index = x)
 })
 
-cairo_pdf(filename = paste0('~/','forestplot_multivariable_DE.pdf'),onefile = TRUE,width = 9,height = 9)
+cairo_pdf(filename = paste0(outputdir,'forestplot_multivariable_DE.pdf'),onefile = TRUE,width = 9,height = 9)
 plots <- map(seq_along(multivariate_res),function(x){multivariate_res[[x]][[2]] %>% ggplotGrob()})
 gridExtra::marrangeGrob(grobs = plots,ncol = 1,nrow = 1,top = '')
 dev.off()

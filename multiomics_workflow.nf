@@ -244,6 +244,7 @@ process MOFA{
     input:
         path(notebook)
         path(html)
+        path(html)
 
     when:
         html.exists()

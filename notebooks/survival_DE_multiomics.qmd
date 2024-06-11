@@ -14,7 +14,6 @@ params:
   comparison: 'DuctalvsLobular_noG2'
   time: 'RFi_days'
   event: 'RFi_event'
-  lambda: 'lambda_min'
   outcome: 'LN'
 editor_options: 
   chunk_output_type: console

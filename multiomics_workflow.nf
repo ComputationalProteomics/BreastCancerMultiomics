@@ -8,6 +8,8 @@ workflow  {
     // Run workflow
     GENERATE_DESIGN_FILES (ch_notebook_multiomics.filter {it.name == 'generate_design_files.qmd'})
 
+    PREPROCESS_IMMUNE (ch_notebook_multiomics.filter {it.name == 'preprocess_immuneinfiltration.qmd'})
+
     DATA_NORMALIZATION(
         ch_notebook_multiomics.filter {it.name == 'preprocessing.qmd'},
         GENERATE_DESIGN_FILES.out.collect()
@@ -94,6 +96,22 @@ process GENERATE_DESIGN_FILES{
     """
     mkdir -p /multiomics/results/design_files/
     mkdir -p /multiomics/results/rendered_notebooks/
+    quarto render ${notebook} --to html > .html
+    """
+}
+
+process PREPROCESS_IMMUNE{
+    publishDir "./results/rendered_notebooks",
+        mode: "copy"
+
+    input:
+        path(notebook)
+
+    output:
+        path('*.html'), emit: html
+
+    script:
+    """
     quarto render ${notebook} --to html > .html
     """
 }

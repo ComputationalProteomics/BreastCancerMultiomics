@@ -9,6 +9,8 @@ format:
     toc-location: left
     smooth-scroll: true
 engine: knitr
+execute: 
+  output: false
 ---
 
 # Required Packages

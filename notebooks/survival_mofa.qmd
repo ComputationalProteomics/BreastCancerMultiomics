@@ -36,9 +36,9 @@ library(tidyverse)
 library(tidymodels)
 library(MOFA2)
 library(censored)
-library(glmnet)
 library(gridExtra)
 library(grDevices)
+library(forestmodel)
 ```
 
 # Survival Analysis
@@ -135,17 +135,20 @@ cox_multi_factors <- {
 ```{r}
 #| tbl-column: page
 #| tbl-colwidths: true
+#| include: false
 fitcheck <- cox.zph(extract_fit_engine(cox_multi_factors))
 fitcheck
 ```
 ```{r}
+#| include: false
 # pdf(file = paste0(outputdir,'zph_plot_factors.pdf'),width = 20,height = 20,onefile = TRUE)
 # ggcoxzph(fitcheck,resid = TRUE,df = params$df)
 # dev.off()
 ```
+
 #### Plot Hazard Ratios
 ```{r}
-hrPlot <- extract_fit_engine(cox_multi_factors) %>% ggforest(data = data)
+hrPlot <- extract_fit_engine(cox_multi_factors) %>% forest_model()
 ggsave(filename = 'HR_plot_factors_cox.pdf',plot = hrPlot,device = 'pdf',path = outputdir,width = 10,height = 10,dpi = 300)
 
 varKeep <- list('params','varKeep','outputdir')
@@ -155,7 +158,7 @@ invisible(gc())
 
 
 ## MOFA - Cox Single Features
-#### Factors associated with outcome
+### Factors associated with outcome
 
 ```{r}
 model <- readRDS(file = params$model)
@@ -192,7 +195,7 @@ associated.factors <- correlate_factors_with_covariates(model,
   arrange(desc(Outcome))
 ```
 
-#### Features from selected factors
+### Features from selected factors
 ```{r}
 features <- MOFA2::get_weights(object = model,views = 'all',factors = associated.factors[['Factor']],as.data.frame = TRUE,scale = TRUE)
 featFactors <- features %>% 
@@ -255,12 +258,10 @@ clinical <- modelMeta %>%
     Treatment=TreatGroup,
     params$outcome
     ) %>%   
-  mutate(NHG=(if_else(NHG=='3','3','1|2')),
-         !!params$outcome:=(.[[params$outcome]])) %>% 
-  mutate(NHG=factor(NHG,levels=c('1|2','3')),
+  mutate(!!params$outcome:=as.factor(.[[params$outcome]]),
+         NHG=factor(NHG,levels=c('1','2','3'),ordered = FALSE),
          Size=factor(Size,levels=c('0','1'),labels=c('≤20mm','>20mm')),
-         Treatment=factor(Treatment,levels=c('ChemoEndo','Endo','Chemo','None'),exclude = c('Chemo','None'),ordered = FALSE)
-         ) %>% 
+         Treatment=factor(Treatment,levels=c('ChemoEndo','Endo','Chemo','None'),exclude = c('Chemo','None'),ordered = FALSE)) %>%
   drop_na()
 
 clinical_variables <- clinical %>%
@@ -275,17 +276,12 @@ finalFeaturesProcessed <- recipe(x =  finalFeatures) %>%
   update_role(all_of(omics_variables),all_of(clinical_variables),new_role = 'predictor') %>%
   update_role(sample,new_role = 'ID') %>%
   update_role(surv, new_role = 'outcome') %>% 
-  step_relevel(NHG,ref_level = '1|2') %>% 
+  step_relevel(NHG,ref_level = '1') %>% 
   step_relevel(Size,ref_level = '≤20mm') %>% 
   step_relevel(Treatment,ref_level = 'Endo') %>%
-  step_dummy(all_factor_predictors(),naming = function(col,lvl,ord){paste0(col,'_',lvl)}) %>%
-  step_normalize(all_of(omics_variables)) %>% 
+  step_normalize(all_of(omics_variables),Age) %>% 
   prep() %>% 
   bake(new_data=NULL)
-
-clinical_variables <- finalFeaturesProcessed %>%
-  dplyr::select(-c(surv,sample,all_of(omics_variables))) %>%
-  colnames()
 ```
 
 ### Fit Univariable Cox Model
@@ -347,6 +343,8 @@ wf <- catchWarning({workflow() %>%
 })
 
 ```
+
+#### Select significant features and generate forest plots
 ```{r}
 multiTable <- map(.x = seq_len(length(cox_models_omics_multivariate)),function(x){
   model <- extract_fit_engine(cox_models_omics_multivariate[[x]][['result']]) %>% 
@@ -380,7 +378,7 @@ create_safe_forest_plot <- function(fit, data,index) {
     fitcheck <- cox.zph(fit = fit)
     
     # Attempt to create the forest plot
-    plotPH <- ggforest(model = fit, data = data)
+    plotPH <- forest_model(model = fit,exclude_infinite_cis = TRUE,recalculate_width = TRUE,recalculate_height = TRUE,format_options = forest_model_format_options(text_size = 3))
     
     # Return the fitcheck and plot as a list
     list(fitcheck = fitcheck, plotPH = plotPH)
@@ -392,7 +390,7 @@ create_safe_forest_plot <- function(fit, data,index) {
     # Return default values (NA for fitcheck and a blank plot for plotPH)
     # default_plot <- ggplot() + labs(title = "Forest plot could not be generated")
     fitUni <- extract_fit_engine(cox_models_omics[[names(multiCoxFilter[index])]])
-    default_plot <- ggforest(model = fitUni,data = data)
+    default_plot <- forest_model(model = fitUni,exclude_infinite_cis = TRUE,recalculate_width = TRUE,recalculate_height = TRUE,format_options = forest_model_format_options(text_size = 3))
     list(fitcheck = NA, plotPH = default_plot)
   })
 }

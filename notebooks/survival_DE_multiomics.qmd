@@ -29,15 +29,15 @@ library(tidyverse)
 library(survival)
 library(survminer)
 library(tidymodels)
-library(glmnet)
 library(censored)
 library(gridExtra)
 library(grDevices)
+library(forestmodel)
 ```
 
 
 ```{r Output Directory}
-outputdir <- paste0('/multiomics/results/figures/survival_analysis/DE/',params$comparison,'/',params$comparison,'_',params$event,'/')
+outputdir <- paste0('~/multiomics/results/figures/survival_analysis/DE/',params$comparison,'/',params$comparison,'_',params$event,'/')
 
 if(!dir.exists(paths = outputdir)) {
   dir.create(path = outputdir,recursive = TRUE)
@@ -48,11 +48,11 @@ if(!dir.exists(paths = outputdir)) {
 ```{r}
 #| message: false
 
-files <- list.files(path = '/multiomics',pattern = 'stats.tsv',recursive = TRUE,include.dirs = TRUE,full.names = TRUE) %>% 
+files <- list.files(path = '~/multiomics',pattern = 'stats.tsv',recursive = TRUE,include.dirs = TRUE,full.names = TRUE) %>% 
   .[str_detect(.,params$comparison)] %>% 
   .[!str_detect(.,'cluster')]
 
-design <- read_tsv(file = '/multiomics/results/design_files/design_multiomics_mofa.tsv')
+design <- read_tsv(file = '~/multiomics/results/design_files/design_multiomics_mofa.tsv')
 
 if(str_detect(params$comparison,'noG2')){
   design <- design %>% 
@@ -105,9 +105,8 @@ clinical <- design %>%
     Treatment=TreatGroup,
     params$outcome
     ) %>% 
-  mutate(NHG=(if_else(NHG=='3','3','1|2')),
-         !!params$outcome:=(.[[params$outcome]])) %>% 
-  mutate(NHG=factor(NHG,levels=c('1|2','3'),ordered = FALSE),
+  mutate(!!params$outcome:=as.factor(.[[params$outcome]]),
+         NHG=factor(NHG,levels=c('1','2','3'),ordered = FALSE),
          Size=factor(Size,levels=c('0','1'),labels=c('≤20mm','>20mm')),
          Treatment=factor(Treatment,levels=c('ChemoEndo','Endo','Chemo','None'),exclude = c('Chemo','None'),ordered = FALSE)) %>%
   drop_na()
@@ -124,17 +123,12 @@ finalFeaturesProcessed <- recipe(x =  finalFeatures) %>%
   update_role(all_of(omics_variables),all_of(clinical_variables),new_role = 'predictor') %>%
   update_role(sample_id,new_role = 'ID') %>%
   update_role(surv, new_role = 'outcome') %>% 
-  step_relevel(NHG,ref_level = '1|2') %>%
+  step_relevel(NHG,ref_level = '1') %>%
   step_relevel(Size,ref_level = '≤20mm') %>%
   step_relevel(Treatment,ref_level = 'Endo') %>%
-  step_dummy(all_factor_predictors(),naming = function(col,lvl,ord){paste0(col,'_',lvl)}) %>%
   step_normalize(all_of(omics_variables),Age) %>% 
   prep() %>% 
   bake(new_data=NULL)
-
-clinical_variables <- finalFeaturesProcessed %>%
-  dplyr::select(-c(surv,sample_id,all_of(omics_variables))) %>%
-  colnames()
 ```
 
 ## Fit Univariable Cox Model
@@ -232,7 +226,7 @@ create_safe_forest_plot <- function(fit, data,index) {
     fitcheck <- cox.zph(fit = fit)
     
     # Attempt to create the forest plot
-    plotPH <- ggforest(model = fit, data = data)
+    plotPH <- forest_model(model = fit,exclude_infinite_cis = TRUE,recalculate_width = TRUE,recalculate_height = TRUE,format_options = forest_model_format_options(text_size = 3))
     
     # Return the fitcheck and plot as a list
     list(fitcheck = fitcheck, plotPH = plotPH)
@@ -243,7 +237,7 @@ create_safe_forest_plot <- function(fit, data,index) {
     log_error(error_message)
     # Return default values (NA for fitcheck and a blank plot for plotPH)
     fitUni <- extract_fit_engine(cox_models_omics[[names(multiCoxFilter[index])]])
-    default_plot <- ggforest(model = fitUni,data = data)
+    default_plot <- forest_model(model = fitUni,exclude_infinite_cis = TRUE,recalculate_width = TRUE,recalculate_height = TRUE,format_options = forest_model_format_options(text_size = 3))
     list(fitcheck = NA, plotPH = default_plot)
   })
 }

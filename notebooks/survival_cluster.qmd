@@ -1,0 +1,151 @@
+---
+title: "Survival Analysis - Consensus Cluster"
+author: "Sergio Mosquim Junior"
+format:
+  html:
+    toc: true
+    code-fold: true
+    embed-resources: true
+    toc-location: left
+    smooth-scroll: true
+    message: false
+engine: knitr
+params:
+  dataPath: '/multiomics/results/consensus_clustering/DuctalvsLobular/proteome/proteome.k=6.consensusClass.csv'
+  designPath: '/multiomics/results/design_files/design_Full_noPool.tsv'
+---
+
+# Requires Packages:
+
+```{r required packages}
+#| message: false
+#| warning: false
+library(tidyverse)
+library(survival)
+library(survminer)
+library(tidymodels)
+library(glmnet)
+library(censored)
+library(forestmodel)
+```
+
+## Load data
+```{r}
+#| message: false
+
+outputdir <- '/multiomics/results/figures/survival_analysis/consensus_cluster/'
+if(!dir.exists(paths = outputdir)) {
+  dir.create(path = outputdir,recursive = TRUE)
+}
+
+design <- read_tsv(file = params$designPath)
+dataCluster <- read_csv(file = params$dataPath,col_names = c('sample','cluster'))
+
+clinicalFeatures <- design %>% 
+  select(
+    sample=sample_id,
+    time=RFi_days,
+    event=RFi_event,
+    Age=`Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)`,
+    Size=T.size,
+    Treatment=TreatGroup,
+    LN,
+    NHG,
+    ) %>% 
+  mutate(NHG=factor(NHG,levels=c('1','2','3'),ordered = FALSE),
+         Size=factor(Size,levels=c('0','1'),labels=c('≤20mm','>20mm')),
+         Treatment=factor(Treatment,levels=c('ChemoEndo','Endo','Chemo','None'),exclude = c('Chemo','None'),ordered = FALSE))
+
+colnames(clinicalFeatures) <- colnames(clinicalFeatures) %>% str_replace_all(.,'\\_','\\.')
+
+finalFeatures <- left_join(dataCluster,clinicalFeatures) %>% 
+  pivot_wider(names_from = 'cluster',
+              values_from = 'cluster',
+              names_prefix = 'cluster.',
+              values_fn = ~if_else(is.numeric(.x),1,0),
+              values_fill = 0) %>%
+  mutate(across(.cols=any_of(contains('cluster')),~as.factor(.x))) %>%
+  mutate(surv=Surv(time=time,event=event),cluster=as.factor(dataCluster[["cluster"]])) %>% 
+  mutate(across(contains('cluster.'),~relevel(.x,ref='0')))
+
+```
+
+# Single features
+```{r}
+clinical_variables <- clinicalFeatures %>% 
+  dplyr::select(-c(sample,time,event)) %>% 
+  colnames()
+
+variables <- finalFeatures %>% 
+  select(matches('cluster.')) %>% 
+  colnames()
+
+cox_models_omics <- map(.x = variables,.f = function(x){
+  data <- finalFeatures %>% dplyr::select(sample,surv,x) 
+  
+  basic_recipe <- recipe(x =  data) %>%
+    update_role(x,new_role = 'predictor') %>%
+    update_role(sample,new_role = 'ID') %>%
+    update_role(surv, new_role = 'outcome') 
+
+  hr_factors <- proportional_hazards() %>% 
+    set_engine('survival') %>% 
+    set_mode('censored regression')
+
+  wf <- workflow() %>%
+    add_recipe(basic_recipe) %>% 
+    add_model(hr_factors,formula = surv~.) %>% 
+    fit(data=data)
+
+  return(wf)
+})
+
+clusters <- map(.x = seq_len(length(cox_models_omics)),function(x){
+  model <- extract_fit_engine(cox_models_omics[[x]]) %>% 
+    summary()
+  tibble(Feature=pluck(model,'coefficients') %>% as.data.frame() %>% .[1,] %>% rownames(),
+         pluck(model,'coefficients') %>% as_tibble() %>% .[1,],
+         pluck(model,'conf.int') %>% as.data.frame() %>% select(c(3,4)) ,
+         LogTest_pvalue=pluck(model,'logtest') %>% .[3],
+         SCTest_pvalue=pluck(model,'sctest') %>% .[3],
+         WaldTest_pvalue=pluck(model,'waldtest') %>% .[3])
+}) %>% 
+  list_rbind() %>% 
+    mutate(PValue.Adj=p.adjust(.[['Pr(>|z|)']],method = 'fdr')) %>% 
+    relocate(PValue.Adj,.after = `Pr(>|z|)`) %>% 
+    mutate(label=c(paste0('Cluster.',1:6,'.vs.Others')))
+
+# p <- ggplot(teste,aes(x=`exp(coef)`,y=label))+
+#   geom_point(color='red')+
+#   geom_errorbarh(aes(xmin=`lower .95`,xmax=`upper .95`),color='red')+
+#   theme_bw()+
+#   geom_vline(xintercept = 1,linetype = 2)+labs(x = 'Hazard Ratio',y = NULL)+ 
+#   geom_text(aes(label=round(`Pr(>|z|)`,digits = 3)),nudge_y = 0.2)
+
+# From forestmodel package
+modelList <- map(cox_models_omics,~extract_fit_engine(.x))
+forestPlot <- forest_model(model_list = modelList,merge_models = TRUE)
+
+cairo_pdf(filename = paste0(outputdir,'forestplot_cluster.pdf'),onefile = TRUE,width = 9,height = 9)
+plot <- forestPlot %>% ggplotGrob()
+gridExtra::grid.arrange(plot,newpage = FALSE)
+dev.off()
+```
+# kaplan-Meier
+```{r}
+#| include: false
+#| eval: false
+fit <- surv_fit(surv~cluster,data = finalFeatures)
+ggsurvplot(fit = fit,data = finalFeatures,conf.int = FALSE,pval = TRUE,pval.method = TRUE,surv.median.line = 'hv',risk.table = TRUE)
+
+kmPlots <- map(.x = variables,.f = function(x){
+  survFormula <- reformulate(termlabels = c(x),response = 'surv')
+  fit <- surv_fit(formula = survFormula,data = finalFeatures)
+  ggsurvplot(fit = fit,data = finalFeatures,conf.int = TRUE,pval = TRUE,pval.method = TRUE,surv.median.line = 'hv',risk.table = TRUE)
+  })
+
+#When having a list of formulas, i.e., fit and plot removed from kmplots
+teste <- surv_fit(formula = kmPlots,data = finalFeatures)
+ggsurvpl(fit = teste,data = finalFeatures)
+```
+

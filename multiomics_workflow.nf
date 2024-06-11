@@ -63,6 +63,11 @@ workflow  {
       DIFFERENTIAL_EXPRESSION.out.collect()
     )
 
+    SURVIVAL_CLUSTER(
+      ch_notebook_multiomics.filter {it.name == 'survival_cluster.qmd'},
+      CONSENSUS_CLUSTER.out.collect()
+    )
+
     DIFFERENTIAL_EXPRESSION_CLUSTER(
       ch_notebook_multiomics.filter {it.name == 'differentialexpression_consensus_cluster.qmd'},
       CLUSTERING.out.collect()
@@ -314,17 +319,32 @@ process SURVIVAL_DE{
         path("*.html"),emit: html
     script:
     """
-    quarto render ${notebook} -P comparison:'DuctalvsLobular_noG2' -P time:'RFi_days' -P event:'RFi_event' -P lambda:'lambda_min' -P outcome:'InvCa.type' > .html
-    quarto render ${notebook} -P comparison:'DuctalvsLobular_noG2' -P time:'OS_days' -P event:'OS_event' -P lambda:'lambda_min' -P outcome:'InvCa.type' > .html
-    #quarto render ${notebook} -P comparison:'DuctalvsLobular_noG2' -P time:'DRFi_days' -P event:'DRFi_event' -P lambda:'lambda_min' -P outcome:'InvCa.type' > .html
+    quarto render ${notebook} -P comparison:'DuctalvsLobular_noG2' -P time:'RFi_days' -P event:'RFi_event' -P outcome:'InvCa.type' > .html
+    quarto render ${notebook} -P comparison:'DuctalvsLobular_noG2' -P time:'OS_days' -P event:'OS_event' -P outcome:'InvCa.type' > .html
+    #quarto render ${notebook} -P comparison:'DuctalvsLobular_noG2' -P time:'DRFi_days' -P event:'DRFi_event' -P outcome:'InvCa.type' > .html
 
-    quarto render ${notebook} -P comparison:'AllSamples_noG2' -P time:'RFi_days' -P event:'RFi_event' -P lambda:'lambda_min' -P outcome:'LN' > .html
-    quarto render ${notebook} -P comparison:'AllSamples_noG2' -P time:'OS_days' -P event:'OS_event' -P lambda:'lambda_1se' -P outcome:'LN' > .html
-    #quarto render ${notebook} -P comparison:'AllSamples_noG2' -P time:'DRFi_days' -P event:'DRFi_event' -P lambda:'lambda_min' -P outcome:'InvCa.type' > .html
+    quarto render ${notebook} -P comparison:'AllSamples_noG2' -P time:'RFi_days' -P event:'RFi_event' -P outcome:'LN' > .html
+    quarto render ${notebook} -P comparison:'AllSamples_noG2' -P time:'OS_days' -P event:'OS_event' -P outcome:'LN' > .html
+    #quarto render ${notebook} -P comparison:'AllSamples_noG2' -P time:'DRFi_days' -P event:'DRFi_event' -P outcome:'InvCa.type' > .html
 
     #quarto render ${notebook} -P comparison:'LNposvsLNneg/Ductal/' > .html
 
     #quarto render ${notebook} -P comparison:'LNposvsLNneg/Lobular/' > .html
+    """
+}
+
+process SURVIVAL_CLUSTER{
+    publishDir "./results/rendered_notebooks",
+        mode: "copy"
+
+    input:
+        path(notebook)
+        path(html)
+    output:
+        path("*.html"),emit: html
+    script:
+    """
+    quarto render ${notebook} > .html
     """
 }
 

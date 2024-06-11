@@ -47,7 +47,7 @@ workflow  {
 
     MOFA(
       ch_notebook_multiomics.filter {it.name == 'MOFA.qmd'},
-      BATCH_CORRECTION.out.collect()
+      BATCH_CORRECTION.out.collect(),
       PREPROCESS_IMMUNE.out.collect()
     )
 

@@ -156,7 +156,7 @@ signif_omics <- map(.x = seq_along(cox_models_omics),function(x){
 }) %>% 
   list_rbind() %>% 
   mutate(PValue.Adj=p.adjust(.[['Pr(>|z|)']],method = 'fdr')) %>% 
-  filter(.[['Pr(>|z|)']]<0.01) %>% 
+  filter(.[['Pr(>|z|)']]<0.05) %>% 
   rownames() %>% 
   as_vector() %>% 
   unique
@@ -224,7 +224,7 @@ multiTable <- map(.x = seq_len(length(cox_models_omics_multivariate)),function(x
 names(cox_models_omics_multivariate) <- multiTable[["Feature"]]
 
 signifMulti <- multiTable %>% 
-  filter(`Pr(>|z|)`<0.01) %>% 
+  filter(`Pr(>|z|)`<0.05) %>% 
   arrange(PValue.Adj)
 
 multiCoxFilter <- keep(cox_models_omics_multivariate,names(cox_models_omics_multivariate) %in% signifMulti[["Feature"]])

@@ -206,8 +206,7 @@ featFactors <- features %>%
 featList <- list(proteomics={featFactors %>%dplyr::filter(view=='proteomics') %>% select(feature) %>% unlist %>% as.character %>% unique},
               phosphoproteomics={featFactors %>% dplyr::filter(view=='phosphoproteomics') %>% select(feature) %>% unlist %>% as.character %>% unique},
               transcriptomics={featFactors %>% dplyr::filter(view=='transcriptomics') %>% select(feature) %>% unlist %>% as.character %>% unique},
-              epic={featFactors %>% dplyr::filter(view=='EPIC') %>% select(feature) %>% unlist %>% as.character %>% unique},
-              cibersort={featFactors %>% dplyr::filter(view=='cibersortx') %>% select(feature) %>% unlist %>% as.character %>% unique}) 
+              immuneinfiltration={featFactors %>% dplyr::filter(view=='immuneinfiltration') %>% select(feature) %>% unlist %>% as.character %>% unique}) 
 
 if(!is_empty(featList[['proteomics']])){
   protFeatures <- get_data(object = model,features = list(proteomics=featList$proteomics),as.data.frame = TRUE) %>% 
@@ -227,20 +226,14 @@ if(!is_empty(featList[['transcriptomics']])){
     pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
   }else{rnaFeatures <- data_frame(sample=modelMeta[['sample']])}
 
-if(!is_empty(featList[['epic']])){
-  epicFeatures <- get_data(object = model,features = list(EPIC=featList$epic),as.data.frame = TRUE) %>% 
+if(!is_empty(featList[['immuneinfiltration']])){
+  immuneFeatures <- get_data(object = model,features = list(immuneinfiltration=featList$immuneinfiltration),as.data.frame = TRUE) %>% 
     mutate(feature=paste0(feature,'.',view)) %>% 
     pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
-  }else{epicFeatures <- data_frame(sample=modelMeta[['sample']])}
-
-if(!is_empty(featList[['cibersort']])){
-  cibersortFeatures <- get_data(object = model,features = list(cibersortx=featList$cibersort),as.data.frame = TRUE) %>% 
-    mutate(feature=paste0(feature,'.',view)) %>% 
-    pivot_wider(id_cols = 'sample',names_from = feature,values_from = value)
-  }else{cibersortFeatures <- data_frame(sample=modelMeta[['sample']])}
+  }else{immuneFeatures <- data_frame(sample=modelMeta[['sample']])}
 
 
-omicFeatures <- reduce(.x = list(protFeatures,phosphoFeatures,rnaFeatures,epicFeatures,cibersortFeatures),.f = ~left_join(x = .x,y = .y,by = 'sample'))
+omicFeatures <- reduce(.x = list(protFeatures,phosphoFeatures,rnaFeatures,immuneFeatures),.f = ~left_join(x = .x,y = .y,by = 'sample'))
 colnames(omicFeatures) <- make.names(names = colnames(omicFeatures),unique = TRUE)
 
 omics_variables <- omicFeatures %>% 
@@ -255,10 +248,11 @@ clinical <- modelMeta %>%
     Age=`Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)`,
     Size=T.size,
     NHG,
-    Treatment=TreatGroup,
-    params$outcome
+    Treatment=TreatGroup
+    # params$outcome
     ) %>%   
-  mutate(!!params$outcome:=as.factor(.[[params$outcome]]),
+  mutate(
+# !!params$outcome:=as.factor(.[[params$outcome]]),
          NHG=factor(NHG,levels=c('1','2','3'),ordered = FALSE),
          Size=factor(Size,levels=c('0','1'),labels=c('≤20mm','>20mm')),
          Treatment=factor(Treatment,levels=c('ChemoEndo','Endo','Chemo','None'),exclude = c('Chemo','None'),ordered = FALSE)) %>%

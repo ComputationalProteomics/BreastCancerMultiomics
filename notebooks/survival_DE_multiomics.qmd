@@ -58,6 +58,11 @@ if(str_detect(params$comparison,'noG2')){
     filter(str_detect(Group.Info,'Group2',negate=TRUE))
 }
 
+if(str_equal(params$comparison,'Group1vsGroup2')){
+  design <- design %>% 
+    filter(Group.Info %in% c('Group1','Group2'))
+}
+
 data <- list(proteomics=read_tsv(file = files[str_detect(files,'full')]),
              phosphoproteomics=read_tsv(file = files[str_detect(files,'aggModSeq')]),
              transcriptomics=read_tsv(file = files[str_detect(files,'transcript')]))
@@ -101,12 +106,14 @@ clinical <- design %>%
     Age=`Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)`,
     Size=T.size,
     NHG,
+    LN,
     Treatment=TreatGroup
     # params$outcome
     ) %>% 
   mutate(
     # !!params$outcome:=as.factor(.[[params$outcome]]),
          NHG=factor(NHG,levels=c('1','2','3'),ordered = FALSE),
+         LN=factor(LN,levels=c('0','1')),
          Size=factor(Size,levels=c('0','1'),labels=c('≤20mm','>20mm')),
          Treatment=factor(Treatment,levels=c('ChemoEndo','Endo','Chemo','None'),exclude = c('Chemo','None'),ordered = FALSE)) %>%
   drop_na()

@@ -324,6 +324,11 @@ process SURVIVAL_MOFA{
     quarto render ${notebook} -P model:'/multiomics/results/MOFA/LNposvsLNneg/Ductal/model.RDS' -P outcome:'LN' -P time:'DRFi_days' -P event:'DRFi_event' > .html
     quarto render ${notebook} -P model:'/multiomics/results/MOFA/LNposvsLNneg/Ductal/model.RDS' -P outcome:'LN' -P time:'OS_days' -P event:'OS_event' > .html
 
+    quarto render ${notebook} -P model:'/multiomics/results/MOFA/Group1vsGroup2/model.RDS' -P outcome:'DRFi_event' -P time:'RFi_days' -P event:'RFi_event' > .html
+    quarto render ${notebook} -P model:'/multiomics/results/MOFA/Group1vsGroup2/model.RDS' -P outcome:'DRFi_event' -P time:'DRFi_days' -P event:'DRFi_event' > .html
+    quarto render ${notebook} -P model:'/multiomics/results/MOFA/Group1vsGroup2/model.RDS' -P outcome:'DRFi_event' -P time:'OS_days' -P event:'OS_event' > .html
+
+
     #quarto render ${notebook} -P model:'/multiomics/results/MOFA/Group1vsGroup2/model.RDS' -P outcome:'LN' > .html
     """
 }
@@ -346,6 +351,11 @@ process SURVIVAL_DE{
     quarto render ${notebook} -P comparison:'AllSamples_noG2' -P time:'RFi_days' -P event:'RFi_event' -P outcome:'LN' > .html
     quarto render ${notebook} -P comparison:'AllSamples_noG2' -P time:'OS_days' -P event:'OS_event' -P outcome:'LN' > .html
     #quarto render ${notebook} -P comparison:'AllSamples_noG2' -P time:'DRFi_days' -P event:'DRFi_event' -P outcome:'InvCa.type' > .html
+
+    quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'DRFi_days' -P event:'DRFi_event' -P outcome:'Group.Info' > .html
+    quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'RFi_days' -P event:'RFi_event' -P outcome:'Group.Info' > .html
+    quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'OS_days' -P event:'OS_event' -P outcome:'Group.Info' > .html
+
 
     #quarto render ${notebook} -P comparison:'LNposvsLNneg/Ductal/' > .html
 

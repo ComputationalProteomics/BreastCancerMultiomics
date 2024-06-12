@@ -101,10 +101,11 @@ clinical <- design %>%
     Age=`Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)`,
     Size=T.size,
     NHG,
-    Treatment=TreatGroup,
-    params$outcome
+    Treatment=TreatGroup
+    # params$outcome
     ) %>% 
-  mutate(!!params$outcome:=as.factor(.[[params$outcome]]),
+  mutate(
+    # !!params$outcome:=as.factor(.[[params$outcome]]),
          NHG=factor(NHG,levels=c('1','2','3'),ordered = FALSE),
          Size=factor(Size,levels=c('0','1'),labels=c('≤20mm','>20mm')),
          Treatment=factor(Treatment,levels=c('ChemoEndo','Endo','Chemo','None'),exclude = c('Chemo','None'),ordered = FALSE)) %>%

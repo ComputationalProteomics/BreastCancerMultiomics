@@ -316,6 +316,20 @@ signif_omics <- map(.x = seq_along(cox_models_omics),function(x){
   unique
 ```
 
+#### Evaluating significant features and skipping if none are present
+```{r}
+# Define a function to set the eval option for subsequent chunks
+conditionally_eval <- function() {
+  if (is_empty(signif_omics)) {
+    knitr::opts_chunk$set(eval = FALSE)
+    writeLines(text = 'No variables were deemed significant (p-value < 0.01), skipping multivariate model',con = paste0(outputdir,'error.txt'))
+  }
+}
+
+# Apply the function for the next chunk
+conditionally_eval()
+```
+
 ### Fit Multivariable Cox Model
 ```{r}
 catchWarning <- function(expr){

@@ -1,0 +1,285 @@
+---
+title: "validation"
+format: html
+execute: 
+  output: false
+  
+params:
+  time: 'RFi_days'
+  event: 'RFi_event'
+  outcome: 'LN'
+
+editor_options: 
+  chunk_output_type: console
+---
+# Requires Packages:
+
+```{r required packages}
+#| message: false
+#| warning: false
+library(tidyverse)
+library(survival)
+library(survminer)
+library(tidymodels)
+library(censored)
+library(gridExtra)
+library(grDevices)
+library(forestmodel)
+library(NormalyzerDE)
+```
+
+```{r}
+# samples <- openxlsx::read.xlsx(xlsxFile = 'Supplementary Data Table 1 - 2021-12-17.xlsx',sheet = 1)
+design <- readxl::read_xlsx(path = '~/multiomics/data/sample_selection/Supplementary Data Table 1 - 2021-12-17.xlsx',sheet = 1,n_max = Inf,guess_max = 5000)
+design_study <- read_tsv(file = '~/multiomics/results/design_files/mergedDesign_ref_mutation.tsv')
+design_filter <- design %>% filter(!(.[["Sample"]] %in% design_study[["Sample"]]))
+```
+
+# Sample groups with outlier removal and ranking
+```{r}
+#Outlier Removal
+sampleFilter <- design_filter %>%
+  filter(
+    # between(ReferenceYear,2010,2016),
+         # RNA.NDConc >= 200,
+         ER=='Positive',
+         HER2=='Negative',
+         # !is.na(NHG),
+         # !is.na(DRFi_event),
+         # !is.na(RFi_event),
+         # !is.na(OS_event),
+         !duplicated(Sample)
+         )
+
+sampleFilter <- sampleFilter %>% mutate(sample_id=str_split_i(GEX.assay,'\\.',1)) %>% relocate(sample_id,.before = 1)
+
+# sampleFilterFollowUp <- design_filter %>% 
+#   filter(Follow.up.cohort==TRUE,
+#          RNA.NDConc >= 200,
+#          ER=='Positive',
+#          HER2=='Negative',
+#          !is.na(NHG),
+#          !is.na(DRFi_event))
+
+# for (i in c(1:3)) {
+#   quartiles <- quantile(x = sampleFilter$Size.mm,probs = c(0.25,0.75),na.rm = TRUE)
+#   interQuantileR <- IQR(sampleFilter$Size.mm,na.rm = TRUE)
+#   lowerRange <- quartiles[1]-1.5*interQuantileR
+#   upperRange <- quartiles[2]+1.5*interQuantileR
+#   sampleFilter <- sampleFilter %>%
+#     filter(between(Size.mm,lowerRange,upperRange))
+#   i <- i+1
+#   print(i)
+# }
+
+# for (i in c(1:3)) {
+#   quartiles <- quantile(x = sampleFilterFollowUp$Size.mm,probs = c(0.25,0.75),na.rm = TRUE)
+#   interQuantileR <- IQR(sampleFilterFollowUp$Size.mm,na.rm = TRUE)
+#   lowerRange <- quartiles[1]-1.5*interQuantileR
+#   upperRange <- quartiles[2]+1.5*interQuantileR
+#   sampleFilterFollowUp <- sampleFilterFollowUp %>% 
+#     filter(between(Size.mm,lowerRange,upperRange))
+#   i <- i+1
+#   print(i)
+# }
+```
+
+```{r}
+data_all <- read_delim(file = '~/multiomics/data/transcriptomics/SCANB.9206.genematrix_noNeg.txt')
+data_filter <- data_all %>% select(Gene=1,sampleFilter$GEX.assay)
+load('~/multiomics/data/transcriptomics/Gene.ID.ann.Rdata')
+rm(list = c('design','data_all'))
+invisible(gc())
+```
+
+```{r}
+ln_genes <- c('EPS8L2','CNN1','LNPK','SEPT2','CBFA2T3')
+drfi_genes_mofa <- c('THBS1','THBS2','MFGE8','MYH9','MYH10','MYH11','RBM39','KCND3')
+drfi_genes_de <- c('HSP90AB3P','HSP90AA2P','HSP90AA1','HSP90AB1')
+
+common_genes <- Gene.ID.ann %>% filter(Gene.Name %in% ln_genes | Gene.Name %in% drfi_genes_mofa | Gene.Name%in%drfi_genes_de)
+features <- data_filter %>% filter(Gene %in% common_genes[["Gene.ID"]])
+
+if(identical(features[["Gene"]],common_genes[["Gene.ID"]])){
+  features[["Gene"]] <- common_genes[["Gene.Name"]]
+}else{
+  print("Names not identical")
+}
+
+features <- features %>% select(-Gene) %>% performCyclicLoessNormalization(noLogTransform = FALSE)
+colnames(features) <- colnames(features) %>% str_split_i(pattern = '\\.',i = 1)
+features <- features %>% as_tibble() %>% mutate(Gene=common_genes[["Gene.Name"]]) %>% relocate(Gene,.before = 1)
+
+features <- features %>% select(sampleFilter[["sample_id"]]) %>% t() %>% cbind(sample_id=rownames(.),.) %>% as.data.frame()
+colnames(features) <- c('sample_id',common_genes[["Gene.Name"]])
+features <- features %>% mutate(across(common_genes[["Gene.Name"]],as.numeric)) %>% select(-c(CBFA2T3,CNN1))
+
+# varsKeep <- c('features','common_genes','sampleFilter','params')
+# rm(list = setdiff(ls(),varsKeep))
+# invisible(gc())
+```
+
+```{r}
+clinical <- sampleFilter %>% 
+  select(
+    sample_id,
+    time=params$time,
+    event=params$event,
+    Age=`Age (5-year range, e.g., 35(31-35), 40(36-40), 45(41-45) etc.)`,
+    Size=T.size,
+    NHG,
+    LN,
+    Treatment=TreatGroup
+    ) %>% 
+  mutate(NHG=factor(NHG,levels=c('1','2','3'),ordered = FALSE),
+         LN=factor(LN,levels=c('0','1')),
+         Size=factor(Size,levels=c('0','1'),labels=c('≤20mm','>20mm')),
+         Treatment=factor(Treatment,levels=c('ChemoEndo','Endo','Chemo','None'),exclude = c('Chemo','None'),ordered = FALSE)) %>%
+  drop_na()
+
+clinical_variables <- clinical %>%
+  dplyr::select(-c(sample_id,time,event)) %>%
+  colnames()
+
+omics_variables <- features %>% select(-sample_id) %>% colnames()
+
+finalFeatures <- left_join(clinical,features) %>% 
+  mutate(surv=Surv(time=time,event=event)) %>% 
+  select(-c(time,event))
+
+finalFeaturesProcessed <- recipe(x =  finalFeatures) %>%
+  update_role(all_of(omics_variables),all_of(clinical_variables),new_role = 'predictor') %>%
+  update_role(sample_id,new_role = 'ID') %>%
+  update_role(surv, new_role = 'outcome') %>% 
+  step_relevel(NHG,ref_level = '1') %>%
+  step_relevel(Size,ref_level = '≤20mm') %>%
+  step_relevel(Treatment,ref_level = 'Endo') %>%
+  step_normalize(all_of(omics_variables),Age) %>% 
+  prep() %>% 
+  bake(new_data=NULL)
+```
+
+## Fit Univariable Cox Model
+```{r}
+cox_models_omics <- map(.x = omics_variables,.f = function(x){
+  data <- finalFeaturesProcessed %>% dplyr::select(sample_id,surv,x) 
+
+  hr_factors <- proportional_hazards() %>% 
+    set_engine('survival') %>% 
+    set_mode('censored regression')
+
+  wf <- workflow() %>%
+    add_variables(outcomes = surv,predictors = x) %>% 
+    add_model(hr_factors,formula = surv~.) %>% 
+    fit(data=data)
+  
+  return(wf)
+})
+
+names(cox_models_omics) <- omics_variables
+
+signif_omics <- map(.x = seq_along(cox_models_omics),function(x){
+  model <- extract_fit_engine(cox_models_omics[[x]]) %>% 
+    summary()
+  pluck(model,'coefficients') %>% as.data.frame()
+}) %>% 
+  list_rbind() %>% 
+  mutate(PValue.Adj=p.adjust(.[['Pr(>|z|)']],method = 'fdr')) %>% 
+  filter(.[['Pr(>|z|)']]<0.05) %>% 
+  rownames() %>% 
+  as_vector() %>% 
+  unique
+
+modelList <- map(cox_models_omics,extract_fit_engine)
+uniPlot <- forest_model(model_list = modelList,merge_models = TRUE)
+```
+
+## Fit Multivariable Cox Model
+```{r}
+catchWarning <- function(expr){
+  warning_message <- NULL
+  warnHandler <- function(warning){
+    warning_message <<- c(warning_message,list(warning))
+    invokeRestart('muffleWarning')
+  }
+  res <- withCallingHandlers(expr = expr, warning = warnHandler)
+  list(result=res,warning=warning_message)
+}
+
+cox_models_omics_multivariate <- map(.x = omics_variables,.f = function(x){
+data <- finalFeaturesProcessed %>% 
+  dplyr::select(sample_id,surv,x,all_of(clinical_variables))
+
+hr_factors <- proportional_hazards() %>% 
+  set_engine('survival') %>% 
+  set_mode('censored regression')
+
+wf <- catchWarning({workflow() %>%
+    add_variables(outcomes = surv,predictors = c(x,all_of(clinical_variables))) %>% 
+    add_model(hr_factors,formula = surv~.) %>% 
+    fit(data=data)})
+})
+
+```
+
+### Select significant features and generate forest plots
+```{r}
+multiTable <- map(.x = seq_len(length(cox_models_omics_multivariate)),function(x){
+  model <- extract_fit_engine(cox_models_omics_multivariate[[x]][['result']]) %>% 
+    summary()
+  tibble(Feature=pluck(model,'coefficients') %>% as.data.frame() %>% .[1,] %>% rownames(),
+         pluck(model,'coefficients') %>% as_tibble() %>% .[1,],
+         LogTest_pvalue=pluck(model,'logtest') %>% .[3],
+         SCTest_pvalue=pluck(model,'sctest') %>% .[3],
+         WaldTest_pvalue=pluck(model,'waldtest') %>% .[3])
+}) %>% 
+  list_rbind() %>% 
+    mutate(PValue.Adj=p.adjust(.[['Pr(>|z|)']],method = 'fdr')) %>% 
+    relocate(PValue.Adj,.after = `Pr(>|z|)`)
+
+# names(cox_models_omics_multivariate) <- multiTable[["Feature"]]
+# 
+# signifMulti <- multiTable %>% 
+#   filter(`Pr(>|z|)`<0.05) %>% 
+#   arrange(PValue.Adj)
+# 
+# multiCoxFilter <- keep(cox_models_omics_multivariate,names(cox_models_omics_multivariate) %in% signifMulti[["Feature"]])
+
+# Function to log errors to a file
+log_error <- function(error_message) {
+  writeLines(error_message, con = paste0(outputdir,"error_log.txt"))
+}
+
+create_safe_forest_plot <- function(fit, data,index) {
+  tryCatch({
+    # Check proportional hazards assumption
+    fitcheck <- cox.zph(fit = fit)
+    
+    # Attempt to create the forest plot
+    plotPH <- forest_model(model = fit,exclude_infinite_cis = TRUE,recalculate_width = TRUE,recalculate_height = TRUE,format_options = forest_model_format_options(text_size = 3))
+    
+    # Return the fitcheck and plot as a list
+    list(fitcheck = fitcheck, plotPH = plotPH)
+  }, error = function(e) {
+    # Handle the error by printing a message and returning default values
+    error_message <- paste(Sys.time(), " - An error occurred while generating the forest plot: ", e$message, sep = "")
+    message(error_message)
+    log_error(error_message)
+    # Return default values (NA for fitcheck and a blank plot for plotPH)
+    fitUni <- extract_fit_engine(cox_models_omics[[names(multiCoxFilter[index])]])
+    default_plot <- forest_model(model = fitUni,exclude_infinite_cis = TRUE,recalculate_width = TRUE,recalculate_height = TRUE,format_options = forest_model_format_options(text_size = 3))
+    list(fitcheck = NA, plotPH = default_plot)
+  })
+}
+
+# Generate list of plots with error handling
+multivariate_res <- map(seq_along(cox_models_omics_multivariate), function(x) {
+  fit <- extract_fit_engine(cox_models_omics_multivariate[[x]][['result']])
+  create_safe_forest_plot(fit, finalFeaturesProcessed,index = x)
+})
+
+cairo_pdf(filename = paste0(outputdir,'forestplot_multivariable_DE.pdf'),onefile = TRUE,width = 9,height = 9)
+plots <- map(seq_along(multivariate_res),function(x){multivariate_res[[x]][[2]] %>% ggplotGrob()})
+gridExtra::marrangeGrob(grobs = plots,ncol = 1,nrow = 1,top = '')
+dev.off()
+```

@@ -119,6 +119,7 @@ features <- features %>% mutate(across(common_genes[["Gene.Name"]],as.numeric)) 
 # invisible(gc())
 ```
 
+# Analysis of all samples
 ```{r}
 clinical <- sampleFilter %>% 
   select(
@@ -136,6 +137,8 @@ clinical <- sampleFilter %>%
          Size=factor(Size,levels=c('0','1'),labels=c('≤20mm','>20mm')),
          Treatment=factor(Treatment,levels=c('ChemoEndo','Endo','Chemo','None'),exclude = c('Chemo','None'),ordered = FALSE)) %>%
   drop_na()
+
+# At this stage, there are 3399(248) RFi events, 3400(180) DRFi events and 4640(618) OS events
 
 clinical_variables <- clinical %>%
   dplyr::select(-c(sample_id,time,event)) %>%
@@ -191,6 +194,7 @@ signif_omics <- map(.x = seq_along(cox_models_omics),function(x){
   unique
 
 modelList <- map(cox_models_omics,extract_fit_engine)
+fitCheck <- map(modelList,cox.zph)
 uniPlot <- forest_model(model_list = modelList,merge_models = TRUE)
 ```
 

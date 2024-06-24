@@ -80,6 +80,10 @@ workflow  {
       ch_notebook_multiomics.filter {it.name == 'GSEA_consensus_cluster.qmd'},
       DIFFERENTIAL_EXPRESSION_CLUSTER.out.collect()
     )
+
+    EXTERNAL_VALIDATION(
+    ch_notebook_multiomics.filter {it.name == 'validation_analysis.qmd'}
+    )
 }
 
 // Process definition
@@ -415,5 +419,23 @@ process GSEA_CONSENSUS_CLUSTER{
     script:
     """
     quarto render ${notebook} --to html > .html
+    """
+}
+
+process EXTERNAL_VALIDATION{
+    publishDir "./results/rendered_notebooks",
+        mode: "copy"
+
+    input:
+        path(notebook)
+
+    output:
+        path("*.html"), emit: html
+
+    script:
+    """
+    quarto render ${notebook} -P time:'OS_days' -P event:'OS_event' > .html
+    quarto render ${notebook} -P time:'RFi_days' -P event:'RFi_event' > .html
+    quarto render ${notebook} -P time:'DRFi_days' -P event:'DRFi_event' > .html
     """
 }

@@ -28,10 +28,18 @@ library(forestmodel)
 library(NormalyzerDE)
 ```
 
+```{r Output Directory}
+outputdir <- paste0('/multiomics/results/figures/validation/',params$event,'/')
+
+if(!dir.exists(paths = outputdir)) {
+  dir.create(path = outputdir,recursive = TRUE)
+}
+```
+
 ```{r}
 # samples <- openxlsx::read.xlsx(xlsxFile = 'Supplementary Data Table 1 - 2021-12-17.xlsx',sheet = 1)
-design <- readxl::read_xlsx(path = '~/multiomics/data/sample_selection/Supplementary Data Table 1 - 2021-12-17.xlsx',sheet = 1,n_max = Inf,guess_max = 5000)
-design_study <- read_tsv(file = '~/multiomics/results/design_files/mergedDesign_ref_mutation.tsv')
+design <- readxl::read_xlsx(path = '/multiomics/data/sample_selection/Supplementary Data Table 1 - 2021-12-17.xlsx',sheet = 1,n_max = Inf,guess_max = 5000)
+design_study <- read_tsv(file = '/multiomics/results/design_files/mergedDesign_ref_mutation.tsv')
 design_filter <- design %>% filter(!(.[["Sample"]] %in% design_study[["Sample"]]))
 ```
 
@@ -85,9 +93,9 @@ sampleFilter <- sampleFilter %>% mutate(sample_id=str_split_i(GEX.assay,'\\.',1)
 ```
 
 ```{r}
-data_all <- read_delim(file = '~/multiomics/data/transcriptomics/SCANB.9206.genematrix_noNeg.txt')
+data_all <- read_delim(file = '/multiomics/data/transcriptomics/SCANB.9206.genematrix_noNeg.txt')
 data_filter <- data_all %>% select(Gene=1,sampleFilter$GEX.assay)
-load('~/multiomics/data/transcriptomics/Gene.ID.ann.Rdata')
+load('/multiomics/data/transcriptomics/Gene.ID.ann.Rdata')
 rm(list = c('design','data_all'))
 invisible(gc())
 ```
@@ -113,10 +121,6 @@ features <- features %>% as_tibble() %>% mutate(Gene=common_genes[["Gene.Name"]]
 features <- features %>% select(sampleFilter[["sample_id"]]) %>% t() %>% cbind(sample_id=rownames(.),.) %>% as.data.frame()
 colnames(features) <- c('sample_id',common_genes[["Gene.Name"]])
 features <- features %>% mutate(across(common_genes[["Gene.Name"]],as.numeric)) %>% select(-c(CBFA2T3))
-
-# varsKeep <- c('features','common_genes','sampleFilter','params')
-# rm(list = setdiff(ls(),varsKeep))
-# invisible(gc())
 ```
 
 # Analysis of all samples
@@ -202,6 +206,8 @@ fitCheck <- map(modelList,cox.zph) %>%
 modelList <- keep(modelList,names(modelList) %in% names(fitCheck))
 uniPlot <- forest_model(model_list = modelList,merge_models = TRUE)
 omics_variables <- names(modelList)
+
+ggsave(filename = 'forestplot_univariable_all_samples.pdf',plot = uniPlot,device = 'pdf',path = outputdir,dpi = 600)
 ```
 
 ## Fit Multivariable Cox Model
@@ -288,11 +294,18 @@ multivariate_res <- map(seq_along(cox_models_omics_multivariate), function(x) {
   create_safe_forest_plot(fit, finalFeaturesProcessed,index = x)
 })
 
-# cairo_pdf(filename = paste0(outputdir,'forestplot_multivariable_DE.pdf'),onefile = TRUE,width = 9,height = 9)
-# plots <- map(seq_along(multivariate_res),function(x){multivariate_res[[x]][[2]] %>% ggplotGrob()})
-# gridExtra::marrangeGrob(grobs = plots,ncol = 1,nrow = 1,top = '')
-# dev.off()
+cairo_pdf(filename = paste0(outputdir,'forestplot_multivariable_all_samples.pdf'),onefile = TRUE,width = 9,height = 9)
+plots <- map(seq_along(multivariate_res),function(x){multivariate_res[[x]][[2]] %>% ggplotGrob()})
+gridExtra::marrangeGrob(grobs = plots,ncol = 1,nrow = 1,top = '')
+dev.off()
 ```
+
+```{r}
+varsKeep <- c('features','common_genes','sampleFilter','params','outputdir')
+rm(list = setdiff(ls(),varsKeep))
+invisible(gc())
+```
+
 
 # Analysis of LN Negative
 ```{r}
@@ -378,6 +391,8 @@ fitCheck <- map(modelList,cox.zph) %>%
 modelList <- keep(modelList,names(modelList) %in% names(fitCheck))
 uniPlot <- forest_model(model_list = modelList,merge_models = TRUE)
 omics_variables <- names(modelList)
+
+ggsave(filename = 'forestplot_univariable_LNneg.pdf',plot = uniPlot,device = 'pdf',path = outputdir,dpi = 600)
 ```
 
 ## Fit Multivariable Cox Model
@@ -464,10 +479,16 @@ multivariate_res <- map(seq_along(cox_models_omics_multivariate), function(x) {
   create_safe_forest_plot(fit, finalFeaturesProcessed,index = x)
 })
 
-# cairo_pdf(filename = paste0(outputdir,'forestplot_multivariable_DE.pdf'),onefile = TRUE,width = 9,height = 9)
-# plots <- map(seq_along(multivariate_res),function(x){multivariate_res[[x]][[2]] %>% ggplotGrob()})
-# gridExtra::marrangeGrob(grobs = plots,ncol = 1,nrow = 1,top = '')
-# dev.off()
+cairo_pdf(filename = paste0(outputdir,'forestplot_multivariable_LNneg.pdf'),onefile = TRUE,width = 9,height = 9)
+plots <- map(seq_along(multivariate_res),function(x){multivariate_res[[x]][[2]] %>% ggplotGrob()})
+gridExtra::marrangeGrob(grobs = plots,ncol = 1,nrow = 1,top = '')
+dev.off()
+```
+
+```{r}
+varsKeep <- c('features','common_genes','sampleFilter','params','outputdir')
+rm(list = setdiff(ls(),varsKeep))
+invisible(gc())
 ```
 
 # Analysis of LN Positive
@@ -554,6 +575,8 @@ fitCheck <- map(modelList,cox.zph) %>%
 modelList <- keep(modelList,names(modelList) %in% names(fitCheck))
 uniPlot <- forest_model(model_list = modelList,merge_models = TRUE)
 omics_variables <- names(modelList)
+
+ggsave(filename = 'forestplot_univariable_LNpos.pdf',plot = uniPlot,device = 'pdf',path = outputdir,dpi = 600)
 ```
 
 ## Fit Multivariable Cox Model
@@ -640,8 +663,14 @@ multivariate_res <- map(seq_along(cox_models_omics_multivariate), function(x) {
   create_safe_forest_plot(fit, finalFeaturesProcessed,index = x)
 })
 
-# cairo_pdf(filename = paste0(outputdir,'forestplot_multivariable_DE.pdf'),onefile = TRUE,width = 9,height = 9)
-# plots <- map(seq_along(multivariate_res),function(x){multivariate_res[[x]][[2]] %>% ggplotGrob()})
-# gridExtra::marrangeGrob(grobs = plots,ncol = 1,nrow = 1,top = '')
-# dev.off()
+cairo_pdf(filename = paste0(outputdir,'forestplot_multivariable_LNpos.pdf'),onefile = TRUE,width = 9,height = 9)
+plots <- map(seq_along(multivariate_res),function(x){multivariate_res[[x]][[2]] %>% ggplotGrob()})
+gridExtra::marrangeGrob(grobs = plots,ncol = 1,nrow = 1,top = '')
+dev.off()
+```
+
+```{r}
+varsKeep <- c('features','common_genes','sampleFilter','params','outputdir')
+rm(list = setdiff(ls(),varsKeep))
+invisible(gc())
 ```

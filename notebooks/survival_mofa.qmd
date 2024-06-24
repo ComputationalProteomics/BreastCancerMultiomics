@@ -297,8 +297,16 @@ cox_models_omics <- map(.x = omics_variables,.f = function(x){
 
 names(cox_models_omics) <- omics_variables
 
-signif_omics <- map(.x = seq_along(cox_models_omics),function(x){
-  model <- extract_fit_engine(cox_models_omics[[x]]) %>% 
+modelList <- map(cox_models_omics,extract_fit_engine)
+fitCheck <- map(modelList,cox.zph) %>% 
+  map(~pluck(.x,'table',6)) %>% 
+  unlist() %>% 
+  .[.>0.05]
+
+modelList <- keep(modelList,names(modelList) %in% names(fitCheck))
+
+signif_omics <- map(.x = seq_along(modelList),function(x){
+  model <- modelList[[x]] %>% 
     summary()
   pluck(model,'coefficients') %>% as.data.frame()
 }) %>% 

@@ -79,8 +79,7 @@ data <- pmap(list(data,idCol,omics_type),function(x,y,z){
   x[[y]] <- paste0(make.names(names = x[[y]],unique = TRUE),z)
   data <- x %>% 
   select(all_of(y),all_of(signifCol),design$sample_id) %>% 
-  filter(.[[signifCol]]<0.1) %>% 
-  drop_na()
+  filter(.[[signifCol]]<0.1)
 })
 
 features <- map2(data,idCol,function(x,y){

@@ -183,7 +183,7 @@ signif_omics <- map(.x = seq_along(modelList),function(x){
 conditionally_eval <- function() {
   if (is_empty(signif_omics)) {
     knitr::opts_chunk$set(eval = FALSE)
-    writeLines(text = 'No variables were deemed significant (p-value < 0.01), skipping multivariate model',con = paste0(outputdir,'error.txt'))
+    writeLines(text = 'No variables were deemed significant (p-value < 0.05), skipping multivariate model',con = paste0(outputdir,'error.txt'))
   }
 }
 

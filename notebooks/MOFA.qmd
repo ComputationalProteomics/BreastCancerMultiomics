@@ -10,6 +10,8 @@ format:
     smooth-scroll: true
     message: false
 engine: knitr
+params:
+  used_analysis: true
 ---
 
 # Requires Packages:
@@ -28,6 +30,7 @@ library(furrr)
 
 # MultiOmics Factor Analysis - MOFA
 ```{r}
+#| eval: !expr (!params$used_analysis)
 workers <- availableCores(constraints = 'connections',which = 'min')
 plan(callr,workers=workers)
 on.exit(expr = {plan(sequential)})
@@ -35,6 +38,7 @@ on.exit(expr = {plan(sequential)})
 
 ## All samples with infiltration
 ```{r}
+#| eval: !expr (!params$used_analysis)
 if(!dir.exists(paths = '/multiomics/results/figures/MOFA/all_samples/infiltration')) {
   dir.create(path = '/multiomics/results/figures/MOFA/all_samples/infiltration',recursive = TRUE)
 }
@@ -46,6 +50,7 @@ if(!dir.exists(paths = '/multiomics/results/MOFA/all_samples/infiltration')) {
 
 ### Data preprocessing and multiomics dataframe creation
 ```{r}
+#| eval: !expr (!params$used_analysis)
 design <- read_tsv('/multiomics/results/design_files/design_multiomics_mofa.tsv')
 proteindata <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
 prot <- proteindata %>% 
@@ -100,24 +105,28 @@ response <- design %>%
 #### Sizes
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 purrr::map(.x = dataMix,.f = dim)
 ```
 
 #### Create MOFA object
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 MOFAobject <- create_mofa(dataMix)
 ```
 
 #### Plot data overview
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 plot_data_overview(MOFAobject)
 ```
 
 #### Data options
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 data_opts <- get_default_data_options(MOFAobject)
 data_opts$scale_views <- TRUE
 ```
@@ -125,6 +134,7 @@ data_opts$scale_views <- TRUE
 #### Model options
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 model_opts <- get_default_model_options(MOFAobject)
 model_opts$num_factors <- 20
 model_opts$spikeslab_weights <- TRUE
@@ -134,6 +144,7 @@ model_opts$ard_weights <- TRUE
 #### Training options
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 train_opts <- get_default_training_options(MOFAobject)
 train_opts$convergence_mode <- "slow"
 ```
@@ -141,6 +152,7 @@ train_opts$convergence_mode <- "slow"
 ### Model Training
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 set.seed(123)
 MOFAobject <- prepare_mofa(MOFAobject,data_options = data_opts,model_options = model_opts,training_options = train_opts)
 
@@ -160,6 +172,7 @@ bestModel <- select_model(trainedModels)
 #### Add metadata
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 # Add metadata
 design <- design %>% 
   dplyr::rename(sample=sample_id)
@@ -175,16 +188,19 @@ updated_features_names[["immuneinfiltration"]] <- immuneFeat
 features_names(bestModel) <- updated_features_names
 ```
 ```{r}
+#| eval: !expr (!params$used_analysis)
 slotNames(bestModel)
 ```
 
 #### Save model
 ```{r}
+#| eval: !expr (!params$used_analysis)
 saveRDS(object = bestModel,file = '/multiomics/results/MOFA/all_samples/infiltration/model.RDS',compress = 'gzip')
 ```
 
 #### Correlation between factors
 ```{r}
+#| eval: !expr (!params$used_analysis)
 factor_corr_plot <- {plot_factor_cor(object = bestModel)
   grDevices::recordPlot()}
 
@@ -193,6 +209,7 @@ ggsave(filename = 'factor_corr_plot.png',plot = grDevices::replayPlot(factor_cor
 
 #### Variance decomposition
 ```{r}
+#| eval: !expr (!params$used_analysis)
 plotVariance <- plot_variance_explained(bestModel,max_r2 = 10)
 
 ggsave(filename = 'MOFA_variance_allgroups.pdf',plot = plotVariance,device = 'pdf',path = '/multiomics/results/figures/MOFA/all_samples/infiltration/',dpi = 600,width = 10,height = 10,units = 'in')
@@ -200,6 +217,7 @@ ggsave(filename = 'MOFA_variance_allgroups.pdf',plot = plotVariance,device = 'pd
 
 #### Factor correlation
 ```{r}
+#| eval: !expr (!params$used_analysis)
 covariatePlot <- correlate_factors_with_covariates(bestModel, 
   covariates = c('Group.Info','Size.mm','NCN.PAM50','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","PR",'SSP.PAM50',"NHG",'BCFi_event','tumor_mutational_burden','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma"), 
   plot="log_pval",
@@ -212,6 +230,7 @@ ggsave(filename = 'covariance.pdf',plot = covariatePlot,device = 'pdf',path = '/
 
 #### Plot feature weights
 ```{r}
+#| eval: !expr (!params$used_analysis)
 immune_weights <- plot_top_weights(object = bestModel,
                                    view = 'immuneinfiltration',
                                    factors = 3,
@@ -245,6 +264,7 @@ map2(.x = weightPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device =
 
 #### Plot Heatmaps
 ```{r}
+#| eval: !expr (!params$used_analysis)
 prot_heatmap <- plot_data_heatmap(bestModel, 
   view = "proteomics",
   factor = 3,  
@@ -297,7 +317,8 @@ map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device 
 
 ## All samples without infiltration
 ```{r}
-varskeep <- c('workers','madFiltering','NAFiltering')
+#| eval: !expr (!params$used_analysis)
+varskeep <- c('workers','madFiltering','NAFiltering','params')
 rm(list = c(setdiff(ls(),varskeep)))
 invisible(gc())
 
@@ -312,6 +333,7 @@ if(!dir.exists(paths = '/multiomics/results/MOFA/all_samples/no_infiltration')) 
 
 ### Data preprocessing and multiomics dataframe creation
 ```{r}
+#| eval: !expr (!params$used_analysis)
 design <- read_tsv('/multiomics/results/design_files/design_multiomics_mofa.tsv')
 proteindata <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
 prot <- proteindata %>% 
@@ -357,24 +379,28 @@ response <- design %>%
 #### Sizes
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 purrr::map(.x = dataMix,.f = dim)
 ```
 
 #### Create MOFA object
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 MOFAobject <- create_mofa(dataMix)
 ```
 
 #### Plot data overview
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 plot_data_overview(MOFAobject)
 ```
 
 #### Data options
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 data_opts <- get_default_data_options(MOFAobject)
 data_opts$scale_views <- TRUE
 ```
@@ -382,6 +408,7 @@ data_opts$scale_views <- TRUE
 #### Model options
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 model_opts <- get_default_model_options(MOFAobject)
 model_opts$num_factors <- 20
 model_opts$spikeslab_weights <- TRUE
@@ -391,6 +418,7 @@ model_opts$ard_weights <- TRUE
 #### Training options
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 train_opts <- get_default_training_options(MOFAobject)
 train_opts$convergence_mode <- "slow"
 ```
@@ -398,6 +426,7 @@ train_opts$convergence_mode <- "slow"
 ### Model Training
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 set.seed(123)
 MOFAobject <- prepare_mofa(MOFAobject,data_options = data_opts,model_options = model_opts,training_options = train_opts)
 
@@ -417,6 +446,7 @@ bestModel <- select_model(trainedModels)
 #### Add metadata
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 # Add metadata
 design <- design %>% 
   dplyr::rename(sample=sample_id)
@@ -431,16 +461,19 @@ updated_features_names[["transcriptomics"]] <- geneFeatures
 features_names(bestModel) <- updated_features_names
 ```
 ```{r}
+#| eval: !expr (!params$used_analysis)
 slotNames(bestModel)
 ```
 
 #### Save model
 ```{r}
+#| eval: !expr (!params$used_analysis)
 saveRDS(object = bestModel,file = '/multiomics/results/MOFA/all_samples/no_infiltration/model.RDS',compress = 'gzip')
 ```
 
 #### Correlation between factors
 ```{r}
+#| eval: !expr (!params$used_analysis)
 factor_corr_plot <- {plot_factor_cor(bestModel)
   grDevices::recordPlot()}
 
@@ -449,6 +482,7 @@ ggsave(filename = 'factor_corr_plot.png',plot = grDevices::replayPlot(factor_cor
 
 #### Variance decomposition
 ```{r}
+#| eval: !expr (!params$used_analysis)
 plotVariance <- plot_variance_explained(bestModel,max_r2 = 10)
 
 ggsave(filename = 'MOFA_variance_allgroups.pdf',plot = plotVariance,device = 'pdf',path = '/multiomics/results/figures/MOFA/all_samples/no_infiltration/',dpi = 600,width = 10,height = 10,units = 'in')
@@ -456,6 +490,7 @@ ggsave(filename = 'MOFA_variance_allgroups.pdf',plot = plotVariance,device = 'pd
 
 #### Factor correlation
 ```{r}
+#| eval: !expr (!params$used_analysis)
 covariatePlot <- correlate_factors_with_covariates(bestModel, 
   covariates = c('Group.Info','Size.mm','NCN.PAM50','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","PR",'SSP.PAM50',"NHG",'BCFi_event','tumor_mutational_burden','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma"), 
   plot="log_pval",
@@ -468,6 +503,7 @@ ggsave(filename = 'covariance.pdf',plot = covariatePlot,device = 'pdf',path = '/
 
 #### Plot feature weights
 ```{r}
+#| eval: !expr (!params$used_analysis)
 prot_weights <- plot_top_weights(bestModel,
                  view = "proteomics",
                  factor = 3,
@@ -495,6 +531,7 @@ map2(.x = weightPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device =
 
 #### Plot Heatmaps
 ```{r}
+#| eval: !expr (!params$used_analysis)
 prot_heatmap <- plot_data_heatmap(bestModel, 
   view = "proteomics",
   factor = 3,  
@@ -535,7 +572,8 @@ map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device 
 
 ## Group1 vs Group2
 ```{r}
-varskeep <- c('workers','madFiltering','NAFiltering')
+#| eval: !expr (params$used_analysis)
+varskeep <- c('workers','madFiltering','NAFiltering','params')
 rm(list = c(setdiff(ls(),varskeep)))
 invisible(gc())
 
@@ -550,6 +588,7 @@ if(!dir.exists(paths = '/multiomics/results/MOFA/Group1vsGroup2/')) {
 
 ### Data preprocessing and multiomics dataframe creation
 ```{r}
+#| eval: !expr (params$used_analysis)
 design <- read_tsv('/multiomics/results/design_files/design_multiomics_mofa.tsv') %>% 
     filter(str_detect(string = Group.Info,pattern = 'Group1|Group2'))
 proteindata <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
@@ -558,6 +597,8 @@ prot <- proteindata %>%
   madFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 prot$Unique.Ids <- make.names(names = prot$Protein.Names,unique = TRUE)
 protFeatures <- prot$Unique.Ids
+protIds <- prot %>% 
+  select(matches("Name|Gene|Ids|Sequence"))
 prot <- prot %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix
@@ -569,6 +610,8 @@ phospho <- phosphodata %>%
   madFiltering(design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.5)
 phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
 phosphoFeatures <- phospho$Unique.Ids
+phosphoIds <- phospho %>% 
+  select(matches("Name|Gene|Ids|Sequence"))
 phospho <- phospho %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix
@@ -580,6 +623,8 @@ gene <- genedata %>%
   madFiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
 gene$Unique.Ids <- make.names(names = gene$Gene.Name,unique = TRUE)
 geneFeatures <- gene$Unique.Ids
+geneIds <- gene %>% 
+  select(matches("Name|Gene|Ids|Sequence"))
 gene <- gene %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix
@@ -598,30 +643,42 @@ dataMix <- list(proteomics=prot,
 
 response <- design %>% 
   dplyr::select(sample_id,Group.Info)
+
+allIds <- list(proteomics=protIds,phosphoproteomics=phosphoIds,transcriptomics=geneIds) %>% 
+  map2(.y = c('proteomics','phosphoproteomics','transcriptomics'),.f = function(x,y){
+    data <- x %>% mutate(across(Unique.Ids,~paste0(.x,'.',y)))
+  }) %>% 
+  list_rbind()
+
+write_tsv(x = allIds,file = '/multiomics/results/MOFA/Group1vsGroup2/featIDs.tsv')
 ```
 
 ### Model Parameters
 #### Sizes
 
 ```{r}
+#| eval: !expr (params$used_analysis)
 purrr::map(.x = dataMix,.f = dim)
 ```
 
 #### Create MOFA object
 
 ```{r}
+#| eval: !expr (params$used_analysis)
 MOFAobject <- create_mofa(dataMix)
 ```
 
 #### Plot data overview
 
 ```{r}
+#| eval: !expr (params$used_analysis)
 plot_data_overview(MOFAobject)
 ```
 
 #### Data options
 
 ```{r}
+#| eval: !expr (params$used_analysis)
 data_opts <- get_default_data_options(MOFAobject)
 data_opts$scale_views <- TRUE
 ```
@@ -629,6 +686,7 @@ data_opts$scale_views <- TRUE
 #### Model options
 
 ```{r}
+#| eval: !expr (params$used_analysis)
 model_opts <- get_default_model_options(MOFAobject)
 model_opts$num_factors <- 20
 model_opts$spikeslab_weights <- TRUE
@@ -638,6 +696,7 @@ model_opts$ard_weights <- TRUE
 #### Training options
 
 ```{r}
+#| eval: !expr (params$used_analysis)
 train_opts <- get_default_training_options(MOFAobject)
 train_opts$convergence_mode <- "slow"
 ```
@@ -645,6 +704,7 @@ train_opts$convergence_mode <- "slow"
 ### Model Training
 
 ```{r}
+#| eval: !expr (params$used_analysis)
 set.seed(123)
 MOFAobject <- prepare_mofa(MOFAobject,data_options = data_opts,model_options = model_opts,training_options = train_opts)
 
@@ -664,6 +724,7 @@ bestModel <- select_model(trainedModels)
 #### Add metadata
 
 ```{r}
+#| eval: !expr (params$used_analysis)
 # Add metadata
 design <- design %>% 
   dplyr::rename(sample=sample_id)
@@ -680,16 +741,19 @@ updated_features_names[["immuneinfiltration"]] <- immuneFeat
 features_names(bestModel) <- updated_features_names
 ```
 ```{r}
+#| eval: !expr (params$used_analysis)
 slotNames(bestModel)
 ```
 
 #### Save model
 ```{r}
+#| eval: !expr (params$used_analysis)
 saveRDS(object = bestModel,file = '/multiomics/results/MOFA/Group1vsGroup2/model.RDS',compress = 'gzip')
 ```
 
 #### Correlation between factors
 ```{r}
+#| eval: !expr (params$used_analysis)
 factor_corr_plot <- {plot_factor_cor(object = bestModel)
   grDevices::recordPlot()}
 
@@ -698,6 +762,7 @@ ggsave(filename = 'factor_corr_plot.png',plot = grDevices::replayPlot(factor_cor
 
 #### Variance decomposition
 ```{r}
+#| eval: !expr (params$used_analysis)
 plotVariance <- plot_variance_explained(bestModel,max_r2 = 10)
 
 ggsave(filename = 'MOFA_variance_allgroups.pdf',plot = plotVariance,device = 'pdf',path = '/multiomics/results/figures/MOFA/Group1vsGroup2/',dpi = 600,width = 10,height = 10,units = 'in')
@@ -705,6 +770,7 @@ ggsave(filename = 'MOFA_variance_allgroups.pdf',plot = plotVariance,device = 'pd
 
 #### Factor correlation
 ```{r}
+#| eval: !expr (params$used_analysis)
 covariatePlot <- correlate_factors_with_covariates(bestModel, 
   covariates = c('Group.Info','Size.mm','NCN.PAM50','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","PR",'SSP.PAM50',"NHG",'BCFi_event','tumor_mutational_burden',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma"), 
   plot="log_pval",
@@ -717,6 +783,7 @@ ggsave(filename = 'covariance.pdf',plot = covariatePlot,device = 'pdf',path = '/
 
 #### Plot feature weights
 ```{r}
+#| eval: !expr (params$used_analysis)
 immune_weights <- plot_top_weights(object = bestModel,
                                    view = 'immuneinfiltration',
                                    factors = 3,
@@ -750,6 +817,7 @@ map2(.x = weightPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device =
 
 #### Plot Heatmaps
 ```{r}
+#| eval: !expr (params$used_analysis)
 prot_heatmap <- plot_data_heatmap(bestModel, 
   view = "proteomics",
   factor = 3,  
@@ -802,7 +870,8 @@ map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device 
 
 ## Group3 vs Group4
 ```{r}
-varskeep <- c('workers','madFiltering','NAFiltering')
+#| eval: !expr (!params$used_analysis)
+varskeep <- c('workers','madFiltering','NAFiltering','params')
 rm(list = c(setdiff(ls(),varskeep)))
 invisible(gc())
 
@@ -817,6 +886,7 @@ if(!dir.exists(paths = '/multiomics/results/MOFA/Group3vsGroup4/')) {
 
 ### Data preprocessing and multiomics dataframe creation
 ```{r}
+#| eval: !expr (!params$used_analysis)
 design <- read_tsv('/multiomics/results/design_files/design_multiomics_mofa.tsv') %>% 
     filter(str_detect(string = Group.Info,pattern = 'Group3|Group4'))
 proteindata <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
@@ -871,24 +941,28 @@ response <- design %>%
 #### Sizes
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 purrr::map(.x = dataMix,.f = dim)
 ```
 
 #### Create MOFA object
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 MOFAobject <- create_mofa(dataMix)
 ```
 
 #### Plot data overview
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 plot_data_overview(MOFAobject)
 ```
 
 #### Data options
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 data_opts <- get_default_data_options(MOFAobject)
 data_opts$scale_views <- TRUE
 ```
@@ -896,6 +970,7 @@ data_opts$scale_views <- TRUE
 #### Model options
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 model_opts <- get_default_model_options(MOFAobject)
 model_opts$num_factors <- 20
 model_opts$spikeslab_weights <- TRUE
@@ -905,6 +980,7 @@ model_opts$ard_weights <- TRUE
 #### Training options
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 train_opts <- get_default_training_options(MOFAobject)
 train_opts$convergence_mode <- "slow"
 ```
@@ -912,6 +988,7 @@ train_opts$convergence_mode <- "slow"
 ### Model Training
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 set.seed(123)
 MOFAobject <- prepare_mofa(MOFAobject,data_options = data_opts,model_options = model_opts,training_options = train_opts)
 
@@ -931,6 +1008,7 @@ bestModel <- select_model(trainedModels)
 #### Add metadata
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 # Add metadata
 design <- design %>% 
   dplyr::rename(sample=sample_id)
@@ -946,16 +1024,19 @@ updated_features_names[["immuneinfiltration"]] <- immuneFeat
 features_names(bestModel) <- updated_features_names
 ```
 ```{r}
+#| eval: !expr (!params$used_analysis)
 slotNames(bestModel)
 ```
 
 #### Save model
 ```{r}
+#| eval: !expr (!params$used_analysis)
 saveRDS(object = bestModel,file = '/multiomics/results/MOFA/Group3vsGroup4/model.RDS',compress = 'gzip')
 ```
 
 #### Correlation between factors
 ```{r}
+#| eval: !expr (!params$used_analysis)
 factor_corr_plot <- {plot_factor_cor(object = bestModel)
   grDevices::recordPlot()}
 
@@ -964,6 +1045,7 @@ ggsave(filename = 'factor_corr_plot.png',plot = grDevices::replayPlot(factor_cor
 
 #### Variance decomposition
 ```{r}
+#| eval: !expr (!params$used_analysis)
 plotVariance <- plot_variance_explained(bestModel,max_r2 = 10)
 
 ggsave(filename = 'MOFA_variance_allgroups.pdf',plot = plotVariance,device = 'pdf',path = '/multiomics/results/figures/MOFA/Group3vsGroup4/',dpi = 600,width = 10,height = 10,units = 'in')
@@ -971,6 +1053,7 @@ ggsave(filename = 'MOFA_variance_allgroups.pdf',plot = plotVariance,device = 'pd
 
 #### Factor correlation
 ```{r}
+#| eval: !expr (!params$used_analysis)
 covariatePlot <- correlate_factors_with_covariates(bestModel, 
   covariates = c('Group.Info','Size.mm','NCN.PAM50','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","PR",'SSP.PAM50',"NHG",'BCFi_event','tumor_mutational_burden','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma"), 
   plot="log_pval",
@@ -983,6 +1066,7 @@ ggsave(filename = 'covariance.pdf',plot = covariatePlot,device = 'pdf',path = '/
 
 #### Plot feature weights
 ```{r}
+#| eval: !expr (!params$used_analysis)
 immune_weights <- plot_top_weights(object = bestModel,
                                    view = 'immuneinfiltration',
                                    factors = 3,
@@ -1016,6 +1100,7 @@ map2(.x = weightPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device =
 
 #### Plot Heatmaps
 ```{r}
+#| eval: !expr (!params$used_analysis)
 prot_heatmap <- plot_data_heatmap(bestModel, 
   view = "proteomics",
   factor = 3,  
@@ -1068,7 +1153,8 @@ map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device 
 
 ## Lymphnode Positive vs Negative - Ductal
 ```{r}
-varskeep <- c('workers','madFiltering','NAFiltering')
+#| eval: !expr (!params$used_analysis)
+varskeep <- c('workers','madFiltering','NAFiltering','params')
 rm(list = c(setdiff(ls(),varskeep)))
 invisible(gc())
 
@@ -1083,6 +1169,7 @@ if(!dir.exists(paths = '/multiomics/results/MOFA/LNposvsLNneg/Ductal/')) {
 
 ### Data preprocessing and multiomics dataframe creation
 ```{r}
+#| eval: !expr (!params$used_analysis)
 design <- read_tsv('/multiomics/results/design_files/design_multiomics_mofa.tsv') %>% 
     filter(str_detect(string = InvCa.type,pattern = 'Ductal'))
 proteindata <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
@@ -1137,24 +1224,28 @@ response <- design %>%
 #### Sizes
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 purrr::map(.x = dataMix,.f = dim)
 ```
 
 #### Create MOFA object
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 MOFAobject <- create_mofa(dataMix)
 ```
 
 #### Plot data overview
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 plot_data_overview(MOFAobject)
 ```
 
 #### Data options
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 data_opts <- get_default_data_options(MOFAobject)
 data_opts$scale_views <- TRUE
 ```
@@ -1162,6 +1253,7 @@ data_opts$scale_views <- TRUE
 #### Model options
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 model_opts <- get_default_model_options(MOFAobject)
 model_opts$num_factors <- 20
 model_opts$spikeslab_weights <- TRUE
@@ -1171,6 +1263,7 @@ model_opts$ard_weights <- TRUE
 #### Training options
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 train_opts <- get_default_training_options(MOFAobject)
 train_opts$convergence_mode <- "slow"
 ```
@@ -1178,6 +1271,7 @@ train_opts$convergence_mode <- "slow"
 ### Model Training
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 set.seed(123)
 MOFAobject <- prepare_mofa(MOFAobject,data_options = data_opts,model_options = model_opts,training_options = train_opts)
 
@@ -1197,6 +1291,7 @@ bestModel <- select_model(trainedModels)
 #### Add metadata
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 # Add metadata
 design <- design %>% 
   dplyr::rename(sample=sample_id)
@@ -1212,16 +1307,19 @@ updated_features_names[["immuneinfiltration"]] <- immuneFeat
 features_names(bestModel) <- updated_features_names
 ```
 ```{r}
+#| eval: !expr (!params$used_analysis)
 slotNames(bestModel)
 ```
 
 #### Save model
 ```{r}
+#| eval: !expr (!params$used_analysis)
 saveRDS(object = bestModel,file = '/multiomics/results/MOFA/LNposvsLNneg/Ductal/model.RDS',compress = 'gzip')
 ```
 
 #### Correlation between factors
 ```{r}
+#| eval: !expr (!params$used_analysis)
 factor_corr_plot <- {plot_factor_cor(object = bestModel)
   grDevices::recordPlot()}
 
@@ -1230,6 +1328,7 @@ ggsave(filename = 'factor_corr_plot.png',plot = grDevices::replayPlot(factor_cor
 
 #### Variance decomposition
 ```{r}
+#| eval: !expr (!params$used_analysis)
 plotVariance <- plot_variance_explained(bestModel,max_r2 = 10)
 
 ggsave(filename = 'MOFA_variance_allgroups.pdf',plot = plotVariance,device = 'pdf',path = '/multiomics/results/figures/MOFA/LNposvsLNneg/Ductal/',dpi = 600,width = 10,height = 10,units = 'in')
@@ -1237,6 +1336,7 @@ ggsave(filename = 'MOFA_variance_allgroups.pdf',plot = plotVariance,device = 'pd
 
 #### Factor correlation
 ```{r}
+#| eval: !expr (!params$used_analysis)
 covariatePlot <- correlate_factors_with_covariates(bestModel, 
   covariates = c('Group.Info','Size.mm','NCN.PAM50','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","PR",'SSP.PAM50',"NHG",'BCFi_event','tumor_mutational_burden','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma"), 
   plot="log_pval",
@@ -1249,6 +1349,7 @@ ggsave(filename = 'covariance.pdf',plot = covariatePlot,device = 'pdf',path = '/
 
 #### Plot feature weights
 ```{r}
+#| eval: !expr (!params$used_analysis)
 immune_weights <- plot_top_weights(object = bestModel,
                                    view = 'immuneinfiltration',
                                    factors = 3,
@@ -1282,6 +1383,7 @@ map2(.x = weightPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device =
 
 #### Plot Heatmaps
 ```{r}
+#| eval: !expr (!params$used_analysis)
 prot_heatmap <- plot_data_heatmap(bestModel, 
   view = "proteomics",
   factor = 3,  
@@ -1334,7 +1436,8 @@ map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device 
 
 ## Lymphnode Positive vs Negative - Lobular
 ```{r}
-varskeep <- c('workers','madFiltering','NAFiltering')
+#| eval: !expr (!params$used_analysis)
+varskeep <- c('workers','madFiltering','NAFiltering','params')
 rm(list = c(setdiff(ls(),varskeep)))
 invisible(gc())
 
@@ -1349,6 +1452,7 @@ if(!dir.exists(paths = '/multiomics/results/MOFA/LNposvsLNneg/Lobular/')) {
 
 ### Data preprocessing and multiomics dataframe creation
 ```{r}
+#| eval: !expr (!params$used_analysis)
 design <- read_tsv('/multiomics/results/design_files/design_multiomics_mofa.tsv') %>% 
     filter(str_detect(string = InvCa.type,pattern = 'Lobular'))
 proteindata <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
@@ -1403,24 +1507,28 @@ response <- design %>%
 #### Sizes
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 purrr::map(.x = dataMix,.f = dim)
 ```
 
 #### Create MOFA object
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 MOFAobject <- create_mofa(dataMix)
 ```
 
 #### Plot data overview
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 plot_data_overview(MOFAobject)
 ```
 
 #### Data options
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 data_opts <- get_default_data_options(MOFAobject)
 data_opts$scale_views <- TRUE
 ```
@@ -1428,6 +1536,7 @@ data_opts$scale_views <- TRUE
 #### Model options
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 model_opts <- get_default_model_options(MOFAobject)
 model_opts$num_factors <- 20
 model_opts$spikeslab_weights <- TRUE
@@ -1437,6 +1546,7 @@ model_opts$ard_weights <- TRUE
 #### Training options
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 train_opts <- get_default_training_options(MOFAobject)
 train_opts$convergence_mode <- "slow"
 ```
@@ -1444,6 +1554,7 @@ train_opts$convergence_mode <- "slow"
 ### Model Training
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 set.seed(123)
 MOFAobject <- prepare_mofa(MOFAobject,data_options = data_opts,model_options = model_opts,training_options = train_opts)
 
@@ -1463,6 +1574,7 @@ bestModel <- select_model(trainedModels)
 #### Add metadata
 
 ```{r}
+#| eval: !expr (!params$used_analysis)
 # Add metadata
 design <- design %>% 
   dplyr::rename(sample=sample_id)
@@ -1478,16 +1590,19 @@ updated_features_names[["immuneinfiltration"]] <- immuneFeat
 features_names(bestModel) <- updated_features_names
 ```
 ```{r}
+#| eval: !expr (!params$used_analysis)
 slotNames(bestModel)
 ```
 
 #### Save model
 ```{r}
+#| eval: !expr (!params$used_analysis)
 saveRDS(object = bestModel,file = '/multiomics/results/MOFA/LNposvsLNneg/Lobular/model.RDS',compress = 'gzip')
 ```
 
 #### Correlation between factors
 ```{r}
+#| eval: !expr (!params$used_analysis)
 factor_corr_plot <- {plot_factor_cor(object = bestModel)
   grDevices::recordPlot()}
 
@@ -1496,6 +1611,7 @@ ggsave(filename = 'factor_corr_plot.png',plot = grDevices::replayPlot(factor_cor
 
 #### Variance decomposition
 ```{r}
+#| eval: !expr (!params$used_analysis)
 plotVariance <- plot_variance_explained(bestModel,max_r2 = 10)
 
 ggsave(filename = 'MOFA_variance_allgroups.pdf',plot = plotVariance,device = 'pdf',path = '/multiomics/results/figures/MOFA/LNposvsLNneg/Lobular/',dpi = 600,width = 10,height = 10,units = 'in')
@@ -1503,6 +1619,7 @@ ggsave(filename = 'MOFA_variance_allgroups.pdf',plot = plotVariance,device = 'pd
 
 #### Factor correlation
 ```{r}
+#| eval: !expr (!params$used_analysis)
 covariatePlot <- correlate_factors_with_covariates(bestModel, 
   covariates = c('Group.Info','Size.mm','NCN.PAM50','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","PR",'SSP.PAM50',"NHG",'BCFi_event','tumor_mutational_burden','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma"), 
   plot="log_pval",
@@ -1515,6 +1632,7 @@ ggsave(filename = 'covariance.pdf',plot = covariatePlot,device = 'pdf',path = '/
 
 #### Plot feature weights
 ```{r}
+#| eval: !expr (!params$used_analysis)
 immune_weights <- plot_top_weights(object = bestModel,
                                    view = 'immuneinfiltration',
                                    factors = 3,
@@ -1548,6 +1666,7 @@ map2(.x = weightPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device =
 
 #### Plot Heatmaps
 ```{r}
+#| eval: !expr (!params$used_analysis)
 prot_heatmap <- plot_data_heatmap(bestModel, 
   view = "proteomics",
   factor = 3,  
@@ -1601,6 +1720,7 @@ map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device 
 
 ## All samples - Group2 Excluded
 ```{r}
+#| eval: !expr (params$used_analysis)
 if(!dir.exists(paths = '/multiomics/results/figures/MOFA/AllSamples_noG2')) {
   dir.create(path = '/multiomics/results/figures/MOFA/AllSamples_noG2/',recursive = TRUE)
 }
@@ -1612,6 +1732,7 @@ if(!dir.exists(paths = '/multiomics/results/MOFA/AllSamples_noG2/')) {
 
 ### Data preprocessing and multiomics dataframe creation
 ```{r}
+#| eval: !expr (params$used_analysis)
 design <- read_tsv('/multiomics/results/design_files/design_multiomics_mofa.tsv') %>% 
   filter(str_detect(string = Group.Info,pattern = 'Group2',negate = TRUE))
 
@@ -1621,6 +1742,8 @@ prot <- proteindata %>%
   madFiltering(design = design,sampleCol = 'sample_id',annotation = 'Protein',cutoff = 0.75)
 prot$Unique.Ids <- make.names(names = prot$Protein.Names,unique = TRUE)
 protFeatures <- prot$Unique.Ids
+protIds <- prot %>% 
+  select(matches("Name|Gene|Ids|Sequence"))
 prot <- prot %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix
@@ -1632,6 +1755,8 @@ phospho <- phosphodata %>%
   madFiltering(design = design,sampleCol = 'sample_id',annotation = 'Modified.Sequence',cutoff = 0.5)
 phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
 phosphoFeatures <- phospho$Unique.Ids
+phosphoIds <- phospho %>% 
+  select(matches("Name|Gene|Ids|Sequence"))
 phospho <- phospho %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix
@@ -1644,6 +1769,8 @@ gene <- genedata %>%
   madFiltering(design = design,sampleCol = 'sample_id',annotation = 'Gene.ID',cutoff = 0.75)
 gene$Unique.Ids <- make.names(names = gene$Gene.Name,unique = TRUE)
 geneFeatures <- gene$Unique.Ids
+geneIds <- gene %>% 
+  select(matches("Name|Gene|Ids|Sequence"))
 gene <- gene %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix
@@ -1662,30 +1789,42 @@ dataMix <- list(proteomics=prot,
 
 response <- design %>% 
   dplyr::select(sample_id,LN)
+
+allIds <- list(proteomics=protIds,phosphoproteomics=phosphoIds,transcriptomics=geneIds) %>% 
+  map2(.y = c('proteomics','phosphoproteomics','transcriptomics'),.f = function(x,y){
+    data <- x %>% mutate(across(Unique.Ids,~paste0(.x,'.',y)))
+  }) %>% 
+  list_rbind()
+
+write_tsv(x = allIds,file = '/multiomics/results/MOFA/AllSamples_noG2/featIDs.tsv')
 ```
 
 ### Model Parameters
 #### Sizes
 
 ```{r}
+#| eval: !expr (params$used_analysis)
 purrr::map(.x = dataMix,.f = dim)
 ```
 
 #### Create MOFA object
 
 ```{r}
+#| eval: !expr (params$used_analysis)
 MOFAobject <- create_mofa(dataMix)
 ```
 
 #### Plot data overview
 
 ```{r}
+#| eval: !expr (params$used_analysis)
 plot_data_overview(MOFAobject)
 ```
 
 #### Data options
 
 ```{r}
+#| eval: !expr (params$used_analysis)
 data_opts <- get_default_data_options(MOFAobject)
 data_opts$scale_views <- TRUE
 ```
@@ -1693,6 +1832,7 @@ data_opts$scale_views <- TRUE
 #### Model options
 
 ```{r}
+#| eval: !expr (params$used_analysis)
 model_opts <- get_default_model_options(MOFAobject)
 model_opts$num_factors <- 20
 model_opts$spikeslab_weights <- TRUE
@@ -1702,6 +1842,7 @@ model_opts$ard_weights <- TRUE
 #### Training options
 
 ```{r}
+#| eval: !expr (params$used_analysis)
 train_opts <- get_default_training_options(MOFAobject)
 train_opts$convergence_mode <- "slow"
 ```
@@ -1709,6 +1850,7 @@ train_opts$convergence_mode <- "slow"
 ### Model Training
 
 ```{r}
+#| eval: !expr (params$used_analysis)
 set.seed(123)
 MOFAobject <- prepare_mofa(MOFAobject,data_options = data_opts,model_options = model_opts,training_options = train_opts)
 
@@ -1728,6 +1870,7 @@ bestModel <- select_model(trainedModels)
 #### Add metadata
 
 ```{r}
+#| eval: !expr (params$used_analysis)
 # Add metadata
 design <- design %>% 
   dplyr::rename(sample=sample_id)
@@ -1743,16 +1886,19 @@ updated_features_names[["immuneinfiltration"]] <- immuneFeat
 features_names(bestModel) <- updated_features_names
 ```
 ```{r}
+#| eval: !expr (params$used_analysis)
 slotNames(bestModel)
 ```
 
 #### Save model
 ```{r}
+#| eval: !expr (params$used_analysis)
 saveRDS(object = bestModel,file = '/multiomics/results/MOFA/AllSamples_noG2/model.RDS',compress = 'gzip')
 ```
 
 #### Correlation between factors
 ```{r}
+#| eval: !expr (params$used_analysis)
 factor_corr_plot <- {plot_factor_cor(object = bestModel)
   grDevices::recordPlot()}
 
@@ -1761,6 +1907,7 @@ ggsave(filename = 'factor_corr_plot.png',plot = grDevices::replayPlot(factor_cor
 
 #### Variance decomposition
 ```{r}
+#| eval: !expr (params$used_analysis)
 plotVariance <- plot_variance_explained(bestModel,max_r2 = 10)
 
 ggsave(filename = 'MOFA_variance_allgroups.pdf',plot = plotVariance,device = 'pdf',path = '/multiomics/results/figures/MOFA/AllSamples_noG2/',dpi = 600,width = 10,height = 10,units = 'in')
@@ -1768,6 +1915,7 @@ ggsave(filename = 'MOFA_variance_allgroups.pdf',plot = plotVariance,device = 'pd
 
 #### Factor correlation
 ```{r}
+#| eval: !expr (params$used_analysis)
 covariatePlot <- correlate_factors_with_covariates(bestModel, 
   covariates = c('Group.Info','Size.mm','NCN.PAM50','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","PR",'SSP.PAM50',"NHG",'BCFi_event','tumor_mutational_burden','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma"), 
   plot="log_pval",
@@ -1780,6 +1928,7 @@ ggsave(filename = 'covariance.pdf',plot = covariatePlot,device = 'pdf',path = '/
 
 #### Plot feature weights
 ```{r}
+#| eval: !expr (params$used_analysis)
 immune_weights <- plot_top_weights(object = bestModel,
                                    view = 'immuneinfiltration',
                                    factors = 3,
@@ -1813,6 +1962,7 @@ map2(.x = weightPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device =
 
 #### Plot Heatmaps
 ```{r}
+#| eval: !expr (params$used_analysis)
 prot_heatmap <- plot_data_heatmap(bestModel, 
   view = "proteomics",
   factor = 3,  
@@ -1864,6 +2014,7 @@ map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device 
 ```
 
 ```{r}
+#| eval: !expr (params$used_analysis)
 rm(list = ls())
 invisible(gc())
 ```

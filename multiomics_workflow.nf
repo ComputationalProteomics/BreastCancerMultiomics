@@ -82,7 +82,9 @@ workflow  {
     )
 
     EXTERNAL_VALIDATION(
-    ch_notebook_multiomics.filter {it.name == 'validation_analysis.qmd'}
+    ch_notebook_multiomics.filter {it.name == 'validation_analysis.qmd'},
+    SURVIVAL_DE.out.collect(),
+    SURVIVAL_MOFA.out.collect()
     )
 }
 
@@ -428,6 +430,11 @@ process EXTERNAL_VALIDATION{
 
     input:
         path(notebook)
+        path(html)
+        path(html)
+        
+    when:
+        html.exists()
 
     output:
         path("*.html"), emit: html

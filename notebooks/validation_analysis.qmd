@@ -5,9 +5,9 @@ execute:
   output: false
   
 params:
-  time: 'DRFi_days'
-  event: 'DRFi_event'
-  outcome: 'LN'
+  time: 'RFi_days'
+  event: 'RFi_event'
+  comparison: 'AllSamples_noG2'
 
 editor_options: 
   chunk_output_type: console
@@ -29,7 +29,7 @@ library(NormalyzerDE)
 ```
 
 ```{r Output Directory}
-outputdir <- paste0('/multiomics/results/figures/validation/',params$event,'/')
+outputdir <- paste0('/multiomics/results/figures/validation/',params$comparison,'_',params$event,'/')
 
 if(!dir.exists(paths = outputdir)) {
   dir.create(path = outputdir,recursive = TRUE)
@@ -101,11 +101,36 @@ invisible(gc())
 ```
 
 ```{r}
-ln_genes <- c('EPS8L2','CNN1','LNPK','SEPT2','CBFA2T3')
-drfi_genes_mofa <- c('THBS1','THBS2','MFGE8','MYH9','MYH10','MYH11','RBM39','KCND3','BRD3')
-drfi_genes_de <- c('HSP90AB3P','HSP90AA2P','HSP90AA1','HSP90AB1')
+# ln_genes <- c('EPS8L2','CNN1','LNPK','SEPT2','CBFA2T3')
+# drfi_genes_mofa <- c('THBS1','THBS2','MFGE8','MYH9','MYH10','MYH11','RBM39','KCND3','BRD3')
+# drfi_genes_de <- c('HSP90AB3P','HSP90AA2P','HSP90AA1','HSP90AB1')
 
-common_genes <- Gene.ID.ann %>% filter(Gene.Name %in% ln_genes | Gene.Name %in% drfi_genes_mofa | Gene.Name%in%drfi_genes_de)
+coxFeats <- list.files(path = '/multiomics/results/figures/survival_analysis/',pattern = 'cox_analysis_res',full.names = TRUE,recursive = TRUE) %>% 
+  .[str_detect(.,params$comparison)] %>% 
+  .[str_detect(.,params$event)] %>% 
+  map(read_tsv) %>% 
+  list_rbind() %>% 
+  dplyr::filter(.[["p.value_univariable"]]<0.05 | .[["p.value_multivariable"]]<0.05) %>% 
+  dplyr::select(variable) %>% 
+  unlist() %>% 
+  unique()
+
+idMap <- list.files(path = "/multiomics/results/",pattern = "featIDs\\.tsv",full.names = TRUE,recursive = TRUE) %>% 
+  .[str_detect(.,params$comparison)] %>% 
+  map(read_tsv) %>% 
+  list_rbind() %>% 
+  filter(!duplicated(.)) 
+
+geneIds <- idMap %>% 
+  filter(Protein.Names %in% coxFeats | Unique.Ids %in% coxFeats) %>% 
+  unite(col = 'Gene',c('Genes','Gene.Name'),sep = '',na.rm = TRUE,remove = FALSE) %>% 
+  select(Gene) %>% 
+  as_vector() %>% 
+  str_split(.,pattern = "\\;") %>% 
+  unlist() %>% 
+  unique()
+
+common_genes <- Gene.ID.ann %>% filter(Gene.Name %in% geneIds)
 features <- data_filter %>% filter(Gene %in% common_genes[["Gene.ID"]])
 
 if(identical(features[["Gene"]],common_genes[["Gene.ID"]])){
@@ -116,11 +141,13 @@ if(identical(features[["Gene"]],common_genes[["Gene.ID"]])){
 
 features <- features %>% select(-Gene) %>% performCyclicLoessNormalization(noLogTransform = FALSE)
 colnames(features) <- colnames(features) %>% str_split_i(pattern = '\\.',i = 1)
-features <- features %>% as_tibble() %>% mutate(Gene=common_genes[["Gene.Name"]]) %>% relocate(Gene,.before = 1)
+features <- features %>% as_tibble() %>% mutate(Gene=common_genes[["Gene.Name"]]) %>% relocate(Gene,.before = 1) %>% na.omit()
+
+newColNames <- features[["Gene"]]
 
 features <- features %>% select(sampleFilter[["sample_id"]]) %>% t() %>% cbind(sample_id=rownames(.),.) %>% as.data.frame()
-colnames(features) <- c('sample_id',common_genes[["Gene.Name"]])
-features <- features %>% mutate(across(common_genes[["Gene.Name"]],as.numeric)) %>% select(-c(CBFA2T3))
+colnames(features) <- c('sample_id',newColNames)
+features <- features %>% mutate(across(newColNames,as.numeric))
 ```
 
 # Analysis of all samples
@@ -185,18 +212,6 @@ cox_models_omics <- map(.x = omics_variables,.f = function(x){
 
 names(cox_models_omics) <- omics_variables
 
-signif_omics <- map(.x = seq_along(cox_models_omics),function(x){
-  model <- extract_fit_engine(cox_models_omics[[x]]) %>% 
-    summary()
-  pluck(model,'coefficients') %>% as.data.frame()
-}) %>% 
-  list_rbind() %>% 
-  mutate(PValue.Adj=p.adjust(.[['Pr(>|z|)']],method = 'fdr')) %>% 
-  filter(.[['Pr(>|z|)']]<0.05) %>% 
-  rownames() %>% 
-  as_vector() %>% 
-  unique
-
 modelList <- map(cox_models_omics,extract_fit_engine)
 fitCheck <- map(modelList,cox.zph) %>% 
   map(~pluck(.x,'table',6)) %>% 
@@ -204,10 +219,32 @@ fitCheck <- map(modelList,cox.zph) %>%
   .[.>0.05]
 
 modelList <- keep(modelList,names(modelList) %in% names(fitCheck))
-uniPlot <- forest_model(model_list = modelList,merge_models = TRUE)
-omics_variables <- names(modelList)
 
-ggsave(filename = 'forestplot_univariable_all_samples.pdf',plot = uniPlot,device = 'pdf',path = outputdir,dpi = 600)
+signif_omics <- map(.x = seq_along(modelList),function(x){
+  model <- modelList[[x]] %>% 
+    summary()
+  pluck(model,'coefficients') %>% as.data.frame()
+}) %>% 
+  list_rbind() %>% 
+  mutate(PValue.Adj=p.adjust(.[['Pr(>|z|)']],method = 'fdr')) %>% 
+  filter(.[['Pr(>|z|)']]<0.05) %>%
+  rownames() %>% 
+  as_vector() %>% 
+  unique
+
+if(!is_empty(signif_omics)){
+  uniplot <- keep(modelList,names(modelList) %in% signif_omics) %>%
+    forest_model(model_list = .,recalculate_width = TRUE,recalculate_height = TRUE,merge_models = TRUE,format_options = forest_model_format_options(text_size = 3))
+  
+  ggsave(filename = 'forestplot_univariable_allSamples.pdf',plot = uniplot,device = 'pdf',path = outputdir,dpi = 600,width = 9,height = 9,units = 'in')
+}else(
+  writeLines(text = 'No variables were deemed significant (p-value < 0.05) at univariable model',con = paste0(outputdir,'error_allSamples.txt'))
+)
+
+uniTable <- forest_model(model_list = modelList,return_data = TRUE) %>% 
+  pluck('plot_data','forest_data') %>% 
+  select(-c(1,7,14,15,16)) %>% 
+  rename_with(.cols = c(6:11),.fn = ~ paste0(.x,'_univariable'))
 ```
 
 ## Fit Multivariable Cox Model
@@ -222,7 +259,7 @@ catchWarning <- function(expr){
   list(result=res,warning=warning_message)
 }
 
-cox_models_omics_multivariate <- map(.x = omics_variables,.f = function(x){
+cox_models_omics_multivariate <- map(.x = names(modelList),.f = function(x){
 data <- finalFeaturesProcessed %>% 
   dplyr::select(sample_id,surv,x,all_of(clinical_variables))
 
@@ -240,26 +277,18 @@ wf <- catchWarning({workflow() %>%
 
 ### Select significant features and generate forest plots
 ```{r}
-multiTable <- map(.x = seq_len(length(cox_models_omics_multivariate)),function(x){
+names(cox_models_omics_multivariate) <- names(modelList)
+
+signif_omics <- map(.x = seq_along(cox_models_omics_multivariate),function(x){
   model <- extract_fit_engine(cox_models_omics_multivariate[[x]][['result']]) %>% 
     summary()
   tibble(Feature=pluck(model,'coefficients') %>% as.data.frame() %>% .[1,] %>% rownames(),
-         pluck(model,'coefficients') %>% as_tibble() %>% .[1,],
-         LogTest_pvalue=pluck(model,'logtest') %>% .[3],
-         SCTest_pvalue=pluck(model,'sctest') %>% .[3],
-         WaldTest_pvalue=pluck(model,'waldtest') %>% .[3])
+         pluck(model,'coefficients') %>% as_tibble() %>% .[1,])
 }) %>% 
   list_rbind() %>% 
-    mutate(PValue.Adj=p.adjust(.[['Pr(>|z|)']],method = 'fdr')) %>% 
-    relocate(PValue.Adj,.after = `Pr(>|z|)`)
-
-# names(cox_models_omics_multivariate) <- multiTable[["Feature"]]
-# 
-# signifMulti <- multiTable %>% 
-#   filter(`Pr(>|z|)`<0.05) %>% 
-#   arrange(PValue.Adj)
-# 
-# multiCoxFilter <- keep(cox_models_omics_multivariate,names(cox_models_omics_multivariate) %in% signifMulti[["Feature"]])
+  filter(`Pr(>|z|)`<0.05) %>% 
+  select(Feature) %>% 
+  as_vector()
 
 # Function to log errors to a file
 log_error <- function(error_message) {
@@ -268,23 +297,14 @@ log_error <- function(error_message) {
 
 create_safe_forest_plot <- function(fit, data,index) {
   tryCatch({
-    # Check proportional hazards assumption
-    fitcheck <- cox.zph(fit = fit)
-    
     # Attempt to create the forest plot
-    plotPH <- forest_model(model = fit,exclude_infinite_cis = TRUE,recalculate_width = TRUE,recalculate_height = TRUE,format_options = forest_model_format_options(text_size = 3))
-    
-    # Return the fitcheck and plot as a list
-    list(fitcheck = fitcheck, plotPH = plotPH)
+    plotPH <- forest_model(model = fit,exclude_infinite_cis = TRUE,recalculate_width = TRUE,recalculate_height = TRUE,format_options = forest_model_format_options(text_size = 3),return_data = TRUE)
+
   }, error = function(e) {
     # Handle the error by printing a message and returning default values
     error_message <- paste(Sys.time(), " - An error occurred while generating the forest plot: ", e$message, sep = "")
     message(error_message)
     log_error(error_message)
-    # Return default values (NA for fitcheck and a blank plot for plotPH)
-    fitUni <- extract_fit_engine(cox_models_omics[[names(multiCoxFilter[index])]])
-    default_plot <- forest_model(model = fitUni,exclude_infinite_cis = TRUE,recalculate_width = TRUE,recalculate_height = TRUE,format_options = forest_model_format_options(text_size = 3))
-    list(fitcheck = NA, plotPH = default_plot)
   })
 }
 
@@ -294,9 +314,26 @@ multivariate_res <- map(seq_along(cox_models_omics_multivariate), function(x) {
   create_safe_forest_plot(fit, finalFeaturesProcessed,index = x)
 })
 
-cairo_pdf(filename = paste0(outputdir,'forestplot_multivariable_all_samples.pdf'),onefile = TRUE,width = 9,height = 9)
-plots <- map(seq_along(multivariate_res),function(x){multivariate_res[[x]][[2]] %>% ggplotGrob()})
-gridExtra::marrangeGrob(grobs = plots,ncol = 1,nrow = 1,top = '')
+names(multivariate_res) <- names(cox_models_omics_multivariate)
+
+multivariate_res <- compact(multivariate_res)
+
+multiPlot <- keep(multivariate_res, names(multivariate_res) %in% signif_omics)
+
+multiTable <- map(multivariate_res,function(x){
+  resTable <- pluck(x,'plot_data','forest_data') %>% 
+    filter(variable %in% omics_variables) %>% 
+    select(c(2,10:15))
+}) %>% 
+  list_rbind() %>% 
+  rename_with(.cols = -c(1),.fn = ~ paste0(.x,'_multivariable'))
+
+finalTable <- full_join(uniTable,multiTable)
+write_tsv(x = finalTable,file = paste0(outputdir,'cox_analysis_res.tsv'))
+
+cairo_pdf(filename = paste0(outputdir,'forestplot_multivariable.pdf'),onefile = TRUE,width = 9,height = 9)
+  plots <- map(seq_along(multiPlot),function(x){multiPlot[[x]][['plot']] %>% ggplotGrob()})
+  gridExtra::marrangeGrob(grobs = plots,ncol = 1,nrow = 1,top = '')
 dev.off()
 ```
 
@@ -370,18 +407,6 @@ cox_models_omics <- map(.x = omics_variables,.f = function(x){
 
 names(cox_models_omics) <- omics_variables
 
-signif_omics <- map(.x = seq_along(cox_models_omics),function(x){
-  model <- extract_fit_engine(cox_models_omics[[x]]) %>% 
-    summary()
-  pluck(model,'coefficients') %>% as.data.frame()
-}) %>% 
-  list_rbind() %>% 
-  mutate(PValue.Adj=p.adjust(.[['Pr(>|z|)']],method = 'fdr')) %>% 
-  filter(.[['Pr(>|z|)']]<0.05) %>% 
-  rownames() %>% 
-  as_vector() %>% 
-  unique
-
 modelList <- map(cox_models_omics,extract_fit_engine)
 fitCheck <- map(modelList,cox.zph) %>% 
   map(~pluck(.x,'table',6)) %>% 
@@ -389,10 +414,32 @@ fitCheck <- map(modelList,cox.zph) %>%
   .[.>0.05]
 
 modelList <- keep(modelList,names(modelList) %in% names(fitCheck))
-uniPlot <- forest_model(model_list = modelList,merge_models = TRUE)
-omics_variables <- names(modelList)
 
-ggsave(filename = 'forestplot_univariable_LNneg.pdf',plot = uniPlot,device = 'pdf',path = outputdir,dpi = 600)
+signif_omics <- map(.x = seq_along(modelList),function(x){
+  model <- modelList[[x]] %>% 
+    summary()
+  pluck(model,'coefficients') %>% as.data.frame()
+}) %>% 
+  list_rbind() %>% 
+  mutate(PValue.Adj=p.adjust(.[['Pr(>|z|)']],method = 'fdr')) %>% 
+  filter(.[['Pr(>|z|)']]<0.05) %>%
+  rownames() %>% 
+  as_vector() %>% 
+  unique
+
+if(!is_empty(signif_omics)){
+  uniplot <- keep(modelList,names(modelList) %in% signif_omics) %>%
+    forest_model(model_list = .,recalculate_width = TRUE,recalculate_height = TRUE,merge_models = TRUE,format_options = forest_model_format_options(text_size = 3))
+  
+  ggsave(filename = 'forestplot_univariable_LNneg.pdf',plot = uniplot,device = 'pdf',path = outputdir,dpi = 600,width = 9,height = 9,units = 'in')
+}else(
+  writeLines(text = 'No variables were deemed significant (p-value < 0.05) at univariable model',con = paste0(outputdir,'error_LNneg.txt'))
+)
+
+uniTable <- forest_model(model_list = modelList,return_data = TRUE) %>% 
+  pluck('plot_data','forest_data') %>% 
+  select(-c(1,7,14,15,16)) %>% 
+  rename_with(.cols = c(6:11),.fn = ~ paste0(.x,'_univariable'))
 ```
 
 ## Fit Multivariable Cox Model
@@ -407,7 +454,7 @@ catchWarning <- function(expr){
   list(result=res,warning=warning_message)
 }
 
-cox_models_omics_multivariate <- map(.x = omics_variables,.f = function(x){
+cox_models_omics_multivariate <- map(.x = names(modelList),.f = function(x){
 data <- finalFeaturesProcessed %>% 
   dplyr::select(sample_id,surv,x,all_of(clinical_variables))
 
@@ -425,26 +472,18 @@ wf <- catchWarning({workflow() %>%
 
 ### Select significant features and generate forest plots
 ```{r}
-multiTable <- map(.x = seq_len(length(cox_models_omics_multivariate)),function(x){
+names(cox_models_omics_multivariate) <- names(modelList)
+
+signif_omics <- map(.x = seq_along(cox_models_omics_multivariate),function(x){
   model <- extract_fit_engine(cox_models_omics_multivariate[[x]][['result']]) %>% 
     summary()
   tibble(Feature=pluck(model,'coefficients') %>% as.data.frame() %>% .[1,] %>% rownames(),
-         pluck(model,'coefficients') %>% as_tibble() %>% .[1,],
-         LogTest_pvalue=pluck(model,'logtest') %>% .[3],
-         SCTest_pvalue=pluck(model,'sctest') %>% .[3],
-         WaldTest_pvalue=pluck(model,'waldtest') %>% .[3])
+         pluck(model,'coefficients') %>% as_tibble() %>% .[1,])
 }) %>% 
   list_rbind() %>% 
-    mutate(PValue.Adj=p.adjust(.[['Pr(>|z|)']],method = 'fdr')) %>% 
-    relocate(PValue.Adj,.after = `Pr(>|z|)`)
-
-# names(cox_models_omics_multivariate) <- multiTable[["Feature"]]
-# 
-# signifMulti <- multiTable %>% 
-#   filter(`Pr(>|z|)`<0.05) %>% 
-#   arrange(PValue.Adj)
-# 
-# multiCoxFilter <- keep(cox_models_omics_multivariate,names(cox_models_omics_multivariate) %in% signifMulti[["Feature"]])
+  filter(`Pr(>|z|)`<0.05) %>% 
+  select(Feature) %>% 
+  as_vector()
 
 # Function to log errors to a file
 log_error <- function(error_message) {
@@ -453,23 +492,14 @@ log_error <- function(error_message) {
 
 create_safe_forest_plot <- function(fit, data,index) {
   tryCatch({
-    # Check proportional hazards assumption
-    fitcheck <- cox.zph(fit = fit)
-    
     # Attempt to create the forest plot
-    plotPH <- forest_model(model = fit,exclude_infinite_cis = TRUE,recalculate_width = TRUE,recalculate_height = TRUE,format_options = forest_model_format_options(text_size = 3))
-    
-    # Return the fitcheck and plot as a list
-    list(fitcheck = fitcheck, plotPH = plotPH)
+    plotPH <- forest_model(model = fit,exclude_infinite_cis = TRUE,recalculate_width = TRUE,recalculate_height = TRUE,format_options = forest_model_format_options(text_size = 3),return_data = TRUE)
+
   }, error = function(e) {
     # Handle the error by printing a message and returning default values
     error_message <- paste(Sys.time(), " - An error occurred while generating the forest plot: ", e$message, sep = "")
     message(error_message)
     log_error(error_message)
-    # Return default values (NA for fitcheck and a blank plot for plotPH)
-    fitUni <- extract_fit_engine(cox_models_omics[[names(multiCoxFilter[index])]])
-    default_plot <- forest_model(model = fitUni,exclude_infinite_cis = TRUE,recalculate_width = TRUE,recalculate_height = TRUE,format_options = forest_model_format_options(text_size = 3))
-    list(fitcheck = NA, plotPH = default_plot)
   })
 }
 
@@ -479,9 +509,26 @@ multivariate_res <- map(seq_along(cox_models_omics_multivariate), function(x) {
   create_safe_forest_plot(fit, finalFeaturesProcessed,index = x)
 })
 
+names(multivariate_res) <- names(cox_models_omics_multivariate)
+
+multivariate_res <- compact(multivariate_res)
+
+multiPlot <- keep(multivariate_res, names(multivariate_res) %in% signif_omics)
+
+multiTable <- map(multivariate_res,function(x){
+  resTable <- pluck(x,'plot_data','forest_data') %>% 
+    filter(variable %in% omics_variables) %>% 
+    select(c(2,10:15))
+}) %>% 
+  list_rbind() %>% 
+  rename_with(.cols = -c(1),.fn = ~ paste0(.x,'_multivariable'))
+
+finalTable <- full_join(uniTable,multiTable)
+write_tsv(x = finalTable,file = paste0(outputdir,'cox_analysis_res_LNneg.tsv'))
+
 cairo_pdf(filename = paste0(outputdir,'forestplot_multivariable_LNneg.pdf'),onefile = TRUE,width = 9,height = 9)
-plots <- map(seq_along(multivariate_res),function(x){multivariate_res[[x]][[2]] %>% ggplotGrob()})
-gridExtra::marrangeGrob(grobs = plots,ncol = 1,nrow = 1,top = '')
+  plots <- map(seq_along(multiPlot),function(x){multiPlot[[x]][['plot']] %>% ggplotGrob()})
+  gridExtra::marrangeGrob(grobs = plots,ncol = 1,nrow = 1,top = '')
 dev.off()
 ```
 
@@ -554,18 +601,6 @@ cox_models_omics <- map(.x = omics_variables,.f = function(x){
 
 names(cox_models_omics) <- omics_variables
 
-signif_omics <- map(.x = seq_along(cox_models_omics),function(x){
-  model <- extract_fit_engine(cox_models_omics[[x]]) %>% 
-    summary()
-  pluck(model,'coefficients') %>% as.data.frame()
-}) %>% 
-  list_rbind() %>% 
-  mutate(PValue.Adj=p.adjust(.[['Pr(>|z|)']],method = 'fdr')) %>% 
-  filter(.[['Pr(>|z|)']]<0.05) %>% 
-  rownames() %>% 
-  as_vector() %>% 
-  unique
-
 modelList <- map(cox_models_omics,extract_fit_engine)
 fitCheck <- map(modelList,cox.zph) %>% 
   map(~pluck(.x,'table',6)) %>% 
@@ -573,10 +608,32 @@ fitCheck <- map(modelList,cox.zph) %>%
   .[.>0.05]
 
 modelList <- keep(modelList,names(modelList) %in% names(fitCheck))
-uniPlot <- forest_model(model_list = modelList,merge_models = TRUE)
-omics_variables <- names(modelList)
 
-ggsave(filename = 'forestplot_univariable_LNpos.pdf',plot = uniPlot,device = 'pdf',path = outputdir,dpi = 600)
+signif_omics <- map(.x = seq_along(modelList),function(x){
+  model <- modelList[[x]] %>% 
+    summary()
+  pluck(model,'coefficients') %>% as.data.frame()
+}) %>% 
+  list_rbind() %>% 
+  mutate(PValue.Adj=p.adjust(.[['Pr(>|z|)']],method = 'fdr')) %>% 
+  filter(.[['Pr(>|z|)']]<0.05) %>%
+  rownames() %>% 
+  as_vector() %>% 
+  unique
+
+if(!is_empty(signif_omics)){
+  uniplot <- keep(modelList,names(modelList) %in% signif_omics) %>%
+    forest_model(model_list = .,recalculate_width = TRUE,recalculate_height = TRUE,merge_models = TRUE,format_options = forest_model_format_options(text_size = 3))
+  
+  ggsave(filename = 'forestplot_univariable_LNpos.pdf',plot = uniplot,device = 'pdf',path = outputdir,dpi = 600,width = 9,height = 9,units = 'in')
+}else(
+  writeLines(text = 'No variables were deemed significant (p-value < 0.05) at univariable model',con = paste0(outputdir,'error_LNpos.txt'))
+)
+
+uniTable <- forest_model(model_list = modelList,return_data = TRUE) %>% 
+  pluck('plot_data','forest_data') %>% 
+  select(-c(1,7,14,15,16)) %>% 
+  rename_with(.cols = c(6:11),.fn = ~ paste0(.x,'_univariable'))
 ```
 
 ## Fit Multivariable Cox Model
@@ -591,7 +648,7 @@ catchWarning <- function(expr){
   list(result=res,warning=warning_message)
 }
 
-cox_models_omics_multivariate <- map(.x = omics_variables,.f = function(x){
+cox_models_omics_multivariate <- map(.x = names(modelList),.f = function(x){
 data <- finalFeaturesProcessed %>% 
   dplyr::select(sample_id,surv,x,all_of(clinical_variables))
 
@@ -609,26 +666,18 @@ wf <- catchWarning({workflow() %>%
 
 ### Select significant features and generate forest plots
 ```{r}
-multiTable <- map(.x = seq_len(length(cox_models_omics_multivariate)),function(x){
+names(cox_models_omics_multivariate) <- names(modelList)
+
+signif_omics <- map(.x = seq_along(cox_models_omics_multivariate),function(x){
   model <- extract_fit_engine(cox_models_omics_multivariate[[x]][['result']]) %>% 
     summary()
   tibble(Feature=pluck(model,'coefficients') %>% as.data.frame() %>% .[1,] %>% rownames(),
-         pluck(model,'coefficients') %>% as_tibble() %>% .[1,],
-         LogTest_pvalue=pluck(model,'logtest') %>% .[3],
-         SCTest_pvalue=pluck(model,'sctest') %>% .[3],
-         WaldTest_pvalue=pluck(model,'waldtest') %>% .[3])
+         pluck(model,'coefficients') %>% as_tibble() %>% .[1,])
 }) %>% 
   list_rbind() %>% 
-    mutate(PValue.Adj=p.adjust(.[['Pr(>|z|)']],method = 'fdr')) %>% 
-    relocate(PValue.Adj,.after = `Pr(>|z|)`)
-
-# names(cox_models_omics_multivariate) <- multiTable[["Feature"]]
-# 
-# signifMulti <- multiTable %>% 
-#   filter(`Pr(>|z|)`<0.05) %>% 
-#   arrange(PValue.Adj)
-# 
-# multiCoxFilter <- keep(cox_models_omics_multivariate,names(cox_models_omics_multivariate) %in% signifMulti[["Feature"]])
+  filter(`Pr(>|z|)`<0.05) %>% 
+  select(Feature) %>% 
+  as_vector()
 
 # Function to log errors to a file
 log_error <- function(error_message) {
@@ -637,23 +686,14 @@ log_error <- function(error_message) {
 
 create_safe_forest_plot <- function(fit, data,index) {
   tryCatch({
-    # Check proportional hazards assumption
-    fitcheck <- cox.zph(fit = fit)
-    
     # Attempt to create the forest plot
-    plotPH <- forest_model(model = fit,exclude_infinite_cis = TRUE,recalculate_width = TRUE,recalculate_height = TRUE,format_options = forest_model_format_options(text_size = 3))
-    
-    # Return the fitcheck and plot as a list
-    list(fitcheck = fitcheck, plotPH = plotPH)
+    plotPH <- forest_model(model = fit,exclude_infinite_cis = TRUE,recalculate_width = TRUE,recalculate_height = TRUE,format_options = forest_model_format_options(text_size = 3),return_data = TRUE)
+
   }, error = function(e) {
     # Handle the error by printing a message and returning default values
     error_message <- paste(Sys.time(), " - An error occurred while generating the forest plot: ", e$message, sep = "")
     message(error_message)
     log_error(error_message)
-    # Return default values (NA for fitcheck and a blank plot for plotPH)
-    fitUni <- extract_fit_engine(cox_models_omics[[names(multiCoxFilter[index])]])
-    default_plot <- forest_model(model = fitUni,exclude_infinite_cis = TRUE,recalculate_width = TRUE,recalculate_height = TRUE,format_options = forest_model_format_options(text_size = 3))
-    list(fitcheck = NA, plotPH = default_plot)
   })
 }
 
@@ -663,9 +703,26 @@ multivariate_res <- map(seq_along(cox_models_omics_multivariate), function(x) {
   create_safe_forest_plot(fit, finalFeaturesProcessed,index = x)
 })
 
+names(multivariate_res) <- names(cox_models_omics_multivariate)
+
+multivariate_res <- compact(multivariate_res)
+
+multiPlot <- keep(multivariate_res, names(multivariate_res) %in% signif_omics)
+
+multiTable <- map(multivariate_res,function(x){
+  resTable <- pluck(x,'plot_data','forest_data') %>% 
+    filter(variable %in% omics_variables) %>% 
+    select(c(2,10:15))
+}) %>% 
+  list_rbind() %>% 
+  rename_with(.cols = -c(1),.fn = ~ paste0(.x,'_multivariable'))
+
+finalTable <- full_join(uniTable,multiTable)
+write_tsv(x = finalTable,file = paste0(outputdir,'cox_analysis_res_LNpos.tsv'))
+
 cairo_pdf(filename = paste0(outputdir,'forestplot_multivariable_LNpos.pdf'),onefile = TRUE,width = 9,height = 9)
-plots <- map(seq_along(multivariate_res),function(x){multivariate_res[[x]][[2]] %>% ggplotGrob()})
-gridExtra::marrangeGrob(grobs = plots,ncol = 1,nrow = 1,top = '')
+  plots <- map(seq_along(multiPlot),function(x){multiPlot[[x]][['plot']] %>% ggplotGrob()})
+  gridExtra::marrangeGrob(grobs = plots,ncol = 1,nrow = 1,top = '')
 dev.off()
 ```
 

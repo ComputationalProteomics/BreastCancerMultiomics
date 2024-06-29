@@ -87,7 +87,7 @@ dataReduced <- data %>%
 
 dataBatchRemoved <- removeBatchEffect(x = dataReduced,batch = design$group,batch2 = design$batch,design = design,group = design$Group.Info)
 newData <- data %>% 
-  select(1:10) %>% 
+  select(1:10,Phosphosite,Residue) %>% 
   bind_cols(.,dataBatchRemoved)
 
 if(!dir.exists(paths = '/multiomics/results/batchcorrection/phosphoproteome/')) {

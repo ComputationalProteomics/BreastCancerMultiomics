@@ -76,7 +76,7 @@ omics_type <- list('_proteomics','_phosphoproteomics','_transcriptomics')
 set.seed(123)
 data <- pmap(list(data,idCol,omics_type),function(x,y,z){
   signifCol <- colnames(x) %>% str_which(pattern = 'Adj') %>% colnames(x)[.]
-  genecol <- colnames(x) %>% str_which(pattern = "Name|Gene|Ids|Sequence") %>% colnames(x)[.]
+  genecol <- colnames(x) %>% str_which(pattern = "Name|Gene|Ids|Sequence|Phosphosite|Residue") %>% colnames(x)[.]
   x[[y]] <- paste0(make.names(names = x[[y]],unique = TRUE),z)
   data <- x %>% 
   select(all_of(y),all_of(genecol),all_of(signifCol),design$sample_id) %>% 
@@ -85,7 +85,7 @@ data <- pmap(list(data,idCol,omics_type),function(x,y,z){
 
 featIds <- map(data,function(x){
   data <- x %>% 
-    select(matches("Name|Gene|Ids|Sequence"))
+    select(matches("Name|Gene|Ids|Sequence|Phosphosite|Residue"))
 }) %>% 
   list_rbind()
 
@@ -197,7 +197,9 @@ if(!is_empty(signif_omics)){
 uniTable <- forest_model(model_list = modelList,return_data = TRUE) %>% 
   pluck('plot_data','forest_data') %>% 
   select(-c(1,7,14,15,16)) %>% 
-  rename_with(.cols = c(6:11),.fn = ~ paste0(.x,'_univariable'))
+  rename_with(.cols = c(6:11),.fn = ~ paste0(.x,'_univariable')) %>% 
+  left_join(y = featIds,by = c("variable"="Protein.Names")) %>% 
+  relocate(c(12:20),.after = "variable")
 
 ```
 ### Evaluating significant features and skipping if none are present

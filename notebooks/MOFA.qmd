@@ -598,7 +598,7 @@ prot <- proteindata %>%
 prot$Unique.Ids <- make.names(names = prot$Protein.Names,unique = TRUE)
 protFeatures <- prot$Unique.Ids
 protIds <- prot %>% 
-  select(matches("Name|Gene|Ids|Sequence"))
+  select(matches("Name|Gene|Ids|Sequence|Phosphosite|Residue"))
 prot <- prot %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix
@@ -611,7 +611,7 @@ phospho <- phosphodata %>%
 phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
 phosphoFeatures <- phospho$Unique.Ids
 phosphoIds <- phospho %>% 
-  select(matches("Name|Gene|Ids|Sequence"))
+  select(matches("Name|Gene|Ids|Sequence|Phosphosite|Residue"))
 phospho <- phospho %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix
@@ -624,7 +624,7 @@ gene <- genedata %>%
 gene$Unique.Ids <- make.names(names = gene$Gene.Name,unique = TRUE)
 geneFeatures <- gene$Unique.Ids
 geneIds <- gene %>% 
-  select(matches("Name|Gene|Ids|Sequence"))
+  select(matches("Name|Gene|Ids|Sequence|Phosphosite|Residue"))
 gene <- gene %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix
@@ -1743,7 +1743,7 @@ prot <- proteindata %>%
 prot$Unique.Ids <- make.names(names = prot$Protein.Names,unique = TRUE)
 protFeatures <- prot$Unique.Ids
 protIds <- prot %>% 
-  select(matches("Name|Gene|Ids|Sequence"))
+  select(matches("Name|Gene|Ids|Sequence|Phosphosite|Residue"))
 prot <- prot %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix
@@ -1756,7 +1756,7 @@ phospho <- phosphodata %>%
 phospho$Unique.Ids <- make.names(names = phospho$Protein.Names,unique = TRUE)
 phosphoFeatures <- phospho$Unique.Ids
 phosphoIds <- phospho %>% 
-  select(matches("Name|Gene|Ids|Sequence"))
+  select(matches("Name|Gene|Ids|Sequence|Phosphosite|Residue"))
 phospho <- phospho %>% 
   dplyr::select(design$sample_id) %>% 
   as.matrix

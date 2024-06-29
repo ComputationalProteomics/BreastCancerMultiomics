@@ -328,6 +328,15 @@ uniTable <- forest_model(model_list = modelList,return_data = TRUE) %>%
   pluck('plot_data','forest_data') %>% 
   select(-c(1,7,14,15,16)) %>% 
   rename_with(.cols = c(6:11),.fn = ~ paste0(.x,'_univariable'))
+
+featIds <- params$model %>% 
+  str_split_i('model.RDS',1) %>% 
+  list.files(pattern = 'featIDs',full.names = TRUE,recursive = TRUE) %>% 
+  read_tsv()
+
+uniTable <- uniTable %>% 
+  left_join(y = featIds, by= c("variable"="Unique.Ids")) %>% 
+  relocate(c(12:21),.after="variable")
 ```
 
 #### Evaluating significant features and skipping if none are present

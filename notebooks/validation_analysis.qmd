@@ -101,14 +101,12 @@ invisible(gc())
 ```
 
 ```{r}
-# ln_genes <- c('EPS8L2','CNN1','LNPK','SEPT2','CBFA2T3')
-# drfi_genes_mofa <- c('THBS1','THBS2','MFGE8','MYH9','MYH10','MYH11','RBM39','KCND3','BRD3')
-# drfi_genes_de <- c('HSP90AB3P','HSP90AA2P','HSP90AA1','HSP90AB1')
+colTypes <- cols("Residue"=col_character(),.default = col_guess())
 
 coxFeats <- list.files(path = '/multiomics/results/figures/survival_analysis/',pattern = 'cox_analysis_res',full.names = TRUE,recursive = TRUE) %>% 
   .[str_detect(.,params$comparison)] %>% 
   .[str_detect(.,params$event)] %>% 
-  map(read_tsv) %>% 
+  map(function(x){read_tsv(file = x,col_types = colTypes)}) %>% 
   list_rbind() %>% 
   dplyr::filter(.[["p.value_univariable"]]<0.05 | .[["p.value_multivariable"]]<0.05) %>% 
   dplyr::select(variable) %>% 
@@ -117,7 +115,7 @@ coxFeats <- list.files(path = '/multiomics/results/figures/survival_analysis/',p
 
 idMap <- list.files(path = "/multiomics/results/",pattern = "featIDs\\.tsv",full.names = TRUE,recursive = TRUE) %>% 
   .[str_detect(.,params$comparison)] %>% 
-  map(read_tsv) %>% 
+  map(function(x){read_tsv(file = x,col_types = colTypes)}) %>% 
   list_rbind() %>% 
   filter(!duplicated(.)) 
 

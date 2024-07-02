@@ -1,0 +1,203 @@
+---
+title: "Boxplot Validation Samples"
+author: "Sergio Mosquim Junior"
+format:
+  html:
+    toc: true
+    code-fold: true
+    embed-resources: true
+    toc-location: left
+    smooth-scroll: true
+    message: false
+engine: knitr
+params:
+  comparison: 'Group1vsGroup2'
+  time: 'DRFi_days'
+  event: 'DRFi_event'
+  outcome: 'DRFi_event'
+editor_options: 
+  chunk_output_type: console
+---
+
+# Requires Packages:
+
+```{r required packages}
+#| message: false
+#| warning: false
+library(tidyverse)
+library(gridExtra)
+library(grDevices)
+```
+
+# Boxplots from DE features
+## Load Data
+```{r}
+files <- list.files(path = '~/multiomics',pattern = 'stats.tsv',recursive = TRUE,include.dirs = TRUE,full.names = TRUE) %>% 
+  .[str_detect(.,params$comparison)] %>% 
+  .[!str_detect(.,'cluster')]
+
+design <- read_tsv(file = '~/multiomics/results/design_files/design_multiomics_mofa.tsv')
+
+if(str_detect(params$comparison,'noG2')){
+  design <- design %>% 
+    filter(str_detect(Group.Info,'Group2',negate=TRUE))
+}
+
+if(str_equal(params$comparison,'Group1vsGroup2')){
+  design <- design %>% 
+    filter(Group.Info %in% c('Group1','Group2'))
+}
+
+data <- list(proteomics=read_tsv(file = files[str_detect(files,'full')]),
+             phosphoproteomics=read_tsv(file = files[str_detect(files,'aggModSeq')]),
+             transcriptomics=read_tsv(file = files[str_detect(files,'transcript')]))
+
+idCol <- list(proteomics='Protein.Names',phosphoproteomics='Protein.Names',transcriptomics='Gene.Name')
+omics_type <- list('_proteomics','_phosphoproteomics','_transcriptomics')
+```
+
+## Select Features
+```{r}
+colTypes <- cols("Residue"=col_character(),.default = col_guess())
+
+coxFeats <- list.files(path = '~/multiomics/results/figures/survival_analysis/DE/',pattern = 'cox_analysis_res',full.names = TRUE,recursive = TRUE) %>% 
+  .[str_detect(.,params$comparison)] %>% 
+  .[str_detect(.,params$event)] %>% 
+  map(function(x){read_tsv(file = x,col_types = colTypes)}) %>% 
+  list_rbind() %>% 
+  dplyr::filter(.[["p.value_univariable"]]<0.05 | .[["p.value_multivariable"]]<0.05) %>% 
+  dplyr::select(variable) %>% 
+  unlist() %>% 
+  unique()
+
+idMap <- list.files(path = "~/multiomics/results/figures/survival_analysis/DE/",pattern = "featIDs\\.tsv",full.names = TRUE,recursive = TRUE) %>%
+  .[str_detect(.,params$comparison)] %>%
+  map(function(x){read_tsv(file = x,col_types = colTypes)}) %>%
+  list_rbind() %>%
+  filter(!duplicated(.))
+
+teste <- {feature <- coxFeats %>% .[str_detect(.,"\\_proteomics")]
+          mapping <- idMap %>% 
+            filter(Protein.Names==feature) %>% 
+            .[["Protein.Names"]] %>% 
+            str_split_i(pattern = "\\_proteomics",i = 1) %>% 
+            str_replace_all(pattern = "\\.",replacement = "\\;")
+          final <- data[["proteomics"]] %>% 
+            filter(Protein.Names==mapping) %>% 
+            select(design[["sample_id"]]) %>% 
+            t() %>% 
+            as.data.frame() %>% 
+            mutate(sample=rownames(.))
+} %>% relocate(where(is.character),.before=where(is.numeric))
+colnames(teste) <- c("sample",feature)
+
+teste2 <- {feature <- coxFeats %>% .[str_detect(.,"\\_phosphoproteomics")]
+          mapping <- idMap %>% 
+            filter(Protein.Names %in% feature) %>% 
+            .[["Modified.Sequence"]]
+          final <- data[["phosphoproteomics"]] %>% 
+            filter(Modified.Sequence %in% mapping) %>% 
+            select(design[["sample_id"]]) %>% 
+            t() %>% 
+            as.data.frame() %>% 
+            mutate(sample=rownames(.))
+} %>% relocate(where(is.character),.before=where(is.numeric))
+colnames(teste2) <- c("sample",feature)
+
+```
+
+## Generate Plots
+
+# Boxplots from MOFA features
+## Select Features
+```{r}
+colTypes <- cols("Residue"=col_character(),.default = col_guess())
+
+# idMap <- list.files(path = "~/multiomics/results/MOFA/",pattern = "featIDs\\.tsv",full.names = TRUE,recursive = TRUE) %>% 
+#   .[str_detect(.,params$comparison)] %>% 
+#   map(function(x){read_tsv(file = x,col_types = colTypes)}) %>% 
+#   list_rbind() %>% 
+#   filter(!duplicated(.)) 
+
+coxFeats <- list.files(path = '~/multiomics/results/figures/survival_analysis/',pattern = 'cox_analysis_res',full.names = TRUE,recursive = TRUE) %>% 
+  .[str_detect(.,params$comparison)] %>% 
+  .[str_detect(.,params$event)] %>% 
+  map(function(x){read_tsv(file = x,col_types = colTypes)}) %>% 
+  list_rbind() %>% 
+  dplyr::filter(.[["p.value_univariable"]]<0.05 | .[["p.value_multivariable"]]<0.05) %>% 
+  dplyr::select(variable) %>% 
+  unlist() %>% 
+  unique()
+
+model <- list.files(path = "~/multiomics/results/MOFA/",pattern = "model.RDS",full.names = TRUE,recursive = TRUE) %>% 
+  .[str_detect(.,params$comparison)] %>% 
+  read_rds()
+
+features <- coxFeats %>% str_split_i(pattern = '\\.proteomics|\\.transcriptomics|\\.phosphoproteomics',1)
+
+metadata <- model@samples_metadata %>%
+  dplyr::select(sample,LN,DRFi_event)
+
+data <- list(
+  proteomics={model@data[["proteomics"]] %>% 
+    .[["group1"]] %>% 
+    .[c(features[str_detect(coxFeats,'\\.proteomics')]),] %>% 
+    t() %>% 
+    as.data.frame() %>% 
+    mutate(sample=rownames(.)) %>% 
+    left_join(metadata,.,'sample')},
+  phosphoproteomics={model@data[["phosphoproteomics"]] %>% 
+    .[["group1"]] %>% 
+    .[c(features[str_detect(coxFeats,'\\.phosphoproteomics')]),] %>% 
+    t() %>% 
+    as.data.frame() %>% 
+    mutate(sample=rownames(.)) %>% 
+    left_join(metadata,.,'sample')},
+  transcriptomics={model@data[["transcriptomics"]] %>% 
+    .[["group1"]] %>% 
+    .[c(features[str_detect(coxFeats,'\\.transcriptomics')]),] %>% 
+    t() %>% 
+    as.data.frame() %>% 
+    mutate(sample=rownames(.)) %>% 
+    left_join(metadata,.,'sample')})
+
+
+# immuneFeat <- model@data[["immuneinfiltration"]][["group1"]][c(features[str_detect(coxFeats,'\\.immuneinfiltration')]),] %>% 
+#   t() %>% 
+#   as.data.frame() %>% 
+#   mutate(sample=rownames(.)) %>% 
+#   left_join(metadata,.,'sample')
+
+features <- list("proteomics"=c(features[str_detect(coxFeats,'\\.proteomics')]),
+                 "phosphoproteomics"=c(features[str_detect(coxFeats,'\\.phosphoproteomics')]),
+                 "transcriptomics"=c(features[str_detect(coxFeats,'\\.transcriptomics')]
+                 # "immuneinfiltration"=c(features[str_detect(coxFeats,'\\.immuneinfiltration')]
+                                        )
+)
+```
+
+## Generate Plots
+```{r}
+plots <- map2(data,features,function(x,y){
+  data <- x
+  features <- y
+  plot <- map(features,function(x){
+    ggplot(data)+
+      geom_point(mapping = aes(x=as.factor(LN),y=.data[[x]],color=as.factor(LN)))+
+      geom_boxplot(mapping = aes(x=as.factor(LN),y=.data[[x]],fill=as.factor(LN)),alpha=0.7)+
+      scale_color_manual(name="LN status",values = c("0"="darkblue","1"="darkred"))+
+      scale_fill_manual(name="LN status",values = c("0"="darkblue","1"="darkred"))+
+      stat_compare_means(mapping = aes(x=as.factor(LN),y=.data[[x]]),
+                         method = 't.test',
+                         symnum.args = list(cutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, Inf), 
+                                            symbols = c("****", "***", "**", "*", "ns")),
+                         ref.group = "0",
+                         show.legend = FALSE)+
+      xlab("LN status")+
+      theme_bw()
+  })
+  names(plot) <- y
+  return(plot)
+})
+```
+

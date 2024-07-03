@@ -86,6 +86,12 @@ workflow  {
     SURVIVAL_DE.out.collect(),
     SURVIVAL_MOFA.out.collect()
     )
+
+    BOXPLOTS(
+    ch_notebook_multiomics.filter {it.name == 'boxplots_validation_samples.qmd'},
+    SURVIVAL_DE.out.collect(),
+    SURVIVAL_MOFA.out.collect()
+    )
 }
 
 // Process definition
@@ -432,7 +438,7 @@ process EXTERNAL_VALIDATION{
         path(notebook)
         path(html)
         path(html)
-        
+
     when:
         html.exists()
 
@@ -446,5 +452,30 @@ process EXTERNAL_VALIDATION{
     quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'DRFi_days' -P event:'DRFi_event' > .html
     quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'OS_days' -P event:'OS_event' > .html
     quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'RFi_days' -P event:'RFi_event' > .html
+    """
+}
+
+process BOXPLOTS{
+    publishDir "./results/rendered_notebooks",
+        mode: "copy"
+
+    input:
+        path(notebook)
+        path(html)
+        path(html)
+
+    when:
+        html.exists()
+
+    output:
+        path("*.html"), emit: html
+
+    script:
+    """
+    quarto render ${notebook} -P comparison:'AllSamples_noG2' -P time:'OS_days' -P event:'OS_event' -P outcome:'LN' > .html
+    quarto render ${notebook} -P comparison:'AllSamples_noG2' -P time:'RFi_days' -P event:'RFi_event' -P outcome:'LN' > .html
+    quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'DRFi_days' -P event:'DRFi_event' -P outcome:'DRFi_event' > .html
+    quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'OS_days' -P event:'OS_event' -P outcome:'DRFi_event' > .html
+    quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'RFi_days' -P event:'RFi_event' -P outcome:'DRFi_event' > .html
     """
 }

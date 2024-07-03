@@ -47,7 +47,7 @@ if(!dir.exists(paths = outputdir)) {
 ```{r}
 #| message: false
 
-files <- list.files(path = '/multiomics',pattern = 'stats.tsv',recursive = TRUE,include.dirs = TRUE,full.names = TRUE) %>% 
+files <- list.files(path = '/multiomics/results/',pattern = 'stats.tsv',recursive = TRUE,include.dirs = TRUE,full.names = TRUE) %>% 
   .[str_detect(.,params$comparison)] %>% 
   .[!str_detect(.,'cluster')]
 

@@ -386,8 +386,15 @@ process SURVIVAL_CLUSTER{
         path("*.html"),emit: html
     script:
     """
-    quarto render ${notebook} > .html
-    quarto render ${notebook} -P time:'OS_days' -P event:'OS_event' > .html
+    quarto render ${notebook} -P dataPath:'/multiomics/results/consensus_clustering/DuctalvsLobular/proteome/proteome.k=6.consensusClass.csv' -P designPath:'/multiomics/results/design_files/design_Full_noPool.tsv' > .html
+    quarto render ${notebook} -P dataPath:'/multiomics/results/consensus_clustering/DuctalvsLobular/proteome/proteome.k=6.consensusClass.csv' -P designPath:'/multiomics/results/design_files/design_Full_noPool.tsv' -P time:'OS_days' -P event:'OS_event' > .html
+
+    quarto render ${notebook} -P dataPath:'/multiomics/results/consensus_clustering/DuctalvsLobular/phosphoproteome/phosphoproteome.k=5.consensusClass.csv' -P designPath:'/multiomics/results/design_files/design_phospho_noPool.tsv' > .html
+    quarto render ${notebook} -P dataPath:'/multiomics/results/consensus_clustering/DuctalvsLobular/phosphoproteome/phosphoproteome.k=5.consensusClass.csv' -P designPath:'/multiomics/results/design_files/design_phospho_noPool.tsv' -P time:'OS_days' -P event:'OS_event' > .html
+
+    quarto render ${notebook} -P dataPath:'/multiomics/results/consensus_clustering/DuctalvsLobular/transcriptome/transcriptome.k=5.consensusClass.csv' -P designPath:'/multiomics/results/design_files/design_RNA_noPool.tsv' > .html
+    quarto render ${notebook} -P dataPath:'/multiomics/results/consensus_clustering/DuctalvsLobular/transcriptome/transcriptome.k=5.consensusClass.csv' -P designPath:'/multiomics/results/design_files/design_RNA_noPool.tsv' -P time:'OS_days' -P event:'OS_event' > .html
+
     """
 }
 

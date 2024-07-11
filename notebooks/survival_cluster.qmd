@@ -15,6 +15,8 @@ params:
   designPath: '/multiomics/results/design_files/design_Full_noPool.tsv'
   time: 'RFi_days'
   event: 'RFi_event'
+editor_options: 
+  chunk_output_type: console
 ---
 
 # Requires Packages:
@@ -35,7 +37,9 @@ library(forestmodel)
 ```{r}
 #| message: false
 
-outputdir <- '/multiomics/results/figures/survival_analysis/consensus_cluster/'
+input <- params$dataPath %>% str_split(pattern = '/',simplify = T) %>% .[5:7] %>% paste0(collapse = '/')
+
+outputdir <- paste0('/multiomics/results/figures/survival_analysis/consensus_cluster/',input,'/')
 if(!dir.exists(paths = outputdir)) {
   dir.create(path = outputdir,recursive = TRUE)
 }
@@ -128,7 +132,7 @@ clusters <- map(.x = seq_len(length(cox_models_omics)),function(x){
 modelList <- map(cox_models_omics,~extract_fit_engine(.x))
 forestPlot <- forest_model(model_list = modelList,merge_models = TRUE)
 
-cairo_pdf(filename = paste0(outputdir,'forestplot_cluster',params$event,'.pdf'),onefile = TRUE,width = 9,height = 9)
+cairo_pdf(filename = paste0(outputdir,'forestplot_cluster_',params$event,'.pdf'),onefile = TRUE,width = 9,height = 9)
 plot <- forestPlot %>% ggplotGrob()
 gridExtra::grid.arrange(plot,newpage = FALSE)
 dev.off()

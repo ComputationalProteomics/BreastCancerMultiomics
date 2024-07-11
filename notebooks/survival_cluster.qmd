@@ -119,7 +119,7 @@ clusters <- map(.x = seq_len(length(cox_models_omics)),function(x){
   list_rbind() %>% 
     mutate(PValue.Adj=p.adjust(.[['Pr(>|z|)']],method = 'fdr')) %>% 
     relocate(PValue.Adj,.after = `Pr(>|z|)`) %>% 
-    mutate(label=c(paste0('Cluster.',1:6,'.vs.Others')))
+    mutate(label=c(paste0('Cluster.',1:nrow(.),'.vs.Others')))
 
 # p <- ggplot(teste,aes(x=`exp(coef)`,y=label))+
 #   geom_point(color='red')+

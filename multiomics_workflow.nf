@@ -387,6 +387,7 @@ process SURVIVAL_CLUSTER{
     script:
     """
     quarto render ${notebook} > .html
+    quarto render ${notebook} -P time:'OS_days' -P event:'OS_event' > .html
     """
 }
 

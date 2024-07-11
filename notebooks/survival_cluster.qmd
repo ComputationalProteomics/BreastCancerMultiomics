@@ -13,6 +13,8 @@ engine: knitr
 params:
   dataPath: '/multiomics/results/consensus_clustering/DuctalvsLobular/proteome/proteome.k=6.consensusClass.csv'
   designPath: '/multiomics/results/design_files/design_Full_noPool.tsv'
+  time: 'RFi_days'
+  event: 'RFi_event'
 ---
 
 # Requires Packages:
@@ -44,8 +46,8 @@ dataCluster <- read_csv(file = params$dataPath,col_names = c('sample','cluster')
 clinicalFeatures <- design %>% 
   select(
     sample=sample_id,
-    time=RFi_days,
-    event=RFi_event,
+    time=params$time,
+    event=params$event,
     Age=`Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)`,
     Size=T.size,
     Treatment=TreatGroup,
@@ -126,7 +128,7 @@ clusters <- map(.x = seq_len(length(cox_models_omics)),function(x){
 modelList <- map(cox_models_omics,~extract_fit_engine(.x))
 forestPlot <- forest_model(model_list = modelList,merge_models = TRUE)
 
-cairo_pdf(filename = paste0(outputdir,'forestplot_cluster.pdf'),onefile = TRUE,width = 9,height = 9)
+cairo_pdf(filename = paste0(outputdir,'forestplot_cluster',params$event,'.pdf'),onefile = TRUE,width = 9,height = 9)
 plot <- forestPlot %>% ggplotGrob()
 gridExtra::grid.arrange(plot,newpage = FALSE)
 dev.off()

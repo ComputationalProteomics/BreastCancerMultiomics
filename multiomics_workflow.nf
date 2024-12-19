@@ -523,7 +523,6 @@ process IMMUNE_BOXPLOT{
 
     input:
         path(notebook)
-        path(html)
 
     when:
         html.exists()

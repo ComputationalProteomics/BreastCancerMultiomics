@@ -97,6 +97,10 @@ workflow  {
     ch_notebook_multiomics.filter {it.name == 'table1_data_completeness.qmd'},
     DIFFERENTIAL_EXPRESSION.out.collect()
     )
+    
+    IMMUNE_BOXPLOT(
+    ch_notebook_multiomics.filter {it.name == 'immune_boxplot_LM22.qmd'}
+    )
 }
 
 // Process definition
@@ -494,6 +498,26 @@ process BOXPLOTS{
 }
 
 process TABLE_1{
+    publishDir "./results/rendered_notebooks",
+        mode: "copy"
+
+    input:
+        path(notebook)
+        path(html)
+
+    when:
+        html.exists()
+
+    output:
+        path("*.html"), emit: html
+
+    script:
+    """
+    quarto render ${notebook} > .html
+    """
+}
+
+process IMMUNE_BOXPLOT{
     publishDir "./results/rendered_notebooks",
         mode: "copy"
 

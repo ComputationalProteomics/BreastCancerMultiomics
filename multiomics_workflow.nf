@@ -92,6 +92,11 @@ workflow  {
     SURVIVAL_DE.out.collect(),
     SURVIVAL_MOFA.out.collect()
     )
+    
+    TABLE_1(
+    ch_notebook_multiomics.filter {it.name == 'table1_data_completeness.qmd'},
+    DIFFERENTIAL_EXPRESSION.out.collect()
+    )
 }
 
 // Process definition
@@ -485,5 +490,25 @@ process BOXPLOTS{
     quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'DRFi_days' -P event:'DRFi_event' -P outcome:'DRFi_event' > .html
     quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'OS_days' -P event:'OS_event' -P outcome:'DRFi_event' > .html
     quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'RFi_days' -P event:'RFi_event' -P outcome:'DRFi_event' > .html
+    """
+}
+
+process TABLE_1{
+    publishDir "./results/rendered_notebooks",
+        mode: "copy"
+
+    input:
+        path(notebook)
+        path(html)
+
+    when:
+        html.exists()
+
+    output:
+        path("*.html"), emit: html
+
+    script:
+    """
+    quarto render ${notebook} > .html
     """
 }

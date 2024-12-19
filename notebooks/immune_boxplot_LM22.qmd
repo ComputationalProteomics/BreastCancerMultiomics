@@ -1,0 +1,79 @@
+---
+title: "Supplementary Figure S2"
+author: "Sergio Mosquim Junior"
+format:
+  html:
+    toc: true
+    code-fold: true
+    embed-resources: true
+    toc-location: left
+    smooth-scroll: true
+engine: knitr
+---
+
+# Requires Packages:
+```{r required packages}
+#| message: false
+#| warning: false
+library(tidyverse)
+library(ggpubr)
+library(ggplot2)
+```
+
+# Load Required Data
+```{r}
+immuneFeat <- read_tsv(file = '/multiomics/data/Immune_infiltration/CIBERSORTx_Job41_Results_transcriptomics_LM22-absolute.txt')
+design <- read_tsv(file = "/multiomics/results/design_files/ductalvslobular_consensus_clustering.tsv")
+```
+
+# Data Preprocessing
+ Column names will be reformatted to remove parentheses and convert spaces and hyphens to underscores. The data frame will then be combined with the design file in order to include the cluster information per sample. Feature names are then extracted to a new variable
+```{r}
+colnames(immuneFeat) <- colnames(immuneFeat) %>% 
+  str_replace_all(pattern = " ",replacement = "_") %>% 
+  str_remove_all(pattern = "\\(|\\)") %>% 
+  str_replace_all(pattern = "\\-",replacement = "\\_")
+
+immuneFeat_process <- immuneFeat %>% 
+  left_join(y = design,by = c("Mixture"="sample_id")) %>% 
+  mutate(CC.Prot=factor(CC.Prot,levels=c(1:6)))
+
+features <- immuneFeat_process %>% select(-c(24:30,Mixture)) %>% colnames()
+```
+
+# Plotting
+## Establishing Comparisons
+  This chunk establishes the comparisons to be included in the plot, i.e., comparing cluster 2 with the remaining clusters
+```{r}
+comparisons <- list(c("2","1"),
+                    c("3","2"),
+                    c("2","4"),
+                    c("2","5"),
+                    c("2","6"))
+```
+
+## Plot
+  Boxplots are generated for each cell type and a wilcox test is run comparing cluster 2 with the remaining clusters.
+```{r}
+plot <- ggdotplot(data = immuneFeat_process,x = "CC.Prot",
+          y = features,combine = TRUE,
+          size = 0.1,
+          add = "boxplot",
+          color = "CC.Prot",
+          fill = "CC.Prot",
+          facet.by = features,binwidth = 0.1,ncol=4)+
+  stat_compare_means(mapping = aes(x = CC.Prot,y = features),
+                     method = "wilcox.test",
+                     paired = FALSE,
+                     comparisons = comparisons,geom = "point",position = "jitter",label.y = 0.5,step.increase = 0.2,
+                     na.rm = TRUE,label = "p.format",hide.ns = FALSE)+
+  theme_bw()+
+  scale_fill_manual(values = colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6)) %>% colorspace::darken())+
+  scale_colour_manual(values = colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') %>% setNames(nm = c(1:6)) %>% colorspace::darken())+
+  ylim(c(0,2))+
+  ylab(label = NULL)+
+  xlab(label = NULL)
+
+ggsave(filename = "LM22_boxplot.pdf",plot = plot,device = "pdf",path = "/multiomics/results/figures/immune_infiltration",height = 20,width = 15,units = "in",dpi = 600,create.dir = TRUE)
+```
+

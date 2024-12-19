@@ -524,9 +524,6 @@ process IMMUNE_BOXPLOT{
     input:
         path(notebook)
 
-    when:
-        html.exists()
-
     output:
         path("*.html"), emit: html
 

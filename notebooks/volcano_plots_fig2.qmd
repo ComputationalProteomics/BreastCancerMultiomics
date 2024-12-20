@@ -1,0 +1,117 @@
+---
+title: "Volcano Plots - Figure 2"
+author: "Sergio Mosquim Junior"
+format:
+  html:
+    toc: true
+    code-fold: true
+    embed-resources: true
+    toc-location: left
+    smooth-scroll: true
+engine: knitr
+---
+
+# Requires Packages:
+```{r required packages}
+#| message: false
+#| warning: false
+library(tidyverse)
+library(ggrepel)
+```
+
+```{r Output Directory}
+outputdir <- '/multiomics/results/figures/volcano_plots/'
+
+if(!dir.exists(paths = outputdir)) {
+  dir.create(path = outputdir,recursive = TRUE)
+}
+```
+
+# Load Differential Expression Data
+```{r}
+prot <- read_tsv(file = '/multiomics/results/differentialexpression/DuctalvsLobular/ductalvslobular_fullproteome_protein/ductalvslobular_fullproteome_protein_stats.tsv')
+phospho <- read_tsv(file = '/multiomics/results/differentialexpression/DuctalvsLobular/ductalvslobular_phosphoproteome_peptide_aggModSeq/ductalvslobular_phosphoproteome_peptide_aggModSeq_stats.tsv')
+gene <- read_tsv(file = '/multiomics/results/differentialexpression/DuctalvsLobular/ductalvslobular_transcriptome/ductalvslobular_transcriptome_stats.tsv')
+```
+
+# Preprocessing
+```{r}
+prot_clean <- prot %>% 
+  select(Protein.Names,Log2FC=contains("FoldChange"),FDR=contains("AdjPVal")) %>% 
+  mutate(Expression = case_when(
+    Log2FC > 1 & FDR < 0.05 ~ "Upregulated",
+    Log2FC < -1 & FDR < 0.05 ~ "Downregulated",
+    .default = "Not Significant"
+  ))
+prot_significant <- prot_clean %>% 
+  filter(!Expression=="Not Significant")
+
+phospho_clean <- phospho %>% 
+  select(Protein.Names,Phosphosite,Residue,Log2FC=contains("FoldChange"),FDR=contains("AdjPVal")) %>% 
+  mutate(Expression = case_when(
+    Log2FC > 1 & FDR < 0.05 ~ "Upregulated",
+    Log2FC < -1 & FDR < 0.05 ~ "Downregulated",
+    .default = "Not Significant"
+  ))
+phospho_significant <- phospho_clean %>% 
+  filter(!Expression=="Not Significant")
+
+gene_clean <- gene %>% 
+  select(Gene.Name,Log2FC=contains("FoldChange"),FDR=contains("AdjPVal")) %>% 
+  mutate(Expression = case_when(
+    Log2FC > 1 & FDR < 0.05 ~ "Upregulated",
+    Log2FC < -1 & FDR < 0.05 ~ "Downregulated",
+    .default = "Not Significant"
+  ))
+gene_significant <- gene_clean %>% 
+  filter(!Expression=="Not Significant")
+```
+
+# Plotting
+```{r}
+plot_volcano_prot <- prot_clean %>% 
+  ggplot(mapping = aes(x=Log2FC, y = -log10(FDR))) +
+  geom_point(size = 0.5,mapping = aes(color=Expression)) +
+  geom_vline(xintercept = c(-1,1),linetype = "dashed",linewidth = 0.1) +
+  geom_hline(yintercept = -log10(0.05),linetype = "dashed", linewidth = 0.1) + 
+  scale_color_manual(values = c("#0571b0","grey40","#ca0020")) +
+  guides(colour = guide_legend(override.aes = list(size=1.5))) +
+  xlab(expression("log"[2]*"FC")) +
+  ylab(expression("-log"[10]*"FDR")) + 
+  theme_bw() +
+  geom_text_repel(data = prot_significant, mapping = aes(x = Log2FC,y = -log10(FDR),colour = Expression, label = Protein.Names),size=3)
+
+plot_volcano_phospho <- phospho_clean %>% 
+  ggplot(mapping = aes(x=Log2FC, y = -log10(FDR))) +
+  geom_point(size = 0.5,mapping = aes(color=Expression)) +
+  geom_vline(xintercept = c(-1,1),linetype = "dashed",linewidth = 0.1) +
+  geom_hline(yintercept = -log10(0.05),linetype = "dashed", linewidth = 0.1) + 
+  scale_color_manual(values = c("#0571b0","grey40","#ca0020")) +
+  guides(colour = guide_legend(override.aes = list(size=1.5))) +
+  xlab(expression("log"[2]*"FC")) +
+  ylab(expression("-log"[10]*"FDR")) + 
+  theme_bw() +
+  geom_text_repel(data = phospho_significant, mapping = aes(x = Log2FC,y = -log10(FDR),colour = Expression, label = Protein.Names),size=3,max.overlaps = 51)
+
+plot_volcano_gene <- gene_clean %>% 
+  ggplot(mapping = aes(x=Log2FC, y = -log10(FDR))) +
+  geom_point(size = 0.5,mapping = aes(color=Expression)) +
+  geom_vline(xintercept = c(-1,1),linetype = "dashed",linewidth = 0.1) +
+  geom_hline(yintercept = -log10(0.05),linetype = "dashed", linewidth = 0.1) + 
+  scale_color_manual(values = c("#0571b0","grey40","#ca0020")) +
+  guides(colour = guide_legend(override.aes = list(size=1.5))) +
+  xlab(expression("log"[2]*"FC")) +
+  ylab(expression("-log"[10]*"FDR")) + 
+  theme_bw() +
+  geom_text_repel(data = gene_significant, mapping = aes(x = Log2FC,y = -log10(FDR),colour = Expression, label = Gene.Name),size=3)
+
+plots <- list(protein_plot=plot_volcano_prot,phospho_plot=plot_volcano_phospho,gene_plot=plot_volcano_gene)
+```
+
+## Save Plots
+```{r}
+map(.x = seq_along(plots),.f = function(x){
+  ggsave(filename = paste0("Figure2_",names(plots[x]),".pdf"),plot = plots[[x]],device = pdf,path = outputdir,dpi = 600,width = 10,height = 10)
+})
+```
+

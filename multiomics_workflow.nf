@@ -82,25 +82,31 @@ workflow  {
     )
 
     EXTERNAL_VALIDATION(
-    ch_notebook_multiomics.filter {it.name == 'validation_analysis.qmd'},
-    SURVIVAL_DE.out.collect(),
-    SURVIVAL_MOFA.out.collect()
+      ch_notebook_multiomics.filter {it.name == 'validation_analysis.qmd'},
+      SURVIVAL_DE.out.collect(),
+      SURVIVAL_MOFA.out.collect()
     )
 
     BOXPLOTS(
-    ch_notebook_multiomics.filter {it.name == 'boxplots_validation_samples.qmd'},
-    SURVIVAL_DE.out.collect(),
-    SURVIVAL_MOFA.out.collect()
+      ch_notebook_multiomics.filter {it.name == 'boxplots_validation_samples.qmd'},
+      SURVIVAL_DE.out.collect(),
+      SURVIVAL_MOFA.out.collect()
     )
     
     TABLE_1(
-    ch_notebook_multiomics.filter {it.name == 'table1_data_completeness.qmd'},
-    DIFFERENTIAL_EXPRESSION.out.collect()
+      ch_notebook_multiomics.filter {it.name == 'table1_data_completeness.qmd'},
+      DIFFERENTIAL_EXPRESSION.out.collect()
     )
     
     IMMUNE_BOXPLOT(
-    ch_notebook_multiomics.filter {it.name == 'immune_boxplot_LM22.qmd'}
+      ch_notebook_multiomics.filter {it.name == 'immune_boxplot_LM22.qmd'}
     )
+    
+    VOLCANO_PLOTS(
+      ch_notebook_multiomics.filter {it.name == 'volcano_plots_fig2.qmd'},
+      DIFFERENTIAL_EXPRESSION.out.collect()
+    )
+
 }
 
 // Process definition
@@ -523,6 +529,26 @@ process IMMUNE_BOXPLOT{
 
     input:
         path(notebook)
+
+    output:
+        path("*.html"), emit: html
+
+    script:
+    """
+    quarto render ${notebook} > .html
+    """
+}
+
+process VOLCANO_PLOTS{
+    publishDir "./results/rendered_notebooks",
+        mode: "copy"
+
+    input:
+        path(notebook)
+        path(html)
+
+    when:
+        html.exists()
 
     output:
         path("*.html"), emit: html

@@ -52,7 +52,8 @@ phospho_clean <- phospho %>%
     Log2FC > 1 & FDR < 0.05 ~ "Upregulated",
     Log2FC < -1 & FDR < 0.05 ~ "Downregulated",
     .default = "Not Significant"
-  ))
+  )) |> 
+    mutate(Feature = str_c(Protein.Names, Phosphosite, Residue, sep = "."))
 phospho_significant <- phospho_clean %>% 
   filter(!Expression=="Not Significant")
 
@@ -72,38 +73,41 @@ gene_significant <- gene_clean %>%
 plot_volcano_prot <- prot_clean %>% 
   ggplot(mapping = aes(x=Log2FC, y = -log10(FDR))) +
   geom_point(size = 0.5,mapping = aes(color=Expression)) +
-  geom_vline(xintercept = c(-1,1),linetype = "dashed",linewidth = 0.1) +
-  geom_hline(yintercept = -log10(0.05),linetype = "dashed", linewidth = 0.1) + 
+  geom_vline(xintercept = c(-1,1),linetype = "dashed",linewidth = 0.7) +
+  geom_hline(yintercept = -log10(0.05),linetype = "dashed", linewidth = 0.7) + 
   scale_color_manual(values = c("#0571b0","grey40","#ca0020")) +
   guides(colour = guide_legend(override.aes = list(size=1.5))) +
   xlab(expression("log"[2]*"FC")) +
   ylab(expression("-log"[10]*"FDR")) + 
-  theme_bw() +
-  geom_text_repel(data = prot_significant, mapping = aes(x = Log2FC,y = -log10(FDR),colour = Expression, label = Protein.Names),size=3)
+  labs(tag = 'A') +
+  theme_bw(base_size = 20) +
+  geom_text_repel(data = prot_significant, mapping = aes(x = Log2FC,y = -log10(FDR),colour = Expression, label = Protein.Names),size=4, max.overlaps = 5)
 
 plot_volcano_phospho <- phospho_clean %>% 
   ggplot(mapping = aes(x=Log2FC, y = -log10(FDR))) +
   geom_point(size = 0.5,mapping = aes(color=Expression)) +
-  geom_vline(xintercept = c(-1,1),linetype = "dashed",linewidth = 0.1) +
-  geom_hline(yintercept = -log10(0.05),linetype = "dashed", linewidth = 0.1) + 
+  geom_vline(xintercept = c(-1,1),linetype = "dashed",linewidth = 0.7) +
+  geom_hline(yintercept = -log10(0.05),linetype = "dashed", linewidth = 0.7) + 
   scale_color_manual(values = c("#0571b0","grey40","#ca0020")) +
   guides(colour = guide_legend(override.aes = list(size=1.5))) +
   xlab(expression("log"[2]*"FC")) +
   ylab(expression("-log"[10]*"FDR")) + 
-  theme_bw() +
-  geom_text_repel(data = phospho_significant, mapping = aes(x = Log2FC,y = -log10(FDR),colour = Expression, label = Protein.Names),size=3,max.overlaps = 51)
+  labs(tag = 'B') +
+  theme_bw(base_size = 20) +
+  geom_text_repel(data = phospho_significant, mapping = aes(x = Log2FC,y = -log10(FDR),colour = Expression, label = Feature),size=4,max.overlaps = 5)
 
 plot_volcano_gene <- gene_clean %>% 
   ggplot(mapping = aes(x=Log2FC, y = -log10(FDR))) +
   geom_point(size = 0.5,mapping = aes(color=Expression)) +
-  geom_vline(xintercept = c(-1,1),linetype = "dashed",linewidth = 0.1) +
-  geom_hline(yintercept = -log10(0.05),linetype = "dashed", linewidth = 0.1) + 
+  geom_vline(xintercept = c(-1,1),linetype = "dashed",linewidth = 0.7) +
+  geom_hline(yintercept = -log10(0.05),linetype = "dashed", linewidth = 0.7) + 
   scale_color_manual(values = c("#0571b0","grey40","#ca0020")) +
   guides(colour = guide_legend(override.aes = list(size=1.5))) +
   xlab(expression("log"[2]*"FC")) +
   ylab(expression("-log"[10]*"FDR")) + 
-  theme_bw() +
-  geom_text_repel(data = gene_significant, mapping = aes(x = Log2FC,y = -log10(FDR),colour = Expression, label = Gene.Name),size=3)
+  labs(tag = 'C') +
+  theme_bw(base_size = 20) +
+  geom_text_repel(data = gene_significant, mapping = aes(x = Log2FC,y = -log10(FDR),colour = Expression, label = Gene.Name),size=4)
 
 plots <- list(protein_plot=plot_volcano_prot,phospho_plot=plot_volcano_phospho,gene_plot=plot_volcano_gene)
 ```

@@ -29,9 +29,9 @@ library(ggpubr)
 
 ```{r}
 if(!dir.exists(paths = '/multiomics/results/figures/immune_infiltration/')) {
-  dir.create(path = '/multiomics/results/figures/immune_infiltration',recursive = TRUE)
+  dir.create(path = '/multiomics/results/figures/immune_infiltration/',recursive = TRUE)
 }
-outputdir <- '/multiomics/results/figures/immune_infiltration'
+outputdir <- '/multiomics/results/figures/immune_infiltration/'
 ```
 
 # Load Required Data
@@ -67,7 +67,6 @@ clusterCols <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') |>
 ProtBoxPlot <- ggviolin(data = dataFilter, x = 'CC.Prot',y = 'expression', fill = 'CC.Prot', add = 'boxplot', add.params = list(fill = "white"))+
   rremove(object = 'legend')+
   stat_compare_means(mapping = aes(CC.Prot, expression), method = 't.test', paired = FALSE, comparisons = comparisons)+
-  stat_compare_means(label.y = 28)+
   scale_fill_manual(values = clusterCols)+
   xlab('Proteome Cluster')+
   ylab(dataFilter[["Protein.Names"]])+

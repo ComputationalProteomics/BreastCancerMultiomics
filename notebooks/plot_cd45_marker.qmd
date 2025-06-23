@@ -1,0 +1,78 @@
+---
+title: "Boxplot Immune Infiltration"
+author: "Sergio Mosquim Junior"
+format:
+  html:
+    toc: true
+    code-fold: true
+    embed-resources: true
+    toc-location: left
+    smooth-scroll: true
+    message: false
+engine: knitr
+editor_options: 
+  chunk_output_type: console
+---
+
+# Requires Packages:
+
+```{r required packages}
+#| message: false
+#| warning: false
+library(tidyverse)
+library(gridExtra)
+library(grDevices)
+library(ggpubr)
+```
+
+# Output Directory
+
+```{r}
+if(!dir.exists(paths = '/multiomics/results/figures/immune_infiltration/')) {
+  dir.create(path = '/multiomics/results/figures/immune_infiltration',recursive = TRUE)
+}
+outputdir <- '/multiomics/results/figures/immune_infiltration'
+```
+
+# Load Required Data
+```{r}
+design <- read_tsv(file = "/multiomics/results/design_files/ductalvslobular_consensus_clustering.tsv") |> 
+    select(c(sample_id, CC.Prot))
+
+immuneFeat <- read_tsv(file = '/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv') |> 
+    filter(str_detect(Protein.Names, 'PTPRC')) |> 
+    slice_max(order_by = pep_count, n=1) |> 
+    select(Protein.Names, design[["sample_id"]]) |> 
+    pivot_longer(cols = design[["sample_id"]], names_to = 'sample_id', values_to = 'expression')
+
+dataFilter <- left_join(design, immuneFeat) |> 
+    filter(!is.na(CC.Prot)) |> 
+    arrange(CC.Prot) |> 
+    mutate(CC.Prot = as_factor(CC.Prot))
+```
+
+# Generate Plots
+
+```{r}
+comparisons <- list(c("2","1"),
+                    c("3","2"),
+                    c("2","4"),
+                    c("2","5"),
+                    c("2","6"))
+
+clusterCols <- colorspace::sequential_hcl(n = 6,palette = 'Purple-Yellow') |> 
+  setNames(nm = c(1:6)) |> 
+  colorspace::darken()
+
+ProtBoxPlot <- ggviolin(data = dataFilter, x = 'CC.Prot',y = 'expression', fill = 'CC.Prot', add = 'boxplot', add.params = list(fill = "white"))+
+  rremove(object = 'legend')+
+  stat_compare_means(mapping = aes(CC.Prot, expression), method = 't.test', paired = FALSE, comparisons = comparisons)+
+  stat_compare_means(label.y = 28)+
+  scale_fill_manual(values = clusterCols)+
+  xlab('Proteome Cluster')+
+  ylab(dataFilter[["Protein.Names"]])+
+  theme_bw(base_size = 20)+
+  theme(legend.position = 'none')
+
+ggsave(filename = "PTPRC_plot.pdf",plot = ProtBoxPlot,device = "pdf",path = outputdir,height = 7,width = 10,units = "in",dpi = 600)
+```

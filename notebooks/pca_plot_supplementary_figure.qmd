@@ -44,7 +44,7 @@ dataProt <- read_tsv(file = '/multiomics/results/rollup/fullproteome/cycloess_Ro
 #     dplyr::select(starts_with('S00')) |> 
 #     min(na.rm=TRUE)
 
-# dataPhospho <- read_tsv(file = '~/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphopeptides_flanking.tsv') |>
+# dataPhospho <- read_tsv(file = '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphopeptides_flanking.tsv') |>
 #     NAFiltering(cutoff = 0.4) |> 
 #     # madFiltering(cutoff = 0.5) |> 
 #     mutate(Unique.Ids = str_c('X_', Protein.Names) |> 
@@ -56,7 +56,7 @@ dataProt <- read_tsv(file = '/multiomics/results/rollup/fullproteome/cycloess_Ro
 #     dplyr::select(starts_with('S00')) |> 
 #     min(na.rm=TRUE)
 
-# dataGene <- read_tsv(file = '~/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') |> 
+# dataGene <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') |> 
 #     NAFiltering(cutoff = 0.4) |> 
 #     mutate(Unique.Ids = str_c("X_", Gene.Name) |> make.names(unique = TRUE), .after = 6)
 

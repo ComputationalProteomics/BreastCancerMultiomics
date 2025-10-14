@@ -1,9 +1,12 @@
 FROM rocker/tidyverse
 
-# Metadata
-LABEL description="Image for Multiomic profiling of ER-positive HER2-negative breast cancer reveals markers associated with metastatic spread" \
-    maintainer="Sergio Mosquim Junior <sergio.mosquim_junior@med.lu.se>" \
-    version="1.1.0" 
+# Open Container Initiative (OCI) Standard Metadata
+LABEL org.opencontainers.image.title="multiomics_analysis" \
+    org.opencontainers.image.version="1.1.0" \
+    org.opencontainers.image.description="Image for Multiomic profiling of ER-positive HER2-negative breast cancer reveals markers associated with metastatic spread" \
+    org.opencontainers.image.authors="Sergio Mosquim Junior <sergio.mosquim_junior@med.lu.se>" \
+    org.opencontainers.image.source="https://github.com/ComputationalProteomics/BreastCancerMultiomics" \
+    org.opencontainers.image.licenses="MIT" 
 
 # Use bash as shell
 SHELL ["/bin/bash", "--login", "-c"]

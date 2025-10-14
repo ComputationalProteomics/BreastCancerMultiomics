@@ -1,0 +1,335 @@
+---
+title: "Boxplots - Supplementary Figures"
+author: "Sergio Mosquim Junior"
+format:
+  html:
+    toc: true
+    code-fold: true
+    embed-resources: true
+    toc-location: left
+    smooth-scroll: true
+    message: false
+---
+
+# Required Packages:
+
+```{r}
+library(tidyverse)
+library(cowplot)
+```
+
+```{r Output Directory}
+outputdir <- paste0('/multiomics/results/figures/boxplots/')
+
+if(!dir.exists(paths = outputdir)) {
+  dir.create(path = outputdir,recursive = TRUE)
+}
+```
+
+# Data
+
+```{r}
+design <- list(
+    proteomics = read_tsv('/multiomics/results/design_files/design_Full_noPool.tsv'),
+    phosphoproteomics = read_tsv('/multiomics/results/design_files/design_phospho_noPool.tsv'),
+    transcriptomics = read_tsv('/multiomics/results/design_files/design_RNA_noPool.tsv')
+)
+```
+
+# No Special Type vs. Invasive Lobular Carcinoma
+
+```{r}
+files <- list.files(path = '/multiomics/results/',pattern = 'stats.tsv',recursive = TRUE,include.dirs = TRUE,full.names = TRUE) %>% 
+  .[str_detect(.,'DuctalvsLobular/')] %>% 
+  .[!str_detect(.,'cluster')]
+
+featData <- list(proteomics=read_tsv(file = files[str_detect(files,'fullproteome_protein')]),
+             phosphoproteomics=read_tsv(file = files[str_detect(files,'aggModSeq')]),
+             transcriptomics=read_tsv(file = files[str_detect(files,'transcript')]))
+
+idCol <- list(proteomics='Protein.Names',phosphoproteomics='Protein.Names',transcriptomics='Gene.Name')
+omics_type <- list('proteomics','phosphoproteomics','transcriptomics')
+
+set.seed(123)
+featData <- pmap(list(featData,idCol,omics_type),function(x,y,z){
+    signifCol <- colnames(x) %>% str_which(pattern = 'Adj') %>% colnames(x)[.]
+    genecol <- colnames(x) %>% str_which(pattern = "Name|Gene|Ids|Sequence|Phosphosite|Residue") %>% colnames(x)[.]
+    fcCol <- colnames(x) %>% str_which(pattern = 'log2FoldChange') %>% colnames(x)[.]
+    x[[y]] <- if(z == 'phosphoproteomics'){
+        paste0(make.names(names = x[[y]]), '.', str_c(x[["Residue"]], x[["Phosphosite"]], sep = '.'),'_',z)
+        }else{
+            paste0(make.names(names = x[[y]]),'_',z)
+        }
+    data <- x %>% 
+        select(all_of(y),all_of(genecol),all_of(signifCol), all_of(fcCol),design[[z]]$sample_id) %>% 
+        filter((!!sym(signifCol) < 0.05) & (abs(!!sym(fcCol)) > 1)) |> 
+        group_by(!!sym(y)) |> 
+        slice_min(order_by = !!sym(signifCol), n = 1, na_rm = TRUE) |> 
+        ungroup() |> 
+        arrange(!!sym(signifCol)) |> 
+        slice_min(order_by = !!sym(signifCol), n = 3, na_rm = TRUE)
+})
+
+
+dataLong <- imap_dfr(featData, function(data, name) {
+    col_name <- idCol[[name]] 
+    design <- design[[name]] |> 
+        filter(sample_id %in% colnames(data))
+  
+    data_long <- data |>
+        select(all_of(c(col_name, design[["sample_id"]]))) |> 
+        pivot_longer(
+            cols = all_of(design[["sample_id"]]),
+            names_to = "sample_id",
+            values_to = "values"
+        ) |>
+        left_join(design, by = "sample_id") |> 
+        mutate(
+            feature = .data[[col_name]],
+            omics = name
+        )
+})
+
+plotsDuctalLobular <- ggplot(dataLong, aes(x = factor(InvCa.type), y = values,fill = factor(InvCa.type), color = factor(InvCa.type))) +
+        geom_boxplot(outlier.shape = NA, alpha = 0.5) +
+        geom_jitter(width = 0.2, alpha = 0.7, size = 0.9) +
+        facet_wrap(~ feature, ncol = 3, scales = "free_y", labeller = label_value) +
+        scale_fill_manual(
+            values = c('Ductal' = 'blue', 'Lobular' = 'red'),
+            labels = c('Ductal' ='No Special Type', 'Lobular' = 'Invasive Lobular Carcinoma')
+        )+
+         scale_color_manual(
+            values = c('Ductal' = 'blue', 'Lobular' = 'red'),
+            labels = c('Ductal' ='No Special Type', 'Lobular' = 'Invasive Lobular Carcinoma')
+        )+
+        labs(x = "", y = "Expression", color = 'Invasive Type', fill = 'Invasive Type') +
+        theme_bw(base_size = 20) +
+        theme(
+            strip.text = element_text(face = "bold", size = 14),
+            legend.position = "bottom",
+            axis.text.x = element_blank(), 
+            axis.ticks.x = element_blank()
+        )
+
+ggsave(filename = paste0(outputdir,'supplementary_figure_s2.pdf'), plot = plotsDuctalLobular, device = 'pdf', dpi = 1200, compress = TRUE, height = 30, width = 30)
+```
+
+# Lymph Node Status
+```{r}
+dataSurv <- read_tsv('/multiomics/results/figures/survival_analysis/DE/AllSamples_noG2/AllSamples_noG2_RFi_event/cox_analysis_res.tsv') |> 
+    mutate(variable = str_replace_all(string = variable, pattern = '\\.(?=proteomics|phosphoproteomics|transcriptomics)', replacement = '_')) |> 
+    filter(p.value_multivariable<0.05) |> 
+    mutate(
+        dataset = map(
+            .x = variable,
+            .f = ~case_when(
+                str_detect(.x, '\\_proteomics') ~ factor('proteomics'),
+                str_detect(.x, '\\_phosphoproteomics') ~ factor('phosphoproteomics'),
+                str_detect(.x, '\\_transcriptomics') ~ factor('transcriptomics')
+            )
+        ) |> unlist()
+    )
+dataMofa <- read_tsv('/multiomics/results/figures/survival_analysis/MOFA/AllSamples_noG2/AllSamples_noG2_LN_RFi_event/cox_analysis_res.tsv') |> 
+    mutate(variable = str_replace_all(string = variable, pattern = '\\.(?=proteomics|phosphoproteomics|transcriptomics)', replacement = '_')) |> 
+    filter(p.value_multivariable<0.05) |> 
+    mutate(
+        dataset = map(
+            .x = variable,
+            .f = ~case_when(
+                str_detect(.x, '\\_proteomics') ~ factor('proteomics'),
+                str_detect(.x, '\\_phosphoproteomics') ~ factor('phosphoproteomics'),
+                str_detect(.x, '\\_transcriptomics') ~ factor('transcriptomics')
+            )
+        ) |> unlist()
+    )
+variables <- list(de = dataSurv, mofa = dataMofa) |> 
+    discard(~nrow(.x) == 0) |> 
+    list_rbind() |> 
+    pull(variable) |> 
+    unique()
+
+files <- list.files(path = '/multiomics/results/',pattern = 'stats.tsv',recursive = TRUE,include.dirs = TRUE,full.names = TRUE) %>% 
+  .[str_detect(.,'AllSamples_noG2')] %>% 
+  .[!str_detect(.,'cluster')]
+
+featData <- list(proteomics=read_tsv(file = files[str_detect(files,'full')]),
+             phosphoproteomics=read_tsv(file = files[str_detect(files,'aggModSeq')]),
+             transcriptomics=read_tsv(file = files[str_detect(files,'transcript')]))
+
+idCol <- list(proteomics='Protein.Names',phosphoproteomics='Protein.Names',transcriptomics='Gene.Name')
+omics_type <- list('proteomics','phosphoproteomics','transcriptomics')
+
+set.seed(123)
+featData <- pmap(list(featData,idCol,omics_type),function(x,y,z){
+  genecol <- colnames(x) %>% str_which(pattern = "Name|Gene|Ids|Sequence|Phosphosite|Residue") %>% colnames(x)[.]
+  x[[y]] <- paste0(make.names(names = x[[y]],unique = TRUE),'_',z)
+  data <- x %>% 
+    select(all_of(y),all_of(genecol),design[[z]]$sample_id)
+})
+
+dataFilter <- featData |> 
+    imap(
+        function(data, name){
+            keptFeats <- variables[str_detect(variables, paste0('_', name))]
+            idCol <- idCol |> 
+                pluck(name, 1) |> 
+                sym()
+            data <- data |> 
+                filter(!!idCol %in% keptFeats)
+            return(data)
+        }) |> 
+    discard(~nrow(.x) == 0)
+
+
+dataLong <- imap_dfr(dataFilter, function(data, name) {
+    col_name <- idCol[[name]] 
+    design <- design[[name]] |> 
+        filter(sample_id %in% colnames(data))
+  
+    data_long <- data |>
+        select(all_of(c(col_name, design[["sample_id"]]))) |> 
+        pivot_longer(
+            cols = all_of(design[["sample_id"]]),
+            names_to = "sample_id",
+            values_to = "values"
+        ) |>
+        left_join(design, by = "sample_id") |> 
+        mutate(
+            feature = .data[[col_name]],
+            omics = name
+        )
+})
+
+plotsLN <- ggplot(dataLong, aes(x = factor(LN), y = values,fill = factor(LN), color = factor(LN))) +
+        geom_boxplot(outlier.shape = NA, alpha = 0.5) +
+        geom_jitter(width = 0.2, alpha = 0.7, size = 0.9) +
+        facet_wrap(~ feature, ncol = 3, scales = "free_y", labeller = label_value) +
+        scale_fill_manual(
+            values = c('0' = 'blue', '1' = 'red'),
+            labels = c('1' = 'LN +', '0' = 'LN -')
+        )+
+         scale_color_manual(
+            values = c('0' = 'blue', '1' = 'red'),
+            labels = c('1' = 'LN +', '0' = 'LN -')
+        )+
+        labs(x = "", y = "Expression", color = 'Lymph Node Status', fill = 'Lymph Node Status') +
+        theme_bw(base_size = 20) +
+        theme(
+            strip.text = element_text(face = "bold", size = 14),
+            legend.position = "bottom",
+            axis.text.x = element_blank(), 
+            axis.ticks.x = element_blank()
+        )
+
+ggsave(filename = paste0(outputdir,'supplementary_figure_s6.pdf'), plot = plotsLN, device = 'pdf', dpi = 1200, compress = TRUE, height = 10, width = 30)
+```
+
+# Distant Recurrence Event
+```{r}
+dataSurv <- read_tsv('/multiomics/results/figures/survival_analysis/DE/Group1vsGroup2/Group1vsGroup2_DRFi_event/cox_analysis_res.tsv') |> 
+    mutate(variable = str_replace_all(string = variable, pattern = '\\.(?=proteomics|phosphoproteomics|transcriptomics)', replacement = '_')) |> 
+    filter(p.value_multivariable<0.05) |> 
+    mutate(
+        dataset = map(
+            .x = variable,
+            .f = ~case_when(
+                str_detect(.x, '\\_proteomics') ~ factor('proteomics'),
+                str_detect(.x, '\\_phosphoproteomics') ~ factor('phosphoproteomics'),
+                str_detect(.x, '\\_transcriptomics') ~ factor('transcriptomics')
+            )
+        ) |> unlist()
+    )
+dataMofa <- read_tsv('/multiomics/results/figures/survival_analysis/MOFA/Group1vsGroup2/Group1vsGroup2_DRFi_event_DRFi_event/cox_analysis_res.tsv') |> 
+    mutate(variable = str_replace_all(string = variable, pattern = '\\.(?=proteomics|phosphoproteomics|transcriptomics)', replacement = '_')) |> 
+    filter(p.value_multivariable<0.05) |> 
+    mutate(
+        dataset = map(
+            .x = variable,
+            .f = ~case_when(
+                str_detect(.x, '\\_proteomics') ~ factor('proteomics'),
+                str_detect(.x, '\\_phosphoproteomics') ~ factor('phosphoproteomics'),
+                str_detect(.x, '\\_transcriptomics') ~ factor('transcriptomics')
+            )
+        ) |> unlist()
+    )
+variables <- list(de = dataSurv, mofa = dataMofa) |> 
+    discard(~nrow(.x) == 0) |> 
+    list_rbind() |> 
+    pull(variable) |> 
+    unique()
+
+files <- list.files(path = '/multiomics/results/',pattern = 'stats.tsv',recursive = TRUE,include.dirs = TRUE,full.names = TRUE) %>% 
+  .[str_detect(.,'Group1vsGroup2')] %>% 
+  .[!str_detect(.,'cluster')]
+
+featData <- list(proteomics=read_tsv(file = files[str_detect(files,'full')]),
+             phosphoproteomics=read_tsv(file = files[str_detect(files,'aggModSeq')]),
+             transcriptomics=read_tsv(file = files[str_detect(files,'transcript')]))
+
+idCol <- list(proteomics='Protein.Names',phosphoproteomics='Protein.Names',transcriptomics='Gene.Name')
+omics_type <- list('proteomics','phosphoproteomics','transcriptomics')
+
+set.seed(123)
+featData <- pmap(list(featData,idCol,omics_type),function(x,y,z){
+  genecol <- colnames(x) %>% str_which(pattern = "Name|Gene|Ids|Sequence|Phosphosite|Residue") %>% colnames(x)[.]
+  x[[y]] <- paste0(make.names(names = x[[y]],unique = TRUE),'_',z)
+  data <- x %>% 
+  select(all_of(y),all_of(genecol),design[[z]]$sample_id)
+})
+
+dataFilter <- featData |> 
+    imap(
+        function(data, name){
+            keptFeats <- variables[str_detect(variables, paste0('_', name))]
+            idCol <- idCol |> 
+                pluck(name, 1) |> 
+                sym()
+            data <- data |> 
+                filter(!!idCol %in% keptFeats)
+            return(data)
+        }) |> 
+    discard(~nrow(.x) == 0)
+
+dataLong <- imap_dfr(dataFilter, function(data, name) {
+    col_name <- idCol[[name]]
+
+    design <- design[[name]] |> 
+        filter(sample_id %in% colnames(data))
+  
+    data_long <- data |>
+        select(all_of(c(col_name, design[["sample_id"]]))) |> 
+        pivot_longer(
+            cols = all_of(design[["sample_id"]]),
+            names_to = "sample_id",
+            values_to = "values"
+        ) |>
+        left_join(design, by = "sample_id") |> 
+        mutate(
+            feature = .data[[col_name]],
+            omics = name
+        )
+})
+
+plotsDRFi <- ggplot(dataLong, aes(x = factor(DRFi_event), y = values,fill = factor(DRFi_event), color = factor(DRFi_event))) +
+        geom_boxplot(outlier.shape = NA, alpha = 0.5) +
+        geom_jitter(width = 0.2, alpha = 0.7, size = 0.9) +
+        facet_wrap(~ feature, ncol = 3, scales = "free_y", labeller = label_value) +
+        scale_fill_manual(
+            values = c('0' = 'blue', '1' = 'red'),
+            labels = c('1' = 'Yes', '0' = 'No')
+        )+
+         scale_color_manual(
+            values = c('0' = 'blue', '1' = 'red'),
+            labels = c('1' = 'Yes', '0' = 'No')
+        )+
+        labs(x = "", y = "Expression", color = 'Distant Recurrence Event', fill = 'Distant Recurrence Event') +
+        theme_bw(base_size = 20) +
+        theme(
+            strip.text = element_text(face = "bold", size = 14),
+            legend.position = "bottom",
+            axis.text.x = element_blank(), 
+            axis.ticks.x = element_blank()
+        )
+
+ggsave(filename = paste0(outputdir,'supplementary_figure_s7.pdf'), plot = plotsDRFi, device = 'pdf', dpi = 1200, compress = TRUE, height = 30, width = 30)
+```

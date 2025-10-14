@@ -9,6 +9,8 @@ format:
     toc-location: left
     smooth-scroll: true
 engine: knitr
+params:
+  run: false
 ---
 
 # Requires Packages:
@@ -31,17 +33,22 @@ on.exit(expr = {plan(sequential)})
 # Differential Expression Analysis
 ## Ductal vs Lobular
 ### Full Proteome
+
+:::{.content-visible when-meta="params.run"}
 #### Peptide Level
 
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 dataP <- '/multiomics/results/rollup/fullproteome/cycloess_normalized_sorted.tsv'
 designP <- '/multiomics/results/design_files/design_Full_noPool.tsv'
 outDir <- '/multiomics/results/differentialexpression/DuctalvsLobular'
 jDEName <- "ductalvslobular_fullproteome_peptide"
 
-proteomePep <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'InvCa.type',comparisons = c('Ductal-Lobular'),leastRepCount = 3,batchCol = 'group')})
+proteomePep <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'InvCa.type',comparisons = c('Ductal-Lobular'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
 
+:::
 #### Protein Level
 
 ```{r}
@@ -50,51 +57,61 @@ designP <- '/multiomics/results/design_files/design_Full_noPool.tsv'
 outDir <- '/multiomics/results/differentialexpression/DuctalvsLobular'
 jDEName <- "ductalvslobular_fullproteome_protein"
 
-proteomeProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'InvCa.type',comparisons = c('Ductal-Lobular'),leastRepCount = 3,batchCol = 'group')})
+proteomeProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'InvCa.type',comparisons = c('Ductal-Lobular'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
 
 ### Phosphoproteome
+:::{.content-visible when-meta="params.run"}
 #### Peptide Level
 
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 dataP <- '/multiomics/results/rollup/phosphoproteome/cycloess_normalized_sorted.tsv'
 designP <- '/multiomics/results/design_files/design_phospho_noPool.tsv'
 outDir <- '/multiomics/results/differentialexpression/DuctalvsLobular'
 jDEName <- "ductalvslobular_phosphoproteome_peptide"
 
-phosphoPep <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'InvCa.type',comparisons = c('Ductal-Lobular'),leastRepCount = 3,batchCol = 'group')})
+phosphoPep <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'InvCa.type',comparisons = c('Ductal-Lobular'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
+:::
 
 ##### Phosphopeptide aggregation Modified.Sequence
 ```{r}
-dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
+dataP <- '/multiomics/results/phospho_aggregation/CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
 designP <- '/multiomics/results/design_files/design_phospho_noPool.tsv'
 outDir <- '/multiomics/results/differentialexpression/DuctalvsLobular'
 jDEName <- "ductalvslobular_phosphoproteome_peptide_aggModSeq"
 
-phosphoPepAggMod <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'InvCa.type',comparisons = c('Ductal-Lobular'),leastRepCount = 3,batchCol = 'group')})
+phosphoPepAggMod <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'InvCa.type',comparisons = c('Ductal-Lobular'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
 
+:::{.content-visible when-meta="params.run"}
 ##### Phosphopeptide aggregation Phosphosite
 ```{r}
-dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphosites_flanking_aggregated.tsv'
+#| eval: !expr params$run
+#| echo: !expr params$run
+dataP <- '/multiomics/results/phospho_aggregation/CycLoess-normalized.txt.phosphosites_flanking_aggregated.tsv'
 designP <- '/multiomics/results/design_files/design_phospho_noPool.tsv'
 outDir <- '/multiomics/results/differentialexpression/DuctalvsLobular'
 jDEName <- "ductalvslobular_phosphoproteome_peptide_aggPhosphoSite"
 
-phosphoPepAggSite <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'InvCa.type',comparisons = c('Ductal-Lobular'),leastRepCount = 3,batchCol = 'group')})
+phosphoPepAggSite <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'InvCa.type',comparisons = c('Ductal-Lobular'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
 
 #### Protein Level
 
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 dataP <- '/multiomics/results/rollup/phosphoproteome/cycloess_Rollup_Genes.tsv'
 designP <- '/multiomics/results/design_files/design_phospho_noPool.tsv'
 outDir <- '/multiomics/results/differentialexpression/DuctalvsLobular'
 jDEName <- "ductalvslobular_phosphoproteome_protein"
 
-phosphoProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'InvCa.type',comparisons = c('Ductal-Lobular'),leastRepCount = 3,batchCol = 'group')})
+phosphoProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'InvCa.type',comparisons = c('Ductal-Lobular'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
+:::
 
 ### Transcriptomics
 ```{r}
@@ -108,7 +125,7 @@ transcriptome <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerD
 
 ### Results
 ```{r}
-results <- list(proteomeProt,proteomePep,phosphoProt,phosphoPep,transcriptome,phosphoPepAggSite,phosphoPepAggMod)
+results <- list(proteomeProt,transcriptome,phosphoPepAggMod)
 future_map(.x = results,.f = value)
 invisible(gc())
 rm(list = ls())
@@ -122,18 +139,18 @@ designP <- '/multiomics/results/design_files/design_Full_noPool_noG2.tsv'
 outDir <- '/multiomics/results/differentialexpression/DuctalvsLobular_noG2'
 jDEName <- "ductalvslobular_fullproteome_protein"
 
-proteomeProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'InvCa.type',comparisons = c('Ductal-Lobular'),leastRepCount = 3,batchCol = 'group')})
+proteomeProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'InvCa.type',comparisons = c('Ductal-Lobular'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
 
 ### Phosphoproteome
 #### Phosphopeptide aggregation Modified.Sequence
 ```{r}
-dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
+dataP <- '/multiomics/results/phospho_aggregation/CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
 designP <- '/multiomics/results/design_files/design_phospho_noPool_noG2.tsv'
 outDir <- '/multiomics/results/differentialexpression/DuctalvsLobular_noG2'
 jDEName <- "ductalvslobular_phosphoproteome_peptide_aggModSeq"
 
-phosphoPepAggMod <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'InvCa.type',comparisons = c('Ductal-Lobular'),leastRepCount = 3,batchCol = 'group')})
+phosphoPepAggMod <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'InvCa.type',comparisons = c('Ductal-Lobular'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
 
 ### Transcriptomics
@@ -163,18 +180,18 @@ designP <- '/multiomics/results/design_files/design_Full_noPool_noG2.tsv'
 outDir <- '/multiomics/results/differentialexpression/LNposvsLNneg/AllSamples_noG2'
 jDEName <- "ductalvslobular_fullproteome_protein"
 
-proteomeProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'group')})
+proteomeProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
 
 #### Phosphoproteome
 ##### Phosphopeptide aggregation Modified.Sequence
 ```{r}
-dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
+dataP <- '/multiomics/results/phospho_aggregation/CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
 designP <- '/multiomics/results/design_files/design_phospho_noPool_noG2.tsv'
 outDir <- '/multiomics/results/differentialexpression/LNposvsLNneg/AllSamples_noG2'
 jDEName <- "ductalvslobular_phosphoproteome_peptide_aggModSeq"
 
-phosphoPepAggMod <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'group')})
+phosphoPepAggMod <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
 
 #### Transcriptomics
@@ -195,64 +212,77 @@ invisible(gc())
 rm(list = ls())
 ```
 
+::: {.content-visible when-meta="params.run"}
 ### Ductal
 #### Full Proteome
 ##### Protein Level
 
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 dataP <- '/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv'
 designP <- '/multiomics/results/design_files/design_full_ductal.tsv'
 outDir <- '/multiomics/results/differentialexpression/LNposvsLNneg/Ductal'
 jDEName <- "LN_ductal_fullproteome_protein"
 
-proteomeProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'group')})
+proteomeProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
 
 #### Phosphoproteome
 ##### Peptide Level
 
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 dataP <- '/multiomics/results/rollup/phosphoproteome/cycloess_normalized_sorted.tsv'
 designP <- '/multiomics/results/design_files/design_phospho_ductal.tsv'
 outDir <- '/multiomics/results/differentialexpression/LNposvsLNneg/Ductal'
 jDEName <- "LN_ductal_phosphoproteome_peptide"
 
-phosphoPep <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'group')})
+phosphoPep <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
 
 ###### Phosphopeptide aggregation Modified.Sequence
 ```{r}
-dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
+#| eval: !expr params$run
+#| echo: !expr params$run
+dataP <- '/multiomics/results/phospho_aggregation/CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
 designP <- '/multiomics/results/design_files/design_phospho_ductal.tsv'
 outDir <- '/multiomics/results/differentialexpression/LNposvsLNneg/Ductal'
 jDEName <- "LN_ductal_phosphoproteome_peptide_aggModSeq"
 
-phosphoPepAggMod <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'group')})
+phosphoPepAggMod <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
 
 ###### Phosphopeptide aggregation Phosphosite
 ```{r}
-dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphosites_flanking_aggregated.tsv'
+#| eval: !expr params$run
+#| echo: !expr params$run
+dataP <- '/multiomics/results/phospho_aggregation/CycLoess-normalized.txt.phosphosites_flanking_aggregated.tsv'
 designP <- '/multiomics/results/design_files/design_phospho_ductal.tsv'
 outDir <- '/multiomics/results/differentialexpression/LNposvsLNneg/Ductal'
 jDEName <- "LN_ductal_phosphoproteome_peptide_aggPhosphoSite"
 
-phosphoPepAggSite <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'group')})
+phosphoPepAggSite <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
 
 ##### Protein Level
 
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 dataP <- '/multiomics/results/rollup/phosphoproteome/cycloess_Rollup_Genes.tsv'
 designP <- '/multiomics/results/design_files/design_phospho_ductal.tsv'
 outDir <- '/multiomics/results/differentialexpression/LNposvsLNneg/Ductal'
 jDEName <- "LN_ductal_phosphoproteome_protein"
 
-phosphoProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'group')})
+phosphoProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
 
 #### Transcriptomics
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 dataP <- '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv'
 designP <- '/multiomics/results/design_files/design_RNA_ductal.tsv'
 outDir <- '/multiomics/results/differentialexpression/LNposvsLNneg/Ductal'
@@ -263,6 +293,8 @@ transcriptome <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerD
 
 #### Results
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 results <- list(proteomeProt,phosphoPep,phosphoProt,transcriptome,phosphoPepAggSite,phosphoPepAggMod)
 future_map(.x = results,.f = value)
 invisible(gc())
@@ -275,27 +307,33 @@ rm(list = ls())
 ##### Protein Level
 
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 dataP <- '/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv'
 designP <- '/multiomics/results/design_files/design_full_ductal_noG2.tsv'
 outDir <- '/multiomics/results/differentialexpression/LNposvsLNneg/Ductal_noG2'
 jDEName <- "LN_ductal_fullproteome_protein"
 
-proteomeProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'group')})
+proteomeProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
 
 #### Phosphoproteome
 ##### Phosphopeptide aggregation Modified.Sequence
 ```{r}
-dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
+#| eval: !expr params$run
+#| echo: !expr params$run
+dataP <- '/multiomics/results/phospho_aggregation/CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
 designP <- '/multiomics/results/design_files/design_phospho_ductal_noG2.tsv'
 outDir <- '/multiomics/results/differentialexpression/LNposvsLNneg/Ductal_noG2'
 jDEName <- "LN_ductal_phosphoproteome_peptide_aggModSeq"
 
-phosphoPepAggMod <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'group')})
+phosphoPepAggMod <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
 
 #### Transcriptomics
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 dataP <- '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv'
 designP <- '/multiomics/results/design_files/design_RNA_ductal_noG2.tsv'
 outDir <- '/multiomics/results/differentialexpression/LNposvsLNneg/Ductal_noG2'
@@ -306,6 +344,8 @@ transcriptome <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerD
 
 #### Results
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 results <- list(proteomeProt,transcriptome,phosphoPepAggMod)
 future_map(.x = results,.f = value)
 invisible(gc())
@@ -318,59 +358,71 @@ rm(list = ls())
 ##### Protein Level
 
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 dataP <- '/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv'
 designP <- '/multiomics/results/design_files/design_full_lobular.tsv'
 outDir <- '/multiomics/results/differentialexpression/LNposvsLNneg/Lobular'
 jDEName <- "LN_lobular_fullproteome_protein"
 
-proteomeProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'group')})
+proteomeProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
 
 #### Phosphoproteome
 ##### Peptide Level
 
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 dataP <- '/multiomics/results/rollup/phosphoproteome/cycloess_normalized_sorted.tsv'
 designP <- '/multiomics/results/design_files/design_phospho_lobular.tsv'
 outDir <- '/multiomics/results/differentialexpression/LNposvsLNneg/Lobular'
 jDEName <- "LN_lobular_phosphoproteome_peptide"
 
-phosphoPep <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'group')})
+phosphoPep <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
 
 ###### Phosphopeptide aggregation Modified.Sequence
 ```{r}
-dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
+#| eval: !expr params$run
+#| echo: !expr params$run
+dataP <- '/multiomics/results/phospho_aggregation/CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
 designP <- '/multiomics/results/design_files/design_phospho_lobular.tsv'
 outDir <- '/multiomics/results/differentialexpression/LNposvsLNneg/Lobular'
 jDEName <- "LN_lobular_phosphoproteome_peptide_aggModSeq"
 
-phosphoPepAggMod <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'group')})
+phosphoPepAggMod <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
 
 ###### Phosphopeptide aggregation Phosphosite
 ```{r}
-dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphosites_flanking_aggregated.tsv'
+#| eval: !expr params$run
+#| echo: !expr params$run
+dataP <- '/multiomics/results/phospho_aggregation/CycLoess-normalized.txt.phosphosites_flanking_aggregated.tsv'
 designP <- '/multiomics/results/design_files/design_phospho_lobular.tsv'
 outDir <- '/multiomics/results/differentialexpression/LNposvsLNneg/Lobular'
 jDEName <- "LN_lobular_phosphoproteome_peptide_aggPhosphoSite"
 
-phosphoPepAggSite <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'group')})
+phosphoPepAggSite <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
 
 ##### Protein Level
 
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 dataP <- '/multiomics/results/rollup/phosphoproteome/cycloess_Rollup_Genes.tsv'
 designP <- '/multiomics/results/design_files/design_phospho_lobular.tsv'
 outDir <- '/multiomics/results/differentialexpression/LNposvsLNneg/Lobular'
 jDEName <- "LN_lobular_phosphoproteome_protein"
 
-phosphoProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'group')})
+phosphoProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'LN',comparisons = c('1-0'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
 
 #### Transcriptomics
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 dataP <- '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv'
 designP <- '/multiomics/results/design_files/design_RNA_lobular.tsv'
 outDir <- '/multiomics/results/differentialexpression/LNposvsLNneg/Lobular'
@@ -381,11 +433,14 @@ transcriptome <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerD
 
 #### Results
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 results <- list(proteomeProt,phosphoPep,phosphoProt,transcriptome,phosphoPepAggSite,phosphoPepAggMod)
 future_map(.x = results,.f = value)
 invisible(gc())
 rm(list = ls())
 ```
+:::
 
 ## Group1 vs Group2
 ### Full Proteome
@@ -397,51 +452,62 @@ designP <- '/multiomics/results/design_files/design_full_g1g2.tsv'
 outDir <- '/multiomics/results/differentialexpression/Group1vsGroup2'
 jDEName <- "G1G2_fullproteome_protein"
 
-proteomeProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'Group.Info',comparisons = c('Group1-Group2'),leastRepCount = 3,batchCol = 'group')})
+proteomeProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'Group.Info',comparisons = c('Group1-Group2'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
 
 ### Phosphoproteome
+
+:::{.content-visible when-meta="params.run"}
 #### Peptide Level
 
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 dataP <- '/multiomics/results/rollup/phosphoproteome/cycloess_normalized_sorted.tsv'
 designP <- '/multiomics/results/design_files/design_phospho_g1g2.tsv'
 outDir <- '/multiomics/results/differentialexpression/Group1vsGroup2'
 jDEName <- "G1G2_phosphoproteome_peptide"
 
-phosphoPep <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'Group.Info',comparisons = c('Group1-Group2'),leastRepCount = 3,batchCol = 'group')})
+phosphoPep <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'Group.Info',comparisons = c('Group1-Group2'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
+:::
 
 ##### Phosphopeptide aggregation Modified.Sequence
 ```{r}
-dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
+dataP <- '/multiomics/results/phospho_aggregation/CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
 designP <- '/multiomics/results/design_files/design_phospho_g1g2.tsv'
 outDir <- '/multiomics/results/differentialexpression/Group1vsGroup2'
 jDEName <- "G1G2_phosphoproteome_peptide_aggModSeq"
 
-phosphoPepAggMod <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'Group.Info',comparisons = c('Group1-Group2'),leastRepCount = 3,batchCol = 'group')})
+phosphoPepAggMod <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'Group.Info',comparisons = c('Group1-Group2'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
 
+:::{.content-visible when-meta="params.run"}
 ##### Phosphopeptide aggregation Phosphosite
 ```{r}
-dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphosites_flanking_aggregated.tsv'
+#| eval: !expr params$run
+#| echo: !expr params$run
+dataP <- '/multiomics/results/phospho_aggregation/CycLoess-normalized.txt.phosphosites_flanking_aggregated.tsv'
 designP <- '/multiomics/results/design_files/design_phospho_g1g2.tsv'
 outDir <- '/multiomics/results/differentialexpression/Group1vsGroup2'
 jDEName <- "G1G2_phosphoproteome_peptide_aggPhosphoSite"
 
-phosphoPepAggSite <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'Group.Info',comparisons = c('Group1-Group2'),leastRepCount = 3,batchCol = 'group')})
+phosphoPepAggSite <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'Group.Info',comparisons = c('Group1-Group2'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
 
 #### Protein Level
 
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 dataP <- '/multiomics/results/rollup/phosphoproteome/cycloess_Rollup_Genes.tsv'
 designP <- '/multiomics/results/design_files/design_phospho_g1g2.tsv'
 outDir <- '/multiomics/results/differentialexpression/Group1vsGroup2'
 jDEName <- "G1G2_phosphoproteome_protein"
 
-phosphoProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'Group.Info',comparisons = c('Group1-Group2'),leastRepCount = 3,batchCol = 'group')})
+phosphoProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'Group.Info',comparisons = c('Group1-Group2'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
+:::
 
 ### Transcriptomics
 ```{r}
@@ -455,71 +521,84 @@ transcriptome <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerD
 
 ### Results
 ```{r}
-results <- list(proteomeProt,phosphoPep,phosphoProt,transcriptome,phosphoPepAggSite,phosphoPepAggMod)
+results <- list(proteomeProt,transcriptome,phosphoPepAggMod)
 future_map(.x = results,.f = value)
 invisible(gc())
 rm(list = ls())
 ```
 
 
+:::{.content-visible when-meta="params.run"}
 ## Group3 vs Group4
 ### Full Proteome
 #### Protein Level
 
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 dataP <- '/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv'
 designP <- '/multiomics/results/design_files/design_full_g3g4.tsv'
 outDir <- '/multiomics/results/differentialexpression/Group3vsGroup4'
 jDEName <- "G3G4_fullproteome_protein"
 
-proteomeProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'Group.Info',comparisons = c('Group3-Group4'),leastRepCount = 3,batchCol = 'group')})
+proteomeProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'Group.Info',comparisons = c('Group3-Group4'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
 
 ### Phosphoproteome
 #### Peptide Level
 
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 dataP <- '/multiomics/results/rollup/phosphoproteome/cycloess_normalized_sorted.tsv'
 designP <- '/multiomics/results/design_files/design_phospho_g3g4.tsv'
 outDir <- '/multiomics/results/differentialexpression/Group3vsGroup4'
 jDEName <- "G3G4_phosphoproteome_peptide"
 
-phosphoPep <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'Group.Info',comparisons = c('Group3-Group4'),leastRepCount = 3,batchCol = 'group')})
+phosphoPep <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'Group.Info',comparisons = c('Group3-Group4'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
 
 ##### Phosphopeptide aggregation Modified.Sequence
 ```{r}
-dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
+#| eval: !expr params$run
+#| echo: !expr params$run
+dataP <- '/multiomics/results/phospho_aggregation/CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
 designP <- '/multiomics/results/design_files/design_phospho_g3g4.tsv'
 outDir <- '/multiomics/results/differentialexpression/Group3vsGroup4'
 jDEName <- "G3G4_phosphoproteome_peptide_aggModSeq"
 
-phosphoPepAggMod <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'Group.Info',comparisons = c('Group3-Group4'),leastRepCount = 3,batchCol = 'group')})
+phosphoPepAggMod <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'Group.Info',comparisons = c('Group3-Group4'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
 
 ##### Phosphopeptide aggregation Phosphosite
 ```{r}
-dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphosites_flanking_aggregated.tsv'
+#| eval: !expr params$run
+#| echo: !expr params$run
+dataP <- '/multiomics/results/phospho_aggregation/CycLoess-normalized.txt.phosphosites_flanking_aggregated.tsv'
 designP <- '/multiomics/results/design_files/design_phospho_g3g4.tsv'
 outDir <- '/multiomics/results/differentialexpression/Group3vsGroup4'
 jDEName <- "G3G4_phosphoproteome_peptide_aggPhosphoSite"
 
-phosphoPepAggSite <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'Group.Info',comparisons = c('Group3-Group4'),leastRepCount = 3,batchCol = 'group')})
+phosphoPepAggSite <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'Group.Info',comparisons = c('Group3-Group4'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
 
 #### Protein Level
 
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 dataP <- '/multiomics/results/rollup/phosphoproteome/cycloess_Rollup_Genes.tsv'
 designP <- '/multiomics/results/design_files/design_phospho_g3g4.tsv'
 outDir <- '/multiomics/results/differentialexpression/Group3vsGroup4'
 jDEName <- "G3G4_phosphoproteome_protein"
 
-phosphoProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'Group.Info',comparisons = c('Group3-Group4'),leastRepCount = 3,batchCol = 'group')})
+phosphoProt <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerDE(jobName = jDEName,designPath = designP,dataPath = dataP,outputDir = outDir,sampleCol = 'sample_id',condCol = 'Group.Info',comparisons = c('Group3-Group4'),leastRepCount = 3,batchCol = 'ms_run_order')})
 ```
 
 ### Transcriptomics
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 dataP <- '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv'
 designP <- '/multiomics/results/design_files/design_RNA_g3g4.tsv'
 outDir <- '/multiomics/results/differentialexpression/Group3vsGroup4'
@@ -530,8 +609,11 @@ transcriptome <- future(globals = TRUE,gc = TRUE,seed = TRUE,expr = {normalyzerD
 
 ### Results
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 results <- list(proteomeProt,phosphoPep,phosphoProt,transcriptome,phosphoPepAggSite,phosphoPepAggMod)
 future_map(.x = results,.f = value)
 invisible(gc())
 rm(list = ls())
 ```
+:::

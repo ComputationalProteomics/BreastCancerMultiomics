@@ -149,12 +149,12 @@ write_tsv(aggregated_df,agg_file)
 
 # Generate design file
 ```{r}
-designP <- "design_phospho_g1g2_g1g34.tsv"
-design <- read_tsv("design_phospho_ductal.tsv")
+designP <- "/multiomics/results/design_files/design_phospho_g1g2_g1g34.tsv"
+design <- read_tsv("/multiomics/results/design_files/design_phospho_ductal.tsv")
 design <- design %>% 
   mutate(Group.Info = replace(Group.Info, Group.Info == "Group3", "Groups34")) %>%
   mutate(Group.Info = replace(Group.Info, Group.Info == "Group4", "Groups34")) %>%
-  select(Sample,Group.Info,group)
+  select(Sample,Group.Info,ms_run_order)
 write_tsv(design, designP)
 ```
 
@@ -168,7 +168,7 @@ comparisons <- c("Group2-Group1","Groups34-Group1")
 jDEName <- "group1vsgroup2Covariate"
 
 
-normalyzerDE(jDEName, designPath = designP, dataPath = agg_file, comparisons = comparisons, sigThres = 0.1, sampleCol = "Sample", condCol = "Group.Info", outputDir = "g1vsg2", leastRepCount = 3, batchCol = 'group')
+normalyzerDE(jDEName, designPath = designP, dataPath = agg_file, comparisons = comparisons, sigThres = 0.1, sampleCol = "Sample", condCol = "Group.Info", outputDir = outputdir, leastRepCount = 3, batchCol = 'ms_run_order')
 
 ```
 
@@ -185,9 +185,9 @@ BiocManager::install("cmapR")
 ```{r}
 library(tidyverse)
 
-gctFile <- "comparisons.gct"
+gctFile <- paste0(outputdir,"comparisons.gct")
 
-statstable <- read_tsv(paste0("g1vsg2/",jDEName,"/",jDEName,"_stats.tsv"))
+statstable <- read_tsv(paste0(outputdir,jDEName,"/",jDEName,"_stats.tsv"))
 resulttable <- data.frame(statstable$id.flanking)
 colnames(resulttable) <- c("id.flanking")
   
@@ -219,7 +219,7 @@ write_gct(gct_matrix, gctFile, precision=2, appenddim = FALSE)
 
 # Download database
 ```{r}
-download.file(url = "https://raw.githubusercontent.com/broadinstitute/ssGSEA2.0/refs/heads/master/db/ptmsigdb/v2.0.0/KINASE/ptm.sig.db.KINASE.flanking.human.v2.0.0.gmt", destfile = "ptm.sig.db.KINASE.flanking.human.v2.0.0.gmt")
+download.file(url = "https://raw.githubusercontent.com/broadinstitute/ssGSEA2.0/refs/heads/master/db/ptmsigdb/v2.0.0/KINASE/ptm.sig.db.KINASE.flanking.human.v2.0.0.gmt", destfile = paste0(outputdir,"ptm.sig.db.KINASE.flanking.human.v2.0.0.gmt"))
 ```
 
 # Install PTM-SEA package if not already installed
@@ -240,7 +240,7 @@ ptmSeaResults <- "PTM-SEA"
 res = run_ssGSEA2(gctFile,
                   output.prefix = ptmSeaResults,
                   gene.set.databases = "ptm.sig.db.KINASE.flanking.human.v2.0.0.gmt",
-                  output.directory = outDir,
+                  output.directory = outputdir,
                   sample.norm.type = "none", 
                   weight = 0.75, 
                   correl.type = "rank", 
@@ -258,7 +258,7 @@ res = run_ssGSEA2(gctFile,
 # Only keeping KINASE results.
 ```{r}
 library(readr)
-res <- read_tsv(paste0(outDir, "/", ptmSeaResults,"-combined.gct"), skip = 2)
+res <- read_tsv(paste0(outputdir, "/", ptmSeaResults,"-combined.gct"), skip = 2)
 
 comps <- str_replace(comparisons,"-",".")
 fdrcomps <- paste0("fdr.pvalue.",comps)
@@ -290,6 +290,6 @@ plotTreatments <- plotTreatments +
   scale_fill_discrete('Experiment',type = c('#ca0020','#0571b0'))
 
 ptmSeaPlotFile <- "PTM-SEA_scanb2023.png"
-ggsave(filename = ptmSeaPlotFile,plot = plotTreatments,device = 'png',path = outDir,units = 'in',width = 9,height = 7,dpi = 600)
+ggsave(filename = ptmSeaPlotFile,plot = plotTreatments,device = 'png',path = outputdir,units = 'in',width = 9,height = 7,dpi = 600)
 ```
 

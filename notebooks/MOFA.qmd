@@ -28,6 +28,7 @@ library(future.callr)
 library(furrr)
 ```
 
+:::{.content-visible when-meta="!params.used_analysis"}
 # MultiOmics Factor Analysis - MOFA
 ```{r}
 #| eval: !expr (!params$used_analysis)
@@ -219,7 +220,7 @@ ggsave(filename = 'MOFA_variance_allgroups.pdf',plot = plotVariance,device = 'pd
 ```{r}
 #| eval: !expr (!params$used_analysis)
 covariatePlot <- correlate_factors_with_covariates(bestModel, 
-  covariates = c('Group.Info','Size.mm','NCN.PAM50','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","PR",'SSP.PAM50',"NHG",'BCFi_event','tumor_mutational_burden','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma"), 
+  covariates = c('Group.Info','Size.mm','NCN.PAM50','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","PR",'SSP.PAM50',"NHG",'BCFi_event','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma"), 
   plot="log_pval",
   abs = TRUE,
   alpha = 0.05
@@ -273,7 +274,7 @@ prot_heatmap <- plot_data_heatmap(bestModel,
   show_rownames = TRUE, show_colnames = FALSE,
   scale = "row",
   denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
 rna_heatmap <- plot_data_heatmap(bestModel, 
@@ -284,7 +285,7 @@ rna_heatmap <- plot_data_heatmap(bestModel,
   show_rownames = TRUE, show_colnames = FALSE,
   scale = "row",
   denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
 phospho_heatmap <- plot_data_heatmap(bestModel, 
@@ -295,7 +296,7 @@ phospho_heatmap <- plot_data_heatmap(bestModel,
   show_rownames = TRUE, show_colnames = FALSE,
   scale = "row",
   denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
 immune_heatmap <- plot_data_heatmap(bestModel, 
@@ -306,7 +307,7 @@ immune_heatmap <- plot_data_heatmap(bestModel,
   show_rownames = TRUE, show_colnames = FALSE,
   scale = "row",
   denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
 
@@ -492,7 +493,7 @@ ggsave(filename = 'MOFA_variance_allgroups.pdf',plot = plotVariance,device = 'pd
 ```{r}
 #| eval: !expr (!params$used_analysis)
 covariatePlot <- correlate_factors_with_covariates(bestModel, 
-  covariates = c('Group.Info','Size.mm','NCN.PAM50','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","PR",'SSP.PAM50',"NHG",'BCFi_event','tumor_mutational_burden','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma"), 
+  covariates = c('Group.Info','Size.mm','NCN.PAM50','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","PR",'SSP.PAM50',"NHG",'BCFi_event','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma"), 
   plot="log_pval",
   abs = TRUE,
   alpha = 0.05
@@ -540,7 +541,7 @@ prot_heatmap <- plot_data_heatmap(bestModel,
   show_rownames = TRUE, show_colnames = FALSE,
   scale = "row",
   denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
 rna_heatmap <- plot_data_heatmap(bestModel, 
@@ -551,7 +552,7 @@ rna_heatmap <- plot_data_heatmap(bestModel,
   show_rownames = TRUE, show_colnames = FALSE,
   scale = "row",
   denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
 phospho_heatmap <- plot_data_heatmap(bestModel, 
@@ -562,13 +563,14 @@ phospho_heatmap <- plot_data_heatmap(bestModel,
   show_rownames = TRUE, show_colnames = FALSE,
   scale = "row",
   denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
 figPath <- c('prot_heatmap.png','phospho_heatmap.png','rna_heatmap.png')
 heatmapPlots <- list(prot_heatmap,phospho_heatmap,rna_heatmap)
 map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '/multiomics/results/figures/MOFA/all_samples/no_infiltration/',dpi = 300,width = 15,height = 15,units = 'in'))
 ```
+:::
 
 ## Group1 vs Group2
 ```{r}
@@ -772,7 +774,7 @@ ggsave(filename = 'MOFA_variance_allgroups.pdf',plot = plotVariance,device = 'pd
 ```{r}
 #| eval: !expr (params$used_analysis)
 covariatePlot <- correlate_factors_with_covariates(bestModel, 
-  covariates = c('Group.Info','Size.mm','NCN.PAM50','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","PR",'SSP.PAM50',"NHG",'BCFi_event','tumor_mutational_burden',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma"), 
+  covariates = c('Group.Info','Size.mm','NCN.PAM50','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","PR",'SSP.PAM50',"NHG",'BCFi_event',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma"), 
   plot="log_pval",
   abs = TRUE,
   alpha = 0.05
@@ -826,7 +828,7 @@ prot_heatmap <- plot_data_heatmap(bestModel,
   show_rownames = TRUE, show_colnames = FALSE,
   scale = "row",
   denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
 rna_heatmap <- plot_data_heatmap(bestModel, 
@@ -837,7 +839,7 @@ rna_heatmap <- plot_data_heatmap(bestModel,
   show_rownames = TRUE, show_colnames = FALSE,
   scale = "row",
   denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
 phospho_heatmap <- plot_data_heatmap(bestModel, 
@@ -848,7 +850,7 @@ phospho_heatmap <- plot_data_heatmap(bestModel,
   show_rownames = TRUE, show_colnames = FALSE,
   scale = "row",
   denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
 immune_heatmap <- plot_data_heatmap(bestModel, 
@@ -859,7 +861,7 @@ immune_heatmap <- plot_data_heatmap(bestModel,
   show_rownames = TRUE, show_colnames = FALSE,
   scale = "row",
   denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
 
@@ -868,6 +870,7 @@ heatmapPlots <- list(prot_heatmap,phospho_heatmap,rna_heatmap,immune_heatmap)
 map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '/multiomics/results/figures/MOFA/Group1vsGroup2/',dpi = 300,width = 15,height = 15,units = 'in'))
 ```
 
+:::{.content-visible when-meta="!params.used_analysis"}
 ## Group3 vs Group4
 ```{r}
 #| eval: !expr (!params$used_analysis)
@@ -1055,7 +1058,7 @@ ggsave(filename = 'MOFA_variance_allgroups.pdf',plot = plotVariance,device = 'pd
 ```{r}
 #| eval: !expr (!params$used_analysis)
 covariatePlot <- correlate_factors_with_covariates(bestModel, 
-  covariates = c('Group.Info','Size.mm','NCN.PAM50','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","PR",'SSP.PAM50',"NHG",'BCFi_event','tumor_mutational_burden','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma"), 
+  covariates = c('Group.Info','Size.mm','NCN.PAM50','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","PR",'SSP.PAM50',"NHG",'BCFi_event','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma"), 
   plot="log_pval",
   abs = TRUE,
   alpha = 0.05
@@ -1109,7 +1112,7 @@ prot_heatmap <- plot_data_heatmap(bestModel,
   show_rownames = TRUE, show_colnames = FALSE,
   scale = "row",
   denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','InvCa.type','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
 rna_heatmap <- plot_data_heatmap(bestModel, 
@@ -1120,7 +1123,7 @@ rna_heatmap <- plot_data_heatmap(bestModel,
   show_rownames = TRUE, show_colnames = FALSE,
   scale = "row",
   denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','InvCa.type','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
 phospho_heatmap <- plot_data_heatmap(bestModel, 
@@ -1131,7 +1134,7 @@ phospho_heatmap <- plot_data_heatmap(bestModel,
   show_rownames = TRUE, show_colnames = FALSE,
   scale = "row",
   denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','InvCa.type','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
 immune_heatmap <- plot_data_heatmap(bestModel, 
@@ -1142,7 +1145,7 @@ immune_heatmap <- plot_data_heatmap(bestModel,
   show_rownames = TRUE, show_colnames = FALSE,
   scale = "row",
   denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
 
@@ -1338,7 +1341,7 @@ ggsave(filename = 'MOFA_variance_allgroups.pdf',plot = plotVariance,device = 'pd
 ```{r}
 #| eval: !expr (!params$used_analysis)
 covariatePlot <- correlate_factors_with_covariates(bestModel, 
-  covariates = c('Group.Info','Size.mm','NCN.PAM50','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","PR",'SSP.PAM50',"NHG",'BCFi_event','tumor_mutational_burden','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma"), 
+  covariates = c('Group.Info','Size.mm','NCN.PAM50','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","PR",'SSP.PAM50',"NHG",'BCFi_event','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma"), 
   plot="log_pval",
   abs = TRUE,
   alpha = 0.05
@@ -1392,7 +1395,7 @@ prot_heatmap <- plot_data_heatmap(bestModel,
   show_rownames = TRUE, show_colnames = FALSE,
   scale = "row",
   denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
 rna_heatmap <- plot_data_heatmap(bestModel, 
@@ -1403,7 +1406,7 @@ rna_heatmap <- plot_data_heatmap(bestModel,
   show_rownames = TRUE, show_colnames = FALSE,
   scale = "row",
   denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
 phospho_heatmap <- plot_data_heatmap(bestModel, 
@@ -1414,7 +1417,7 @@ phospho_heatmap <- plot_data_heatmap(bestModel,
   show_rownames = TRUE, show_colnames = FALSE,
   scale = "row",
   denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
 immune_heatmap <- plot_data_heatmap(bestModel, 
@@ -1425,7 +1428,7 @@ immune_heatmap <- plot_data_heatmap(bestModel,
   show_rownames = TRUE, show_colnames = FALSE,
   scale = "row",
   denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
 
@@ -1621,7 +1624,7 @@ ggsave(filename = 'MOFA_variance_allgroups.pdf',plot = plotVariance,device = 'pd
 ```{r}
 #| eval: !expr (!params$used_analysis)
 covariatePlot <- correlate_factors_with_covariates(bestModel, 
-  covariates = c('Group.Info','Size.mm','NCN.PAM50','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","PR",'SSP.PAM50',"NHG",'BCFi_event','tumor_mutational_burden','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma"), 
+  covariates = c('Group.Info','Size.mm','NCN.PAM50','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","PR",'SSP.PAM50',"NHG",'BCFi_event','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma"), 
   plot="log_pval",
   abs = TRUE,
   alpha = 0.05
@@ -1675,7 +1678,7 @@ prot_heatmap <- plot_data_heatmap(bestModel,
   show_rownames = TRUE, show_colnames = FALSE,
   scale = "row",
   denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
 rna_heatmap <- plot_data_heatmap(bestModel, 
@@ -1686,7 +1689,7 @@ rna_heatmap <- plot_data_heatmap(bestModel,
   show_rownames = TRUE, show_colnames = FALSE,
   scale = "row",
   denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
 phospho_heatmap <- plot_data_heatmap(bestModel, 
@@ -1697,7 +1700,7 @@ phospho_heatmap <- plot_data_heatmap(bestModel,
   show_rownames = TRUE, show_colnames = FALSE,
   scale = "row",
   denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
 immune_heatmap <- plot_data_heatmap(bestModel, 
@@ -1708,7 +1711,7 @@ immune_heatmap <- plot_data_heatmap(bestModel,
   show_rownames = TRUE, show_colnames = FALSE,
   scale = "row",
   denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
 
@@ -1716,7 +1719,7 @@ figPath <- c('prot_heatmap.png','phospho_heatmap.png','rna_heatmap.png','immune_
 heatmapPlots <- list(prot_heatmap,phospho_heatmap,rna_heatmap,immune_heatmap)
 map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device = 'png',path = '/multiomics/results/figures/MOFA/LNposvsLNneg/Lobular/',dpi = 300,width = 15,height = 15,units = 'in'))
 ```
-
+:::
 
 ## All samples - Group2 Excluded
 ```{r}
@@ -1917,7 +1920,7 @@ ggsave(filename = 'MOFA_variance_allgroups.pdf',plot = plotVariance,device = 'pd
 ```{r}
 #| eval: !expr (params$used_analysis)
 covariatePlot <- correlate_factors_with_covariates(bestModel, 
-  covariates = c('Group.Info','Size.mm','NCN.PAM50','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","PR",'SSP.PAM50',"NHG",'BCFi_event','tumor_mutational_burden','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma"), 
+  covariates = c('Group.Info','Size.mm','NCN.PAM50','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","PR",'SSP.PAM50',"NHG",'BCFi_event','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma"), 
   plot="log_pval",
   abs = TRUE,
   alpha = 0.05
@@ -1971,7 +1974,7 @@ prot_heatmap <- plot_data_heatmap(bestModel,
   show_rownames = TRUE, show_colnames = FALSE,
   scale = "row",
   denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
 rna_heatmap <- plot_data_heatmap(bestModel, 
@@ -1982,7 +1985,7 @@ rna_heatmap <- plot_data_heatmap(bestModel,
   show_rownames = TRUE, show_colnames = FALSE,
   scale = "row",
   denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
 phospho_heatmap <- plot_data_heatmap(bestModel, 
@@ -1993,7 +1996,7 @@ phospho_heatmap <- plot_data_heatmap(bestModel,
   show_rownames = TRUE, show_colnames = FALSE,
   scale = "row",
   denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
 immune_heatmap <- plot_data_heatmap(bestModel, 
@@ -2004,7 +2007,7 @@ immune_heatmap <- plot_data_heatmap(bestModel,
   show_rownames = TRUE, show_colnames = FALSE,
   scale = "row",
   denoise = TRUE,
-  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','tumor_mutational_burden','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
+  annotation_samples = c('Group.Info','DRFi_event',"TreatGroup","Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)","NCN.ROR.risk.cat","NHG",'BCFi_event','InvCa.type','LN','LN.spec',"HisScoreFat","HisScoreInsituCancer","HisScoreInvasiveCancer","HisScoreLymphocytes","HisScoreNormal","HisScoreStroma")
 )
 
 

@@ -1,8 +1,9 @@
 FROM rocker/tidyverse
 
 # Metadata
-LABEL description = "Image for Multiomics Analysis under SCAN-B project"
-MAINTAINER "Sergio Mosquim Junior" sergio.mosquim_junior@immun.lth.se
+LABEL description="Image for Multiomic profiling of ER-positive HER2-negative breast cancer reveals markers associated with metastatic spread" \
+    maintainer="Sergio Mosquim Junior <sergio.mosquim_junior@med.lu.se>" \
+    version="1.1.0" 
 
 # Use bash as shell
 SHELL ["/bin/bash", "--login", "-c"]
@@ -17,7 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install Java and nextflow
 ENV JAVA_HOME=/opt/java/openjdk
-COPY --from=eclipse-temurin:latest $JAVA_HOME $JAVA_HOME
+COPY --from=eclipse-temurin:21 $JAVA_HOME $JAVA_HOME
 ENV PATH="${JAVA_HOME}/bin:${PATH}"
 RUN curl -s https://get.nextflow.io | bash
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*

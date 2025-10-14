@@ -9,6 +9,8 @@ format:
     toc-location: left
     smooth-scroll: true
 engine: knitr
+params:
+  run: false
 ---
 
 # Requires Packages:
@@ -56,7 +58,7 @@ proteomeProt <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),
 
 ### Phospho
 ```{r}
-dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
+dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
 designP <- '/multiomics/results/design_files/ductalvslobular_consensus_clustering.tsv'
 outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/AllSamples/Phosphoproteome/'
 jDEName <- "allsamples_phospho_cluster"
@@ -106,10 +108,13 @@ invisible(gc())
 rm(list = ls())
 ```
 
+:::{.content-visible when-meta="params.run"}
 ## All samples - Group 2 Excluded
 ### Full Proteome
 
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 dataP <- '/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv'
 designP <- '/multiomics/results/design_files/ductalvslobular_consensus_clustering_noG2.tsv'
 outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/AllSamples_noG2/Proteome/'
@@ -133,7 +138,9 @@ proteomeProt <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),
 
 ### Phospho
 ```{r}
-dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
+#| eval: !expr params$run
+#| echo: !expr params$run
+dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
 designP <- '/multiomics/results/design_files/ductalvslobular_consensus_clustering_noG2.tsv'
 outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/AllSamples_noG2/Phosphoproteome/'
 jDEName <- "allsamples_phospho_cluster"
@@ -156,6 +163,8 @@ phosphoPep <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),.x
 
 ### Transcriptome
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 dataP <- '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv'
 designP <- '/multiomics/results/design_files/ductalvslobular_consensus_clustering_noG2.tsv'
 outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/AllSamples_noG2/Transcriptome/'
@@ -179,6 +188,8 @@ phosphoPep <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),.x
 
 ### Results
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 invisible(gc())
 rm(list = ls())
 ```
@@ -188,6 +199,8 @@ rm(list = ls())
 #### Full Proteome
 
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 dataP <- '/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv'
 designP <- '/multiomics/results/design_files/lnposvslnneg_ductal_consensus_clustering.tsv'
 outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/LNposvsLNneg/Ductal/Proteome/'
@@ -211,7 +224,9 @@ proteomeProt <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),
 
 #### Phospho
 ```{r}
-dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
+#| eval: !expr params$run
+#| echo: !expr params$run
+dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
 designP <- '/multiomics/results/design_files/lnposvslnneg_ductal_consensus_clustering.tsv'
 outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/LNposvsLNneg/Ductal/Phosphoproteome/'
 jDEName <- "lnposvslnneg_ductal_phospho_cluster"
@@ -234,6 +249,8 @@ phosphoPep <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),.x
 
 #### Transcriptome
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 dataP <- '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv'
 designP <- '/multiomics/results/design_files/lnposvslnneg_ductal_consensus_clustering.tsv'
 outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/LNposvsLNneg/Ductal/Transcriptome/'
@@ -257,6 +274,8 @@ phosphoPep <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),.x
 
 #### Results
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 invisible(gc())
 rm(list = ls())
 ```
@@ -265,6 +284,8 @@ rm(list = ls())
 #### Full Proteome
 
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 dataP <- '/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv'
 designP <- '/multiomics/results/design_files/lnposvslnneg_lobular_consensus_clustering.tsv'
 outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/LNposvsLNneg/Lobular/Proteome/'
@@ -288,7 +309,9 @@ proteomeProt <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),
 
 #### Phospho
 ```{r}
-dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
+#| eval: !expr params$run
+#| echo: !expr params$run
+dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
 designP <- '/multiomics/results/design_files/lnposvslnneg_lobular_consensus_clustering.tsv'
 outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/LNposvsLNneg/Lobular/Phosphoproteome/'
 jDEName <- "lnposvslnneg_lobular_phospho_cluster"
@@ -311,6 +334,8 @@ phosphoPep <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),.x
 
 #### Transcriptome
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 dataP <- '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv'
 designP <- '/multiomics/results/design_files/lnposvslnneg_lobular_consensus_clustering.tsv'
 outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/LNposvsLNneg/Lobular/Transcriptome/'
@@ -334,6 +359,8 @@ phosphoPep <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),.x
 
 #### Results
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 invisible(gc())
 rm(list = ls())
 ```
@@ -342,6 +369,8 @@ rm(list = ls())
 ### Full Proteome
 
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 dataP <- '/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv'
 designP <- '/multiomics/results/design_files/g1vsg2_consensus_clustering.tsv'
 outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/G1vsG2/Proteome/'
@@ -365,7 +394,9 @@ proteomeProt <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),
 
 ### Phospho
 ```{r}
-dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
+#| eval: !expr params$run
+#| echo: !expr params$run
+dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
 designP <- '/multiomics/results/design_files/g1vsg2_consensus_clustering.tsv'
 outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/G1vsG2/Phosphoproteome/'
 jDEName <- "g1vsg2_phospho_cluster"
@@ -388,6 +419,8 @@ phosphoPep <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),.x
 
 ### Transcriptome
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 dataP <- '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv'
 designP <- '/multiomics/results/design_files/g1vsg2_consensus_clustering.tsv'
 outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/G1vsG2/Transcriptome/'
@@ -411,6 +444,8 @@ phosphoPep <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),.x
 
 ### Results
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 invisible(gc())
 rm(list = ls())
 ```
@@ -419,6 +454,8 @@ rm(list = ls())
 ### Full Proteome
 
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 dataP <- '/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv'
 designP <- '/multiomics/results/design_files/g3vsg4_consensus_clustering.tsv'
 outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/G3vsG4/Proteome/'
@@ -442,7 +479,9 @@ proteomeProt <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),
 
 ### Phospho
 ```{r}
-dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
+#| eval: !expr params$run
+#| echo: !expr params$run
+dataP <- '/multiomics/data/proteomics/phospho/phospho_aggregation/CycLoess-normalized.txt.phosphopeptides_flanking.tsv'
 designP <- '/multiomics/results/design_files/g3vsg4_consensus_clustering.tsv'
 outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/G3vsG4/Phosphoproteome/'
 jDEName <- "g3vsg4_phospho_cluster"
@@ -465,6 +504,8 @@ phosphoPep <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),.x
 
 ### Transcriptome
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 dataP <- '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv'
 designP <- '/multiomics/results/design_files/g3vsg4_consensus_clustering.tsv'
 outDir <- '/multiomics/results/differentialexpression/ConsensusCluster/G3vsG4/Transcriptome/'
@@ -488,6 +529,9 @@ phosphoPep <- future_map(.options = furrr_options(globals = TRUE,seed = TRUE),.x
 
 ### Results
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 invisible(gc())
 rm(list = ls())
 ```
+:::

@@ -38,7 +38,7 @@ on.exit(expr = {plan(sequential)})
 # Data Downloaded from https://data.mendeley.com/datasets/yzxtxn4nmd
 load('/multiomics/data/transcriptomics/Gene.ID.ann.Rdata')
 load('/multiomics/data/transcriptomics/SCANB.9206.genematrix_noNeg.Rdata')
-design <- read_tsv('/multiomics/results/design_files/mergedDesign_ref_mutation.tsv') %>% 
+design <- read_tsv('/multiomics/results/design_files/mergedDesign_ref_hisscore.tsv') %>% 
   filter(!is.na(GEX.assay))
 
 geneNames <- rownames(SCANB.9206.genematrix_noNeg) %>% 

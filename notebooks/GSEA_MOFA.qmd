@@ -10,6 +10,8 @@ format:
     smooth-scroll: true
     message: false
 engine: knitr
+params:
+  run: false
 ---
 # Requires Packages:
 ```{r required packages}
@@ -24,16 +26,21 @@ source(file = '/multiomics/notebooks/msigdb_gsea_function.R',chdir = TRUE)
 
 # Gene Set Enrichment Analysis
 
+:::{.content-visible when-meta="params.run"}
 ## All samples with infiltration
 ### Model
 
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 model <- readRDS(file = '/multiomics/results/MOFA/all_samples/infiltration/model.RDS')
 ```
 
 ### Rename Features
 
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 features_names(model)[["proteomics"]] <- features_names(model)[["proteomics"]] %>% str_split_i(.,pattern='\\_',i=1)
 features_names(model)[["phosphoproteomics"]] <- features_names(model)[["phosphoproteomics"]] %>% str_split_i(.,pattern='\\_',i=1)
 features_names(model)[["transcriptomics"]] <- features_names(model)[["transcriptomics"]] %>% str_split_i(.,pattern='\\.',i=1)
@@ -41,11 +48,15 @@ features_names(model)[["transcriptomics"]] <- features_names(model)[["transcript
 
 ### GSEA
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 gsea <- gseaMsigMOFA(model = model,factor = 3,qvaluecutoff = 0.25)
 ```
 
 ### Plotting
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 geneSetName <- msigdbr(species = 'Homo sapiens',category = 'H') %>% dplyr::select(gs_name) %>% unique(x = .)
 resultsAll <- map(.x = names(gsea),.f = ~pluck(.x = gsea,.x,'result')) %>% 
   map(.f = ~left_join(x = geneSetName,y = .x,by = c('gs_name'='ID'))) %>% 
@@ -74,6 +85,7 @@ if(!dir.exists(paths = '/multiomics/results/figures/MOFA/all_samples/infiltratio
 ggsave(filename = 'GSEA_allsamples_infiltration.png',plot = p,device = 'png',path = '/multiomics/results/figures/MOFA/all_samples/infiltration/',units = 'in',width = 10,height = 12,dpi = 600)
 
 ```
+:::
 
 
 ## Group1 vs Group2
@@ -126,16 +138,22 @@ if(!dir.exists(paths = '/multiomics/results/figures/MOFA/Group1vsGroup2/')) {
 ggsave(filename = 'GSEA_Group1vsGroup2.png',plot = p,device = 'png',path = '/multiomics/results/figures/MOFA/Group1vsGroup2/',units = 'in',width = 10,height = 12,dpi = 600)
 
 ```
+
+:::{.content-visible when-meta="params.run"}
 ## Group3 vs Group4
 ### Model
 
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 model <- readRDS(file = '/multiomics/results/MOFA/Group3vsGroup4/model.RDS')
 ```
 
 ### Rename Features
 
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 features_names(model)[["proteomics"]] <- features_names(model)[["proteomics"]] %>% str_split_i(.,pattern='\\_',i=1)
 features_names(model)[["phosphoproteomics"]] <- features_names(model)[["phosphoproteomics"]] %>% str_split_i(.,pattern='\\_',i=1)
 features_names(model)[["transcriptomics"]] <- features_names(model)[["transcriptomics"]] %>% str_split_i(.,pattern='\\.',i=1)
@@ -143,11 +161,15 @@ features_names(model)[["transcriptomics"]] <- features_names(model)[["transcript
 
 ### GSEA
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 gsea <- gseaMsigMOFA(model = model,factor = 3,qvaluecutoff = 0.25)
 ```
 
 ### Plotting
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 geneSetName <- msigdbr(species = 'Homo sapiens',category = 'H') %>% dplyr::select(gs_name) %>% unique(x = .)
 resultsAll <- map(.x = names(gsea),.f = ~pluck(.x = gsea,.x,'result')) %>% 
   map(.f = ~left_join(x = geneSetName,y = .x,by = c('gs_name'='ID'))) %>% 
@@ -181,12 +203,16 @@ ggsave(filename = 'GSEA_Group3vsGroup4.png',plot = p,device = 'png',path = '/mul
 ### Model
 
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 model <- readRDS(file = '/multiomics/results/MOFA/LNposvsLNneg/Ductal/model.RDS')
 ```
 
 ### Rename Features
 
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 features_names(model)[["proteomics"]] <- features_names(model)[["proteomics"]] %>% str_split_i(.,pattern='\\_',i=1)
 features_names(model)[["phosphoproteomics"]] <- features_names(model)[["phosphoproteomics"]] %>% str_split_i(.,pattern='\\_',i=1)
 features_names(model)[["transcriptomics"]] <- features_names(model)[["transcriptomics"]] %>% str_split_i(.,pattern='\\.',i=1)
@@ -194,11 +220,15 @@ features_names(model)[["transcriptomics"]] <- features_names(model)[["transcript
 
 ### GSEA
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 gsea <- gseaMsigMOFA(model = model,factor = 3,qvaluecutoff = 0.25)
 ```
 
 ### Plotting
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 geneSetName <- msigdbr(species = 'Homo sapiens',category = 'H') %>% dplyr::select(gs_name) %>% unique(x = .)
 resultsAll <- map(.x = names(gsea),.f = ~pluck(.x = gsea,.x,'result')) %>% 
   map(.f = ~left_join(x = geneSetName,y = .x,by = c('gs_name'='ID'))) %>% 
@@ -232,12 +262,16 @@ ggsave(filename = 'GSEA_Group3vsGroup4.png',plot = p,device = 'png',path = '/mul
 ### Model
 
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 model <- readRDS(file = '/multiomics/results/MOFA/LNposvsLNneg/Lobular/model.RDS')
 ```
 
 ### Rename Features
 
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 features_names(model)[["proteomics"]] <- features_names(model)[["proteomics"]] %>% str_split_i(.,pattern='\\_',i=1)
 features_names(model)[["phosphoproteomics"]] <- features_names(model)[["phosphoproteomics"]] %>% str_split_i(.,pattern='\\_',i=1)
 features_names(model)[["transcriptomics"]] <- features_names(model)[["transcriptomics"]] %>% str_split_i(.,pattern='\\.',i=1)
@@ -245,11 +279,15 @@ features_names(model)[["transcriptomics"]] <- features_names(model)[["transcript
 
 ### GSEA
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 gsea <- gseaMsigMOFA(model = model,factor = 3,qvaluecutoff = 0.25)
 ```
 
 ### Plotting
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 geneSetName <- msigdbr(species = 'Homo sapiens',category = 'H') %>% dplyr::select(gs_name) %>% unique(x = .)
 resultsAll <- map(.x = names(gsea),.f = ~pluck(.x = gsea,.x,'result')) %>% 
   map(.f = ~left_join(x = geneSetName,y = .x,by = c('gs_name'='ID'))) %>% 
@@ -278,7 +316,7 @@ if(!dir.exists(paths = '/multiomics/results/figures/MOFA/LNposvsLNneg/Lobular/')
 ggsave(filename = 'GSEA_Group3vsGroup4.png',plot = p,device = 'png',path = '/multiomics/results/figures/MOFA/LNposvsLNneg/Lobular/',units = 'in',width = 10,height = 12,dpi = 600)
 
 ```
-
+:::
 
 ## All samples - Group2 Excluded
 ### Model

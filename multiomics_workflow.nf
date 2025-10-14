@@ -6,7 +6,12 @@ workflow  {
     ch_notebook_multiomics = Channel.fromPath("./notebooks/*")
 
     // Run workflow
-    GENERATE_DESIGN_FILES (ch_notebook_multiomics.filter {it.name == 'generate_design_files.qmd'})
+    SAMPLE_SELECTION (ch_notebook_multiomics.filter {it.name == 'sample_selection.qmd'})
+
+    GENERATE_DESIGN_FILES(
+        ch_notebook_multiomics.filter {it.name == 'generate_design_files.qmd'},
+        SAMPLE_SELECTION.out.collect()
+    )
 
     PREPROCESS_IMMUNE (ch_notebook_multiomics.filter {it.name == 'preprocess_immuneinfiltration.qmd'})
 
@@ -20,6 +25,11 @@ workflow  {
         DATA_NORMALIZATION.out.collect()
     )
 
+    PTM_SEA(
+        ch_notebook_multiomics.filter {it.name == 'phosphopeptide_aggregation_ptmsea.qmd'},
+        PROTEIN_ROLLUP.out.collect()
+    )
+
     BATCH_CORRECTION(
       ch_notebook_multiomics.filter {it.name == 'batchcorrection.qmd'},
       PROTEIN_ROLLUP.out.collect()
@@ -27,7 +37,8 @@ workflow  {
 
     DIFFERENTIAL_EXPRESSION(
       ch_notebook_multiomics.filter {it.name == 'differentialexpression.qmd'},
-      PROTEIN_ROLLUP.out.collect()
+      PROTEIN_ROLLUP.out.collect(),
+      PTM_SEA.out.collect()
     )
 
     GSEA(
@@ -107,10 +118,28 @@ workflow  {
       DIFFERENTIAL_EXPRESSION.out.collect()
     )
 
+    COHORT_CHARACTERISTICS(
+        ch_notebook_multiomics.filter {it.name == 'table_patient_tumor_characteristics.qmd'},
+        GENERATE_DESIGN_FILES.out.collect()
+    )
+
+    BOXPLOTS_SUPPLEMENTARY(
+        ch_notebook_multiomics.filter {it.name == 'boxplots_supplementary.qmd'},
+        SURVIVAL_DE.out.collect(),
+        SURVIVAL_MOFA.out.collect()
+    )
+
+    PCA_SUPPLEMENTARY(
+        ch_notebook_multiomics.filter {it.name == 'pca_plot_supplementary_figure.qmd'},
+        PROTEIN_ROLLUP.out.collect()
+    )
+
+    
+
 }
 
 // Process definition
-process GENERATE_DESIGN_FILES{
+process SAMPLE_SELECTION{
     publishDir "./results/rendered_notebooks",
         mode: "copy"
 
@@ -124,6 +153,26 @@ process GENERATE_DESIGN_FILES{
     """
     mkdir -p /multiomics/results/design_files/
     mkdir -p /multiomics/results/rendered_notebooks/
+    quarto render ${notebook} --to html > .html
+    """
+}
+
+process GENERATE_DESIGN_FILES{
+    publishDir "./results/rendered_notebooks",
+        mode: "copy"
+
+    input:
+        path(notebook)
+        path(html)
+
+    when:
+        html.exists()
+
+    output:
+        path("*.html"), emit: html
+
+    script:
+    """
     quarto render ${notebook} --to html > .html
     """
 }
@@ -165,6 +214,26 @@ process DATA_NORMALIZATION{
 }
 
 process PROTEIN_ROLLUP{
+    publishDir "./results/rendered_notebooks",
+        mode: "copy"
+
+    input:
+        path(notebook)
+        path(html)
+
+    when:
+        html.exists()
+
+    output:
+        path("*.html"), emit: html
+
+    script:
+    """
+    quarto render ${notebook} --to html > .html
+    """
+}
+
+process PTM_SEA{
     publishDir "./results/rendered_notebooks",
         mode: "copy"
 
@@ -336,27 +405,12 @@ process SURVIVAL_MOFA{
         path("*.html"),emit: html
     script:
     """
-    #quarto render ${notebook} -P model:'/multiomics/results/MOFA/all_samples/infiltration/model.RDS' -P outcome:'InvCa.type' -P time:'RFi_days' -P event:'RFi_event' > .html
-    #quarto render ${notebook} -P model:'/multiomics/results/MOFA/all_samples/infiltration/model.RDS' -P outcome:'InvCa.type' -P time:'DRFi_days' -P event:'DRFi_event' > .html
-    #quarto render ${notebook} -P model:'/multiomics/results/MOFA/all_samples/infiltration/model.RDS' -P outcome:'InvCa.type' -P time:'OS_days' -P event:'OS_event' > .html
-
-    #quarto render ${notebook} -P model:'/multiomics/results/MOFA/all_samples/infiltration/model.RDS' -P outcome:'LN' -P time:'RFi_days' -P event:'RFi_event' > .html
-    #quarto render ${notebook} -P model:'/multiomics/results/MOFA/all_samples/infiltration/model.RDS' -P outcome:'LN' -P time:'OS_days' -P event:'OS_event' > .html
-
     quarto render ${notebook} -P model:'/multiomics/results/MOFA/AllSamples_noG2/model.RDS' -P outcome:'LN' -P time:'RFi_days' -P event:'RFi_event' > .html
-    #quarto render ${notebook} -P model:'/multiomics/results/MOFA/AllSamples_noG2/model.RDS' -P outcome:'LN' -P time:'DRFi_days' -P event:'DRFi_event' > .html
     quarto render ${notebook} -P model:'/multiomics/results/MOFA/AllSamples_noG2/model.RDS' -P outcome:'LN' -P time:'OS_days' -P event:'OS_event' > .html
-
-    #quarto render ${notebook} -P model:'/multiomics/results/MOFA/LNposvsLNneg/Ductal/model.RDS' -P outcome:'LN' -P time:'RFi_days' -P event:'RFi_event' > .html
-    #quarto render ${notebook} -P model:'/multiomics/results/MOFA/LNposvsLNneg/Ductal/model.RDS' -P outcome:'LN' -P time:'DRFi_days' -P event:'DRFi_event' > .html
-    #quarto render ${notebook} -P model:'/multiomics/results/MOFA/LNposvsLNneg/Ductal/model.RDS' -P outcome:'LN' -P time:'OS_days' -P event:'OS_event' > .html
 
     quarto render ${notebook} -P model:'/multiomics/results/MOFA/Group1vsGroup2/model.RDS' -P outcome:'DRFi_event' -P time:'RFi_days' -P event:'RFi_event' > .html
     quarto render ${notebook} -P model:'/multiomics/results/MOFA/Group1vsGroup2/model.RDS' -P outcome:'DRFi_event' -P time:'DRFi_days' -P event:'DRFi_event' > .html
     quarto render ${notebook} -P model:'/multiomics/results/MOFA/Group1vsGroup2/model.RDS' -P outcome:'DRFi_event' -P time:'OS_days' -P event:'OS_event' > .html
-
-
-    #quarto render ${notebook} -P model:'/multiomics/results/MOFA/Group1vsGroup2/model.RDS' -P outcome:'LN' > .html
     """
 }
 
@@ -366,27 +420,17 @@ process SURVIVAL_DE{
 
     input:
         path(notebook)
-        path(html)
+        path(html) 
     output:
         path("*.html"),emit: html
     script:
     """
-    #quarto render ${notebook} -P comparison:'DuctalvsLobular_noG2' -P time:'RFi_days' -P event:'RFi_event' -P outcome:'InvCa.type' > .html
-    #quarto render ${notebook} -P comparison:'DuctalvsLobular_noG2' -P time:'OS_days' -P event:'OS_event' -P outcome:'InvCa.type' > .html
-    #quarto render ${notebook} -P comparison:'DuctalvsLobular_noG2' -P time:'DRFi_days' -P event:'DRFi_event' -P outcome:'InvCa.type' > .html
-
     quarto render ${notebook} -P comparison:'AllSamples_noG2' -P time:'RFi_days' -P event:'RFi_event' -P outcome:'LN' > .html
     quarto render ${notebook} -P comparison:'AllSamples_noG2' -P time:'OS_days' -P event:'OS_event' -P outcome:'LN' > .html
-    #quarto render ${notebook} -P comparison:'AllSamples_noG2' -P time:'DRFi_days' -P event:'DRFi_event' -P outcome:'InvCa.type' > .html
 
     quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'DRFi_days' -P event:'DRFi_event' -P outcome:'Group.Info' > .html
     quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'RFi_days' -P event:'RFi_event' -P outcome:'Group.Info' > .html
     quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'OS_days' -P event:'OS_event' -P outcome:'Group.Info' > .html
-
-
-    #quarto render ${notebook} -P comparison:'LNposvsLNneg/Ductal/' > .html
-
-    #quarto render ${notebook} -P comparison:'LNposvsLNneg/Lobular/' > .html
     """
 }
 
@@ -540,6 +584,66 @@ process IMMUNE_BOXPLOT{
 }
 
 process VOLCANO_PLOTS{
+    publishDir "./results/rendered_notebooks",
+        mode: "copy"
+
+    input:
+        path(notebook)
+        path(html)
+
+    when:
+        html.exists()
+
+    output:
+        path("*.html"), emit: html
+
+    script:
+    """
+    quarto render ${notebook} > .html
+    """
+}
+
+process COHORT_CHARACTERISTICS{
+    publishDir "./results/rendered_notebooks",
+        mode: "copy"
+
+    input:
+        path(notebook)
+        path(html)
+
+    when:
+        html.exists()
+
+    output:
+        path("*.html"), emit: html
+
+    script:
+    """
+    quarto render ${notebook} > .html
+    """
+}
+
+process BOXPLOTS_SUPPLEMENTARY{
+    publishDir "./results/rendered_notebooks",
+        mode: "copy"
+
+    input:
+        path(notebook)
+        path(html)
+
+    when:
+        html.exists()
+
+    output:
+        path("*.html"), emit: html
+
+    script:
+    """
+    quarto render ${notebook} > .html
+    """
+}
+
+process PCA_SUPPLEMENTARY{
     publishDir "./results/rendered_notebooks",
         mode: "copy"
 

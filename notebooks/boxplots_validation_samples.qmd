@@ -211,27 +211,6 @@ dataMOFA <- list(
 
 ## Generate Plots
 ```{r}
-# plots <- map2(data,features,function(x,y){
-#   data <- x
-#   features <- y
-#   plot <- map(features,function(x){
-#     ggplot(data)+
-#       geom_point(mapping = aes(x=as.factor(.data[[params$outcome]]),y=.data[[x]],color=as.factor(.data[[params$outcome]])))+
-#       geom_boxplot(mapping = aes(x=as.factor(.data[[params$outcome]]),y=.data[[x]],fill=as.factor(.data[[params$outcome]])),alpha=0.7)+
-#       scale_color_manual(name=params$outcome,values = c("0"="darkblue","1"="darkred"))+
-#       scale_fill_manual(name=params$outcome,values = c("0"="darkblue","1"="darkred"))+
-#       stat_compare_means(mapping = aes(x=as.factor(.data[[params$outcome]]),y=.data[[x]]),
-#                          method = 't.test',
-#                          symnum.args = list(cutpoints = c(0, 0.0001, 0.001, 0.01, 0.05, Inf), 
-#                                             symbols = c("****", "***", "**", "*", "ns")),
-#                          ref.group = "0",
-#                          show.legend = FALSE)+
-#       xlab(params$outcome)+
-#       theme_bw()
-#   })
-#   names(plot) <- y
-#   return(plot)
-# })
 features <- coxFeats[coxFeats %in% colnames(dataMOFA)]
 mofaPlot <- map(features,function(x){
     ggplot(dataMOFA)+

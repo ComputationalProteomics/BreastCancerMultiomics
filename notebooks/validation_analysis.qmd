@@ -26,6 +26,7 @@ library(gridExtra)
 library(grDevices)
 library(forestmodel)
 library(NormalyzerDE)
+library(openxlsx)
 ```
 
 ```{r Output Directory}
@@ -37,9 +38,8 @@ if(!dir.exists(paths = outputdir)) {
 ```
 
 ```{r}
-# samples <- openxlsx::read.xlsx(xlsxFile = 'Supplementary Data Table 1 - 2021-12-17.xlsx',sheet = 1)
-design <- readxl::read_xlsx(path = '/multiomics/data/sample_selection/Supplementary Data Table 1 - 2021-12-17.xlsx',sheet = 1,n_max = Inf,guess_max = 5000)
-design_study <- read_tsv(file = '/multiomics/results/design_files/mergedDesign_ref_mutation.tsv')
+design <- read.xlsx(xlsxFile = 'https://static-content.springer.com/esm/art%3A10.1038%2Fs41523-022-00465-3/MediaObjects/41523_2022_465_MOESM2_ESM.xlsx',sheet = 1)
+design_study <- read_tsv(file = '/multiomics/results/design_files/mergedDesign_ref_hisscore.tsv')
 design_filter <- design %>% filter(!(.[["Sample"]] %in% design_study[["Sample"]]))
 ```
 
@@ -48,48 +48,12 @@ design_filter <- design %>% filter(!(.[["Sample"]] %in% design_study[["Sample"]]
 #Outlier Removal
 sampleFilter <- design_filter %>%
   filter(ReferenceYear<=2016,
-    # between(ReferenceYear,2010,2016),
-         # RNA.NDConc >= 200,
          ER=='Positive',
          HER2=='Negative',
-         # !is.na(NHG),
-         # !is.na(DRFi_event),
-         # !is.na(RFi_event),
-         # !is.na(OS_event),
          !duplicated(Sample)
          )
 
 sampleFilter <- sampleFilter %>% mutate(sample_id=str_split_i(GEX.assay,'\\.',1)) %>% relocate(sample_id,.before = 1)
-
-# sampleFilterFollowUp <- design_filter %>% 
-#   filter(Follow.up.cohort==TRUE,
-#          RNA.NDConc >= 200,
-#          ER=='Positive',
-#          HER2=='Negative',
-#          !is.na(NHG),
-#          !is.na(DRFi_event))
-
-# for (i in c(1:3)) {
-#   quartiles <- quantile(x = sampleFilter$Size.mm,probs = c(0.25,0.75),na.rm = TRUE)
-#   interQuantileR <- IQR(sampleFilter$Size.mm,na.rm = TRUE)
-#   lowerRange <- quartiles[1]-1.5*interQuantileR
-#   upperRange <- quartiles[2]+1.5*interQuantileR
-#   sampleFilter <- sampleFilter %>%
-#     filter(between(Size.mm,lowerRange,upperRange))
-#   i <- i+1
-#   print(i)
-# }
-
-# for (i in c(1:3)) {
-#   quartiles <- quantile(x = sampleFilterFollowUp$Size.mm,probs = c(0.25,0.75),na.rm = TRUE)
-#   interQuantileR <- IQR(sampleFilterFollowUp$Size.mm,na.rm = TRUE)
-#   lowerRange <- quartiles[1]-1.5*interQuantileR
-#   upperRange <- quartiles[2]+1.5*interQuantileR
-#   sampleFilterFollowUp <- sampleFilterFollowUp %>% 
-#     filter(between(Size.mm,lowerRange,upperRange))
-#   i <- i+1
-#   print(i)
-# }
 ```
 
 ```{r}

@@ -35,17 +35,19 @@ packages <- c(
   'org.Hs.eg.db',
   'ConsensusClusterPlus',
   'ComplexHeatmap',
-  'mixOmics')
+  'patchwork', 
+  'cowplot',
+  'ggpubr',
+  'ggrepel',
+  'gt',
+  'gtsummary',
+  'webshot2',
+  'Biostrings',
+  'cmapR',
+  'nicolerg/ssGSEA2',
+  'openxlsx')
 
-# packages_bioconductor <- c('enrichplot',
-#                            'AnnotationDbi',
-#                            'NormalyzerDE',
-#                            'clusterProfiler',
-#                            'MOFA2',
-#                            'org.Hs.eg.db',
-#                            'ConsensusClusterPlus',
-#                            'ComplexHeatmap',
-#                            'mixOmics')
+
 
 packageCheckInstall <- function(x){
   if(!require(x,quietly = FALSE,character.only = TRUE)){
@@ -53,14 +55,8 @@ packageCheckInstall <- function(x){
   }
 }
 
-# packageCheckBioconductor <- function(x){
-#   if(!require(x,quietly = FALSE,character.only = TRUE)){
-#     BiocManager::install(pkgs = x,update = TRUE,ask = FALSE,force = TRUE)
-#   }
-# }
 
 lapply(X = packages,FUN = packageCheckInstall)
-# lapply(X = packages_bioconductor,FUN = packageCheckBioconductor)
 BiocManager::install("preprocessCore", configure.args = c(preprocessCore = "--disable-threading"), force= TRUE, update=TRUE, type = "source")
 
 pak::pak_cleanup(package_cache = TRUE,metadata_cache = TRUE,force = TRUE)

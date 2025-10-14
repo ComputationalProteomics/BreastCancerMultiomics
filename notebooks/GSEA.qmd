@@ -10,6 +10,8 @@ format:
     smooth-scroll: true
     message: false
 engine: knitr
+params:
+  run: false
 ---
 
 # Requires Packages:
@@ -146,27 +148,36 @@ if(!dir.exists(paths = '/multiomics/results/figures/GSEA/')) {
 ggsave(filename = 'GSEA_LNposLNneg_allsamples_noG2.png',plot = p,device = 'png',path = '/multiomics/results/figures/GSEA/',units = 'in',width = 10,height = 12,dpi = 600)
 ```
 
+:::{.content-visible when-meta="params.run"}
 ### Ductal
 #### Full Proteome
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 data <- '/multiomics/results/differentialexpression/LNposvsLNneg/Ductal/LN_ductal_fullproteome_protein/LN_ductal_fullproteome_protein_stats.tsv'
 gseaMsigProt <- gseaMsigDBProt(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
 ```
 
 #### Phosphoproteome
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 data <- '/multiomics/results/differentialexpression/LNposvsLNneg/Ductal/LN_ductal_phosphoproteome_peptide/LN_ductal_phosphoproteome_peptide_stats.tsv'
 gseaMsigPhospho <- gseaMsigDBPhospho(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
 ```
 
 #### Transcriptome
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 data <- '/multiomics/results/differentialexpression/LNposvsLNneg/Ductal/LN_ductal_transcriptome/LN_ductal_transcriptome_stats.tsv'
 gseaMsigRNA <- gseaMsigDBRNA(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H',genecol = 'Gene.ID')
 ```
 
 #### MultiOmics GSEA Plot
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 resultsProt <- pluck(gseaMsigProt,'result') %>% 
   left_join(x=geneSetName,y = ., by = c('gs_name'='ID')) %>% 
   dplyr::mutate(Experiment = 'Proteome') %>% 
@@ -207,24 +218,32 @@ ggsave(filename = 'GSEA_LNposLNneg_ductal.png',plot = p,device = 'png',path = '/
 ### Lobular
 #### Full Proteome
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 data <- '/multiomics/results/differentialexpression/LNposvsLNneg/Lobular/LN_lobular_fullproteome_protein/LN_lobular_fullproteome_protein_stats.tsv'
 gseaMsigProt <- gseaMsigDBProt(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
 ```
 
 #### Phosphoproteome
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 data <- '/multiomics/results/differentialexpression/LNposvsLNneg/Lobular/LN_lobular_phosphoproteome_peptide/LN_lobular_phosphoproteome_peptide_stats.tsv'
 gseaMsigPhospho <- gseaMsigDBPhospho(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
 ```
 
 #### Transcriptome
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 data <- '/multiomics/results/differentialexpression/LNposvsLNneg/Lobular/LN_lobular_transcriptome/LN_lobular_transcriptome_stats.tsv'
 gseaMsigRNA <- gseaMsigDBRNA(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H',genecol = 'Gene.ID')
 ```
 
 #### MultiOmics GSEA Plot
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 resultsProt <- pluck(gseaMsigProt,'result') %>% 
   left_join(x=geneSetName,y = ., by = c('gs_name'='ID')) %>% 
   dplyr::mutate(Experiment = 'Proteome') %>% 
@@ -261,6 +280,7 @@ if(!dir.exists(paths = '/multiomics/results/figures/GSEA/')) {
 }
 ggsave(filename = 'GSEA_LNposLNneg_lobular.png',plot = p,device = 'png',path = '/multiomics/results/figures/GSEA/',units = 'in',width = 10,height = 12,dpi = 600)
 ```
+:::
 
 ## Group1 vs Group2
 ### Full Proteome
@@ -320,27 +340,36 @@ if(!dir.exists(paths = '/multiomics/results/figures/GSEA/')) {
 ggsave(filename = 'GSEA_Group1vsGroup2.png',plot = p,device = 'png',path = '/multiomics/results/figures/GSEA/',units = 'in',width = 10,height = 12,dpi = 600)
 ```
 
+:::{.content-visible when-meta="params.run"}
 ## Group3 vs Group4
 ### Full Proteome
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 data <- '/multiomics/results/differentialexpression/Group3vsGroup4/G3G4_fullproteome_protein/G3G4_fullproteome_protein_stats.tsv'
 gseaMsigProt <- gseaMsigDBProt(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
 ```
 
 ### Phosphoproteome
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 data <- '/multiomics/results/differentialexpression/Group3vsGroup4/G3G4_phosphoproteome_peptide/G3G4_phosphoproteome_peptide_stats.tsv'
 gseaMsigPhospho <- gseaMsigDBPhospho(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
 ```
 
 ### Transcriptome
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 data <- '/multiomics/results/differentialexpression/Group3vsGroup4/G3G4_transcriptome/G3G4_transcriptome_stats.tsv'
 gseaMsigRNA <- gseaMsigDBRNA(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H',genecol = 'Gene.ID')
 ```
 
 ### MultiOmics GSEA Plot
 ```{r}
+#| eval: !expr params$run
+#| echo: !expr params$run
 resultsProt <- pluck(gseaMsigProt,'result') %>% 
   left_join(x=geneSetName,y = ., by = c('gs_name'='ID')) %>% 
   dplyr::mutate(Experiment = 'Proteome') %>% 
@@ -377,3 +406,4 @@ if(!dir.exists(paths = '/multiomics/results/figures/GSEA/')) {
 }
 ggsave(filename = 'GSEA_Group3vsGroup4.png',plot = p,device = 'png',path = '/multiomics/results/figures/GSEA/',units = 'in',width = 10,height = 12,dpi = 600)
 ```
+:::

@@ -1,0 +1,42 @@
+---
+title: "Table 1 - Patient and Tumor Characteristics"
+author: "Sergio Mosquim Junior"
+format:
+  html:
+    toc: true
+    code-fold: true
+    embed-resources: true
+    toc-location: left
+    smooth-scroll: true
+engine: knitr
+---
+
+# Required Packages
+```{r}
+library(tidyverse)
+library(gtsummary)
+library(gt)
+library(webshot2)
+```
+
+# Import Data
+```{r}
+data <- read_tsv(file = '/multiomics/results/design_files/mergedDesign_ref_hisscore.tsv') |> 
+    filter(!Sample %in% c('S008448', 'S008597')) |>  # Excluded because stock tubes were not available
+    select('Age (years)'=`Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)`,'Tumor Size (mm)'=Size.mm,LN,PR,NHG,'Histological Subtype'=InvCa.type, Group = Group.Info) |>
+    arrange(Group) |> 
+    mutate(NHG = as_factor(NHG), 'Nodal Status' = factor(x = LN |> as.character(), labels = c('1'='Positive', '0'='Negative')) |> relevel(ref = 'Positive'), across(where(is_double), as.integer), across(where(is.character), as_factor)) |> 
+    select(-LN)
+```
+
+# Make Table 1 for clinical data on proteomics cohort
+
+```{r}
+table1Clinic <- data |> 
+    tbl_summary(by = 'Group',) |> 
+    add_p() |> 
+    add_overall() |> 
+    as_gt()
+
+gtsave(data = table1Clinic, filename = 'table1_patient_tumor_characteristics.html', path = '/multiomics/results/figures' )
+```

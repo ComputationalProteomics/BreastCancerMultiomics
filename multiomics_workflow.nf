@@ -280,6 +280,7 @@ process DIFFERENTIAL_EXPRESSION{
     input:
         path(notebook)
         path(html)
+        path(html)
 
     when:
         html.exists()
@@ -629,6 +630,7 @@ process BOXPLOTS_SUPPLEMENTARY{
 
     input:
         path(notebook)
+        path(html)
         path(html)
 
     when:

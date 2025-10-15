@@ -31,8 +31,8 @@ library(furrr)
 :::{.content-visible when-meta="!params.used_analysis"}
 # MultiOmics Factor Analysis - MOFA
 ```{r}
-#| eval: !expr (!params$used_analysis)
-workers <- availableCores(constraints = 'connections',which = 'min')
+#| eval: !expr (params$used_analysis)
+workers <- (availableCores(constraints = 'connections',which = 'min'))/2 |> floor()
 plan(callr,workers=workers)
 on.exit(expr = {plan(sequential)})
 ```
@@ -2020,4 +2020,5 @@ map2(.x = heatmapPlots,.y = figPath,.f = ~ggsave(filename = .y,plot = .x,device 
 #| eval: !expr (params$used_analysis)
 rm(list = ls())
 invisible(gc())
+plan(sequential)
 ```

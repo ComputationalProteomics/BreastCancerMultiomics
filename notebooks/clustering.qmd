@@ -44,7 +44,7 @@ library(ggalluvial)
 ```
 
 ```{r}
-workers <- availableCores(constraints = 'connections',which = 'min')
+workers <- (availableCores(constraints = 'connections',which = 'min'))/2 |> floor()
 plan(callr,workers=workers)
 on.exit(expr = {plan(sequential)})
 ```

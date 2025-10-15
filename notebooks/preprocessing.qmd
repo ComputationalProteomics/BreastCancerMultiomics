@@ -24,7 +24,7 @@ library(furrr)
 ```
 ```{r}
 set.seed(123)
-workers <- availableCores(constraints = 'connections',which = 'min')
+workers <- (availableCores(constraints = 'connections',which = 'min'))/2 |> floor()
 plan(callr,workers=workers)
 on.exit(expr = {plan(sequential)})
 ```

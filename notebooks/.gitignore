@@ -1,0 +1,8 @@
+# Ignores unused notebooks
+diablo*
+consensus_clustering_features*
+required_packages*
+supplementary_tables_edit*
+survival_DE.*
+*diablo*
+table1_data_completeness.R

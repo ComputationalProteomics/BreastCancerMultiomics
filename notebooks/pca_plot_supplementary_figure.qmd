@@ -15,12 +15,12 @@ engine: knitr
 ```{r}
 library(tidyverse)
 library(tidymodels)
-source(file = '/multiomics/notebooks/filtering.R',chdir = TRUE)
+library(patchwork)
 ```
 
 # Output directory
 ```{r}
-outputdir <- '/multiomics/results/figures/pca/proteome/'
+outputdir <- '/home/multiomics/results/figures/pca/'
 
 if(!dir.exists(paths = outputdir)) {
   dir.create(path = outputdir,recursive = TRUE)
@@ -29,61 +29,42 @@ if(!dir.exists(paths = outputdir)) {
 
 # Data
 ```{r}
-design <- read_tsv(file = '/multiomics/results/design_files/mergedDesign_final_filtered.tsv') |> 
-    # filter(str_detect(Sample, 'Pool', negate = TRUE)) |> 
-    mutate(LN = as.factor(LN) |> relevel(ref = '1'))
-    # filter(!sample_id == 'S000785')
-    # filter(InvCa.type == 'Ductal')
+designProt <- read_tsv(file = '/home/multiomics/results/design_files/mergedDesign_final_filtered.tsv') |> 
+    mutate(
+        type = sample_id |> 
+            map(
+                ~case_when(
+                    str_detect(.x,'^Pool_B1') ~ 'P_B1', 
+                    str_detect(.x, '^Pool_B2') ~ 'P_B2', 
+                    str_detect(.x,'^S0') ~ 'S')) |> 
+            unlist()
+    )
 
-dataProt <- read_tsv(file = '/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv') |> #Sample S000785 is an outlier in the PCA
-    # NAFiltering(cutoff = 0.4) |> 
-    # madFiltering(cutoff = 0.5) |> 
+designPhospho <- read_tsv(file = '/home/multiomics/results/design_files/mergedDesign_PHOSPHO_Filtered.tsv') |> 
+        mutate(
+        type = sample_id |> 
+            map(
+                ~case_when(
+                    str_detect(.x,'^POOL_B1') ~ 'P_B1', 
+                    str_detect(.x, '^POOL_B2') ~ 'P_B2', 
+                    str_detect(.x,'^S0') ~ 'S')) |> 
+            unlist()
+    )
+
+dataProt <- read_tsv(file = '/home/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv') |> 
     mutate(Unique.Ids = str_c("X_", Protein.Names) |> make.names(unique = TRUE), .after = 4)
 
-# minProt <- dataProt |> 
-#     dplyr::select(starts_with('S00')) |> 
-#     min(na.rm=TRUE)
 
-# dataPhospho <- read_tsv(file = '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphopeptides_flanking.tsv') |>
-#     NAFiltering(cutoff = 0.4) |> 
-#     # madFiltering(cutoff = 0.5) |> 
-#     mutate(Unique.Ids = str_c('X_', Protein.Names) |> 
-#         str_c(Residue, Phosphosite, sep = '.') |> 
-#         make.names(unique = TRUE)) |> 
-#     relocate(c(Phosphosite, Residue, Unique.Ids), .after = 10)
-
-# minPhospho <- dataPhospho |> 
-#     dplyr::select(starts_with('S00')) |> 
-#     min(na.rm=TRUE)
-
-# dataGene <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') |> 
-#     NAFiltering(cutoff = 0.4) |> 
-#     mutate(Unique.Ids = str_c("X_", Gene.Name) |> make.names(unique = TRUE), .after = 6)
-
-# minGene <- dataGene |> 
-#     dplyr::select(starts_with('S00')) |> 
-#     min(na.rm=TRUE)
-
-# commonSamples <- design |> 
-#     filter(
-#         (sample_id %in% colnames(dataProt)) & 
-#             (sample_id %in% colnames(dataPhospho)) & 
-#             (sample_id %in% colnames(dataGene))
-#         ) |> 
-#     pull(sample_id)
-
-# commonSamples <- commonSamples[-c(52,111,112,113,121)]
-
-# design <- design |> 
-#     filter(Sample %in% commonSamples)
+dataPhospho <- read_tsv(file = '/home/multiomics/results/rollup/phosphoproteome/cycloess_normalized_sorted.tsv') |>
+    mutate(Unique.Ids = str_c('X_', Protein.Names) |> 
+        make.names(unique = TRUE)) 
 ```
 
 # Principal Component Analysis
 ## Proteome
 ```{r}
-samplesProt <- design |> 
+samplesProt <- designProt |> 
     filter(sample_id %in% colnames(dataProt)) |> 
-    # filter(sample_id!='S000785') |> 
     pull(sample_id)
 
 dataProtPrep <- dataProt |> 
@@ -103,14 +84,14 @@ pcaProt <- dataProtPrep |>
 
 pcaProtRes <- pcaProt |> 
     augment(dataProtPrep |> select(-starts_with('X_'))) |> 
-    left_join(design, by = c('sample' = 'sample_id'))
+    left_join(designProt, by = c('sample' = 'sample_id'))
 
 plotPcaProt <- pcaProtRes |>
     ggplot(aes(x = .fittedPC1, y = .fittedPC2, color = type, text = sample))+
     geom_point()+
     scale_color_manual(
-        values = c('S' = 'blue', 'P' = 'red'),
-        labels = c('S' = 'Sample', 'P' = 'Pooled Samples'))+
+        values = c('S' = 'blue', 'P_B1' = 'darkred', 'P_B2' = 'red'),
+        labels = c('S' = 'Sample', 'P_B1' = 'Pooled Samples - Plate 1', 'P_B2' = 'Pooled Samples - Plate 2'))+
     labs(
         x = 'Principal Component 1',
         y = 'Principal Component 2',
@@ -118,5 +99,56 @@ plotPcaProt <- pcaProtRes |>
     )+
     theme_minimal()
 
-ggsave(filename = 'pca_proteome.pdf', device = 'pdf', plot = plotPcaProt, path = outputdir, dpi = 1200, compress = TRUE, width = 7, height = 5)
+```
+
+## Phosphoproteome
+
+```{r}
+samplesPhospho <- designPhospho |> 
+    filter(sample_id %in% colnames(dataPhospho)) |> 
+    pull(sample_id)
+
+dataPhosphoPrep <- dataPhospho |> 
+    dplyr::select(Unique.Ids,all_of(samplesPhospho)) |> 
+    drop_na() |> 
+    pivot_longer(all_of(samplesPhospho), names_to = 'sample', values_to = 'expression') |> 
+    pivot_wider(names_from = Unique.Ids, values_from = expression) |> 
+    recipe() |> 
+    update_role(starts_with('X_'), new_role = 'predictor') |> 
+    step_normalize(all_predictors()) |> 
+    recipes::prep() |> 
+    bake(NULL)
+
+pcaPhospho <- dataPhosphoPrep |> 
+    select(-sample) |> 
+    prcomp(center = FALSE, scale. = FALSE)
+
+pcaPhosphoRes <- pcaPhospho |> 
+    augment(dataPhosphoPrep |> select(-starts_with('X_'))) |> 
+    left_join(designPhospho, by = c('sample' = 'sample_id'))
+
+plotPcaPhospho <- pcaPhosphoRes |>
+    ggplot(aes(x = .fittedPC1, y = .fittedPC2, color = type, text = sample))+
+    geom_point()+
+    scale_color_manual(
+        values = c('S' = 'blue', 'P_B1' = 'darkred', 'P_B2' = 'red'),
+        labels = c('S' = 'Sample', 'P_B1' = 'Pooled Samples - Plate 1', 'P_B2' = 'Pooled Samples - Plate 2'))+
+    labs(
+        x = 'Principal Component 1',
+        y = 'Principal Component 2',
+        color = 'Sample Type'
+    )+
+    theme_minimal()
+```
+
+## Combined Plots
+
+```{r}
+plots <- list(plotPcaProt, plotPcaPhospho)
+plotsCombined <- plots |> 
+    wrap_plots(nrow = 1)+
+    plot_layout(axes = 'collect', guides = 'collect')+
+    plot_annotation(tag_levels = 'A')
+
+ggsave(filename = 'pca_plots.pdf', device = 'pdf', plot = plotsCombined, path = outputdir, dpi = 1200, compress = TRUE, width = 10, height = 7)
 ```

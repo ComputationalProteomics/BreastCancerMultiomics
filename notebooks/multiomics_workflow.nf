@@ -32,7 +32,8 @@ workflow  {
 
     BATCH_CORRECTION(
       ch_notebook_multiomics.filter {it.name == 'batchcorrection.qmd'},
-      PROTEIN_ROLLUP.out.collect()
+      PROTEIN_ROLLUP.out.collect(),
+      PTM_SEA.out.collect()
     )
 
     DIFFERENTIAL_EXPRESSION(
@@ -110,7 +111,8 @@ workflow  {
     )
     
     IMMUNE_BOXPLOT(
-      ch_notebook_multiomics.filter {it.name == 'immune_boxplot_LM22.qmd'}
+      ch_notebook_multiomics.filter {it.name == 'immune_boxplot_LM22.qmd'},
+      CLUSTERING.out.collect()
     )
     
     VOLCANO_PLOTS(
@@ -134,6 +136,11 @@ workflow  {
         PROTEIN_ROLLUP.out.collect()
     )
 
+    CD45_PLOT(
+        ch_notebook_multiomics.filter {it.name == 'plot_cd45_marker.qmd'},
+        CLUSTERING.out.collect()
+    )
+
     
 
 }
@@ -151,9 +158,7 @@ process SAMPLE_SELECTION{
 
     script:
     """
-    mkdir -p /multiomics/results/design_files/
-    mkdir -p /multiomics/results/rendered_notebooks/
-    quarto render ${notebook} --to html > .html
+    quarto render ${notebook} --to html --output ${notebook.baseName}.html
     """
 }
 
@@ -173,7 +178,7 @@ process GENERATE_DESIGN_FILES{
 
     script:
     """
-    quarto render ${notebook} --to html > .html
+    quarto render ${notebook} --to html --output ${notebook.baseName}.html
     """
 }
 
@@ -189,7 +194,7 @@ process PREPROCESS_IMMUNE{
 
     script:
     """
-    quarto render ${notebook} --to html > .html
+    quarto render ${notebook} --to html --output ${notebook.baseName}.html
     """
 }
 
@@ -209,7 +214,7 @@ process DATA_NORMALIZATION{
 
     script:
     """
-    quarto render ${notebook} --to html > .html
+    quarto render ${notebook} --to html --output ${notebook.baseName}.html
     """
 }
 
@@ -229,7 +234,7 @@ process PROTEIN_ROLLUP{
 
     script:
     """
-    quarto render ${notebook} --to html > .html
+    quarto render ${notebook} --to html --output ${notebook.baseName}.html
     """
 }
 
@@ -249,7 +254,7 @@ process PTM_SEA{
 
     script:
     """
-    quarto render ${notebook} --to html > .html
+    quarto render ${notebook} --to html --output ${notebook.baseName}.html
     """
 }
 
@@ -260,6 +265,7 @@ process BATCH_CORRECTION{
     input:
         path(notebook)
         path(html)
+        path(html)
 
     when:
         html.exists()
@@ -269,7 +275,7 @@ process BATCH_CORRECTION{
 
     script:
     """
-    quarto render ${notebook} --to html > .html
+    quarto render ${notebook} --to html --output ${notebook.baseName}.html
     """
 }
 
@@ -290,7 +296,7 @@ process DIFFERENTIAL_EXPRESSION{
 
     script:
     """
-    quarto render ${notebook} --to html > .html
+    quarto render ${notebook} --to html --output ${notebook.baseName}.html
     """
 }
 
@@ -310,7 +316,7 @@ process GSEA{
 
     script:
     """
-    quarto render ${notebook} --to html > .html
+    quarto render ${notebook} --to html --output ${notebook.baseName}.html
     """
 }
 
@@ -330,7 +336,7 @@ process CLUSTERING{
 
     script:
     """
-    quarto render ${notebook} --to html > .html
+    quarto render ${notebook} --to html --output ${notebook.baseName}.html
     """
 }
 
@@ -351,7 +357,7 @@ process MOFA{
 
     script:
     """
-    quarto render ${notebook} --to html > .html
+    quarto render ${notebook} --to html --output ${notebook.baseName}.html
     """
 }
 
@@ -371,7 +377,7 @@ process GSEA_MOFA{
 
     script:
     """
-    quarto render ${notebook} --to html > .html
+    quarto render ${notebook} --to html --output ${notebook.baseName}.html
     """
 }
 
@@ -391,7 +397,7 @@ process CONSENSUS_CLUSTER{
 
     script:
     """
-    quarto render ${notebook} --to html > .html
+    quarto render ${notebook} --to html --output ${notebook.baseName}.html
     """
 }
 
@@ -406,12 +412,12 @@ process SURVIVAL_MOFA{
         path("*.html"),emit: html
     script:
     """
-    quarto render ${notebook} -P model:'/multiomics/results/MOFA/AllSamples_noG2/model.RDS' -P outcome:'LN' -P time:'RFi_days' -P event:'RFi_event' > .html
-    quarto render ${notebook} -P model:'/multiomics/results/MOFA/AllSamples_noG2/model.RDS' -P outcome:'LN' -P time:'OS_days' -P event:'OS_event' > .html
+    quarto render ${notebook} -P model:'/home/multiomics/results/MOFA/AllSamples_noG2/model.RDS' -P outcome:'LN' -P time:'RFi_days' -P event:'RFi_event' --to html --output ${notebook.baseName}.html
+    quarto render ${notebook} -P model:'/home/multiomics/results/MOFA/AllSamples_noG2/model.RDS' -P outcome:'LN' -P time:'OS_days' -P event:'OS_event' --to html --output ${notebook.baseName}.html
 
-    quarto render ${notebook} -P model:'/multiomics/results/MOFA/Group1vsGroup2/model.RDS' -P outcome:'DRFi_event' -P time:'RFi_days' -P event:'RFi_event' > .html
-    quarto render ${notebook} -P model:'/multiomics/results/MOFA/Group1vsGroup2/model.RDS' -P outcome:'DRFi_event' -P time:'DRFi_days' -P event:'DRFi_event' > .html
-    quarto render ${notebook} -P model:'/multiomics/results/MOFA/Group1vsGroup2/model.RDS' -P outcome:'DRFi_event' -P time:'OS_days' -P event:'OS_event' > .html
+    quarto render ${notebook} -P model:'/home/multiomics/results/MOFA/Group1vsGroup2/model.RDS' -P outcome:'DRFi_event' -P time:'RFi_days' -P event:'RFi_event' --to html --output ${notebook.baseName}.html
+    quarto render ${notebook} -P model:'/home/multiomics/results/MOFA/Group1vsGroup2/model.RDS' -P outcome:'DRFi_event' -P time:'DRFi_days' -P event:'DRFi_event' --to html --output ${notebook.baseName}.html
+    quarto render ${notebook} -P model:'/home/multiomics/results/MOFA/Group1vsGroup2/model.RDS' -P outcome:'DRFi_event' -P time:'OS_days' -P event:'OS_event' --to html --output ${notebook.baseName}.html
     """
 }
 
@@ -426,12 +432,12 @@ process SURVIVAL_DE{
         path("*.html"),emit: html
     script:
     """
-    quarto render ${notebook} -P comparison:'AllSamples_noG2' -P time:'RFi_days' -P event:'RFi_event' -P outcome:'LN' > .html
-    quarto render ${notebook} -P comparison:'AllSamples_noG2' -P time:'OS_days' -P event:'OS_event' -P outcome:'LN' > .html
+    quarto render ${notebook} -P comparison:'AllSamples_noG2' -P time:'RFi_days' -P event:'RFi_event' -P outcome:'LN' --to html --output ${notebook.baseName}.html
+    quarto render ${notebook} -P comparison:'AllSamples_noG2' -P time:'OS_days' -P event:'OS_event' -P outcome:'LN' --to html --output ${notebook.baseName}.html
 
-    quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'DRFi_days' -P event:'DRFi_event' -P outcome:'Group.Info' > .html
-    quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'RFi_days' -P event:'RFi_event' -P outcome:'Group.Info' > .html
-    quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'OS_days' -P event:'OS_event' -P outcome:'Group.Info' > .html
+    quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'DRFi_days' -P event:'DRFi_event' -P outcome:'Group.Info' --to html --output ${notebook.baseName}.html
+    quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'RFi_days' -P event:'RFi_event' -P outcome:'Group.Info' --to html --output ${notebook.baseName}.html
+    quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'OS_days' -P event:'OS_event' -P outcome:'Group.Info' --to html --output ${notebook.baseName}.html
     """
 }
 
@@ -446,14 +452,14 @@ process SURVIVAL_CLUSTER{
         path("*.html"),emit: html
     script:
     """
-    quarto render ${notebook} -P dataPath:'/multiomics/results/consensus_clustering/DuctalvsLobular/proteome/proteome.k=6.consensusClass.csv' -P designPath:'/multiomics/results/design_files/design_Full_noPool.tsv' > .html
-    quarto render ${notebook} -P dataPath:'/multiomics/results/consensus_clustering/DuctalvsLobular/proteome/proteome.k=6.consensusClass.csv' -P designPath:'/multiomics/results/design_files/design_Full_noPool.tsv' -P time:'OS_days' -P event:'OS_event' > .html
+    quarto render ${notebook} -P dataPath:'/home/multiomics/results/consensus_clustering/DuctalvsLobular/proteome/proteome.k=6.consensusClass.csv' -P designPath:'/home/multiomics/results/design_files/design_Full_noPool.tsv' --to html --output ${notebook.baseName}.html
+    quarto render ${notebook} -P dataPath:'/home/multiomics/results/consensus_clustering/DuctalvsLobular/proteome/proteome.k=6.consensusClass.csv' -P designPath:'/home/multiomics/results/design_files/design_Full_noPool.tsv' -P time:'OS_days' -P event:'OS_event' --to html --output ${notebook.baseName}.html
 
-    quarto render ${notebook} -P dataPath:'/multiomics/results/consensus_clustering/DuctalvsLobular/phosphoproteome/phosphoproteome.k=5.consensusClass.csv' -P designPath:'/multiomics/results/design_files/design_phospho_noPool.tsv' > .html
-    quarto render ${notebook} -P dataPath:'/multiomics/results/consensus_clustering/DuctalvsLobular/phosphoproteome/phosphoproteome.k=5.consensusClass.csv' -P designPath:'/multiomics/results/design_files/design_phospho_noPool.tsv' -P time:'OS_days' -P event:'OS_event' > .html
+    quarto render ${notebook} -P dataPath:'/home/multiomics/results/consensus_clustering/DuctalvsLobular/phosphoproteome/phosphoproteome.k=5.consensusClass.csv' -P designPath:'/home/multiomics/results/design_files/design_phospho_noPool.tsv' --to html --output ${notebook.baseName}.html
+    quarto render ${notebook} -P dataPath:'/home/multiomics/results/consensus_clustering/DuctalvsLobular/phosphoproteome/phosphoproteome.k=5.consensusClass.csv' -P designPath:'/home/multiomics/results/design_files/design_phospho_noPool.tsv' -P time:'OS_days' -P event:'OS_event' --to html --output ${notebook.baseName}.html
 
-    quarto render ${notebook} -P dataPath:'/multiomics/results/consensus_clustering/DuctalvsLobular/transcriptome/transcriptome.k=5.consensusClass.csv' -P designPath:'/multiomics/results/design_files/design_RNA_noPool.tsv' > .html
-    quarto render ${notebook} -P dataPath:'/multiomics/results/consensus_clustering/DuctalvsLobular/transcriptome/transcriptome.k=5.consensusClass.csv' -P designPath:'/multiomics/results/design_files/design_RNA_noPool.tsv' -P time:'OS_days' -P event:'OS_event' > .html
+    quarto render ${notebook} -P dataPath:'/home/multiomics/results/consensus_clustering/DuctalvsLobular/transcriptome/transcriptome.k=5.consensusClass.csv' -P designPath:'/home/multiomics/results/design_files/design_RNA_noPool.tsv' --to html --output ${notebook.baseName}.html
+    quarto render ${notebook} -P dataPath:'/home/multiomics/results/consensus_clustering/DuctalvsLobular/transcriptome/transcriptome.k=5.consensusClass.csv' -P designPath:'/home/multiomics/results/design_files/design_RNA_noPool.tsv' -P time:'OS_days' -P event:'OS_event' --to html --output ${notebook.baseName}.html
 
     """
 }
@@ -474,7 +480,7 @@ process DIFFERENTIAL_EXPRESSION_CLUSTER{
 
     script:
     """
-    quarto render ${notebook} --to html > .html
+    quarto render ${notebook} --to html --output ${notebook.baseName}.html
     """
 }
 
@@ -494,7 +500,7 @@ process GSEA_CONSENSUS_CLUSTER{
 
     script:
     """
-    quarto render ${notebook} --to html > .html
+    quarto render ${notebook} --to html --output ${notebook.baseName}.html
     """
 }
 
@@ -515,11 +521,11 @@ process EXTERNAL_VALIDATION{
 
     script:
     """
-    quarto render ${notebook} -P comparison:'AllSamples_noG2' -P time:'OS_days' -P event:'OS_event' > .html
-    quarto render ${notebook} -P comparison:'AllSamples_noG2' -P time:'RFi_days' -P event:'RFi_event' > .html
-    quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'DRFi_days' -P event:'DRFi_event' > .html
-    quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'OS_days' -P event:'OS_event' > .html
-    quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'RFi_days' -P event:'RFi_event' > .html
+    quarto render ${notebook} -P comparison:'AllSamples_noG2' -P time:'OS_days' -P event:'OS_event' --to html --output ${notebook.baseName}.html
+    quarto render ${notebook} -P comparison:'AllSamples_noG2' -P time:'RFi_days' -P event:'RFi_event' --to html --output ${notebook.baseName}.html
+    quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'DRFi_days' -P event:'DRFi_event' --to html --output ${notebook.baseName}.html
+    quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'OS_days' -P event:'OS_event' --to html --output ${notebook.baseName}.html
+    quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'RFi_days' -P event:'RFi_event' --to html --output ${notebook.baseName}.html
     """
 }
 
@@ -540,11 +546,11 @@ process BOXPLOTS{
 
     script:
     """
-    quarto render ${notebook} -P comparison:'AllSamples_noG2' -P time:'OS_days' -P event:'OS_event' -P outcome:'LN' > .html
-    quarto render ${notebook} -P comparison:'AllSamples_noG2' -P time:'RFi_days' -P event:'RFi_event' -P outcome:'LN' > .html
-    quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'DRFi_days' -P event:'DRFi_event' -P outcome:'DRFi_event' > .html
-    quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'OS_days' -P event:'OS_event' -P outcome:'DRFi_event' > .html
-    quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'RFi_days' -P event:'RFi_event' -P outcome:'DRFi_event' > .html
+    quarto render ${notebook} -P comparison:'AllSamples_noG2' -P time:'OS_days' -P event:'OS_event' -P outcome:'LN' --to html --output ${notebook.baseName}.html
+    quarto render ${notebook} -P comparison:'AllSamples_noG2' -P time:'RFi_days' -P event:'RFi_event' -P outcome:'LN' --to html --output ${notebook.baseName}.html
+    quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'DRFi_days' -P event:'DRFi_event' -P outcome:'DRFi_event' --to html --output ${notebook.baseName}.html
+    quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'OS_days' -P event:'OS_event' -P outcome:'DRFi_event' --to html --output ${notebook.baseName}.html
+    quarto render ${notebook} -P comparison:'Group1vsGroup2' -P time:'RFi_days' -P event:'RFi_event' -P outcome:'DRFi_event' --to html --output ${notebook.baseName}.html
     """
 }
 
@@ -564,7 +570,7 @@ process TABLE_1{
 
     script:
     """
-    quarto render ${notebook} > .html
+    quarto render ${notebook} --to html --output ${notebook.baseName}.html
     """
 }
 
@@ -574,13 +580,17 @@ process IMMUNE_BOXPLOT{
 
     input:
         path(notebook)
+        path(html)
+
+    when:
+        html.exists()
 
     output:
         path("*.html"), emit: html
 
     script:
     """
-    quarto render ${notebook} > .html
+    quarto render ${notebook} --to html --output ${notebook.baseName}.html
     """
 }
 
@@ -600,7 +610,7 @@ process VOLCANO_PLOTS{
 
     script:
     """
-    quarto render ${notebook} > .html
+    quarto render ${notebook} --to html --output ${notebook.baseName}.html
     """
 }
 
@@ -620,7 +630,7 @@ process COHORT_CHARACTERISTICS{
 
     script:
     """
-    quarto render ${notebook} > .html
+    quarto render ${notebook} --to html --output ${notebook.baseName}.html
     """
 }
 
@@ -641,7 +651,7 @@ process BOXPLOTS_SUPPLEMENTARY{
 
     script:
     """
-    quarto render ${notebook} > .html
+    quarto render ${notebook} --to html --output ${notebook.baseName}.html
     """
 }
 
@@ -661,6 +671,26 @@ process PCA_SUPPLEMENTARY{
 
     script:
     """
-    quarto render ${notebook} > .html
+    quarto render ${notebook} --to html --output ${notebook.baseName}.html
+    """
+}
+
+process CD45_PLOT{
+    publishDir "./results/rendered_notebooks",
+        mode: "copy"
+
+    input:
+        path(notebook)
+        path(html)
+
+    when:
+        html.exists()
+
+    output:
+        path("*.html"), emit: html
+
+    script:
+    """
+    quarto render ${notebook} --to html --output ${notebook.baseName}.html
     """
 }

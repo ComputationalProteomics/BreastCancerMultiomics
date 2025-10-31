@@ -109,7 +109,8 @@ LABEL org.opencontainers.image.title="multiomics_analysis" \
     org.opencontainers.image.version="2.0.0" \
     org.opencontainers.image.description="Image for Multiomic profiling of ER-positive HER2-negative breast cancer reveals markers associated with metastatic spread" \
     org.opencontainers.image.authors="Sergio Mosquim Junior <sergio.mosquim_junior@med.lu.se>" \
-    org.opencontainers.image.source="https://github.com/ComputationalProteomics/BreastCancerMultiomics"
+    org.opencontainers.image.source="https://github.com/ComputationalProteomics/BreastCancerMultiomics"\
+    org.opencontainers.image.licenses="MIT"
 
 ## Define user details
 ARG USER_NAME=multiomics

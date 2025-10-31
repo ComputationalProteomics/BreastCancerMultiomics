@@ -12,3 +12,7 @@ work/*
 # Ignore Nextflow
 .nextflow
 .nextflow*
+nextflow_work/*
+
+# Ignore ProteinRollup
+ProteinRollup/*

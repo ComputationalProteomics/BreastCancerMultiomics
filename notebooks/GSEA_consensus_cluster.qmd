@@ -24,7 +24,7 @@ library(clusterProfiler)
 library(msigdbr)
 library(org.Hs.eg.db)
 library(AnnotationDbi)
-source(file = '/multiomics/notebooks/msigdb_gsea_function.R',chdir = TRUE)
+source(file = '/home/multiomics/notebooks/msigdb_gsea_function.R',chdir = TRUE)
 ```
 
 # Gene Set Enrichment Analysis
@@ -32,7 +32,7 @@ source(file = '/multiomics/notebooks/msigdb_gsea_function.R',chdir = TRUE)
 ### Full Proteome
 
 ```{r}
-files <- list.files(path = '/multiomics/results/differentialexpression/ConsensusCluster/AllSamples/Proteome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
+files <- list.files(path = '/home/multiomics/results/differentialexpression/ConsensusCluster/AllSamples/Proteome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
 
 gseaMsigProt <- map(.x = files,.f = function(data){
   gseaMsigDBProt(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
@@ -65,7 +65,7 @@ plot_prot <- ggplot(resultsProt, aes(Cluster, ID, fill= NES)) +
 
 ### Phosphoproteome
 ```{r}
-files <- list.files(path = '/multiomics/results/differentialexpression/ConsensusCluster/AllSamples/Phosphoproteome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
+files <- list.files(path = '/home/multiomics/results/differentialexpression/ConsensusCluster/AllSamples/Phosphoproteome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
 
 gseaMsigPhospho <- map(.x = files,.f = function(data){
   gseaMsigDBPhospho(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
@@ -98,7 +98,7 @@ plot_phospho <- ggplot(resultsPhospho, aes(Cluster, ID, fill= NES)) +
 
 ### Transcriptome
 ```{r}
-files <- list.files(path = '/multiomics/results/differentialexpression/ConsensusCluster/AllSamples/Transcriptome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
+files <- list.files(path = '/home/multiomics/results/differentialexpression/ConsensusCluster/AllSamples/Transcriptome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
 
 gseaMsigRNA <- map(.x = files,.f = function(data){
   gseaMsigDBRNA(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
@@ -131,18 +131,18 @@ plot_RNA <- ggplot(resultsRNA, aes(Cluster, ID, fill= NES)) +
 
 ### Saving plots
 ```{r}
-if(!dir.exists(paths = '/multiomics/results/figures/GSEA/ConsensusCluster/AllSamples/')) {
-  dir.create(path = '/multiomics/results/figures/GSEA/ConsensusCluster/AllSamples/',recursive = TRUE)
+if(!dir.exists(paths = '/home/multiomics/results/figures/GSEA/ConsensusCluster/AllSamples/')) {
+  dir.create(path = '/home/multiomics/results/figures/GSEA/ConsensusCluster/AllSamples/',recursive = TRUE)
 }
 
 plots <- list(plot_prot,plot_phospho,plot_RNA)
 plotNames <- list('GSEA_allsamples_cluster_proteome.png','GSEA_allsamples_cluster_phosphoproteome.png','GSEA_allsamples_cluster_transcriptome.png')
 
 map2(plots,plotNames,function(plot,name){
-  ggsave(filename = name, plot = plot,device = 'png',path = '/multiomics/results/figures/GSEA/ConsensusCluster/AllSamples/',dpi = 600,units = 'in',width = 10,height = 12)
+  ggsave(filename = name, plot = plot,device = 'png',path = '/home/multiomics/results/figures/GSEA/ConsensusCluster/AllSamples/',dpi = 600,units = 'in',width = 10,height = 12)
 })
 
-varKeep <- list('gseaMsigDBProt','gseaMsigDBPhospho','gseaMsigDBRNA')
+varKeep <- list('gseaMsigDBProt','gseaMsigDBPhospho','gseaMsigDBRNA', 'params')
 rm(list = setdiff(ls(),varKeep))
 invisible(gc())
 ```
@@ -155,7 +155,7 @@ invisible(gc())
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-files <- list.files(path = '/multiomics/results/differentialexpression/ConsensusCluster/AllSamples_noG2/Proteome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
+files <- list.files(path = '/home/multiomics/results/differentialexpression/ConsensusCluster/AllSamples_noG2/Proteome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
 
 gseaMsigProt <- map(.x = files,.f = function(data){
   gseaMsigDBProt(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
@@ -190,7 +190,7 @@ plot_prot <- ggplot(resultsProt, aes(Cluster, ID, fill= NES)) +
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-files <- list.files(path = '/multiomics/results/differentialexpression/ConsensusCluster/AllSamples_noG2/Phosphoproteome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
+files <- list.files(path = '/home/multiomics/results/differentialexpression/ConsensusCluster/AllSamples_noG2/Phosphoproteome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
 
 gseaMsigPhospho <- map(.x = files,.f = function(data){
   gseaMsigDBPhospho(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
@@ -225,7 +225,7 @@ plot_phospho <- ggplot(resultsPhospho, aes(Cluster, ID, fill= NES)) +
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-files <- list.files(path = '/multiomics/results/differentialexpression/ConsensusCluster/AllSamples_noG2/Transcriptome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
+files <- list.files(path = '/home/multiomics/results/differentialexpression/ConsensusCluster/AllSamples_noG2/Transcriptome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
 
 gseaMsigRNA <- map(.x = files,.f = function(data){
   gseaMsigDBRNA(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
@@ -260,15 +260,15 @@ plot_RNA <- ggplot(resultsRNA, aes(Cluster, ID, fill= NES)) +
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-if(!dir.exists(paths = '/multiomics/results/figures/GSEA/ConsensusCluster/AllSamples_noG2/')) {
-  dir.create(path = '/multiomics/results/figures/GSEA/ConsensusCluster/AllSamples_noG2/',recursive = TRUE)
+if(!dir.exists(paths = '/home/multiomics/results/figures/GSEA/ConsensusCluster/AllSamples_noG2/')) {
+  dir.create(path = '/home/multiomics/results/figures/GSEA/ConsensusCluster/AllSamples_noG2/',recursive = TRUE)
 }
 
 plots <- list(plot_prot,plot_phospho,plot_RNA)
 plotNames <- list('GSEA_allsamples_noG2_cluster_proteome.png','GSEA_allsamples_noG2_cluster_phosphoproteome.png','GSEA_allsamples_noG2_cluster_transcriptome.png')
 
 map2(plots,plotNames,function(plot,name){
-  ggsave(filename = name, plot = plot,device = 'png',path = '/multiomics/results/figures/GSEA/ConsensusCluster/AllSamples_noG2/',dpi = 600,units = 'in',width = 10,height = 12)
+  ggsave(filename = name, plot = plot,device = 'png',path = '/home/multiomics/results/figures/GSEA/ConsensusCluster/AllSamples_noG2/',dpi = 600,units = 'in',width = 10,height = 12)
 })
 
 varKeep <- list('gseaMsigDBProt','gseaMsigDBPhospho','gseaMsigDBRNA')
@@ -282,7 +282,7 @@ invisible(gc())
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-files <- list.files(path = '/multiomics/results/differentialexpression/ConsensusCluster/LNposvsLNneg/Ductal/Proteome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
+files <- list.files(path = '/home/multiomics/results/differentialexpression/ConsensusCluster/LNposvsLNneg/Ductal/Proteome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
 
 gseaMsigProt <- map(.x = files,.f = function(data){
   gseaMsigDBProt(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
@@ -317,7 +317,7 @@ plot_prot <- ggplot(resultsProt, aes(Cluster, ID, fill= NES)) +
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-files <- list.files(path = '/multiomics/results/differentialexpression/ConsensusCluster/LNposvsLNneg/Ductal/Phosphoproteome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
+files <- list.files(path = '/home/multiomics/results/differentialexpression/ConsensusCluster/LNposvsLNneg/Ductal/Phosphoproteome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
 
 gseaMsigPhospho <- map(.x = files,.f = function(data){
   gseaMsigDBPhospho(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
@@ -352,7 +352,7 @@ plot_phospho <- ggplot(resultsPhospho, aes(Cluster, ID, fill= NES)) +
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-files <- list.files(path = '/multiomics/results/differentialexpression/ConsensusCluster/LNposvsLNneg/Ductal/Transcriptome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
+files <- list.files(path = '/home/multiomics/results/differentialexpression/ConsensusCluster/LNposvsLNneg/Ductal/Transcriptome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
 
 gseaMsigRNA <- map(.x = files,.f = function(data){
   gseaMsigDBRNA(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
@@ -387,15 +387,15 @@ plot_RNA <- ggplot(resultsRNA, aes(Cluster, ID, fill= NES)) +
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-if(!dir.exists(paths = '/multiomics/results/figures/GSEA/ConsensusCluster/LNposvsLNneg/Ductal/')) {
-  dir.create(path = '/multiomics/results/figures/GSEA/ConsensusCluster/LNposvsLNneg/Ductal/',recursive = TRUE)
+if(!dir.exists(paths = '/home/multiomics/results/figures/GSEA/ConsensusCluster/LNposvsLNneg/Ductal/')) {
+  dir.create(path = '/home/multiomics/results/figures/GSEA/ConsensusCluster/LNposvsLNneg/Ductal/',recursive = TRUE)
 }
 
 plots <- list(plot_prot,plot_phospho,plot_RNA)
 plotNames <- list('GSEA_lnposlnsneg_ductal_cluster_proteome.png','GSEA_lnposlnsneg_ductal_cluster_phosphoproteome.png','GSEA_lnposlnsneg_ductal_cluster_transcriptome.png')
 
 map2(plots,plotNames,function(plot,name){
-  ggsave(filename = name, plot = plot,device = 'png',path = '/multiomics/results/figures/GSEA/ConsensusCluster/LNposvsLNneg/Ductal/',dpi = 600,units = 'in',width = 10,height = 12)
+  ggsave(filename = name, plot = plot,device = 'png',path = '/home/multiomics/results/figures/GSEA/ConsensusCluster/LNposvsLNneg/Ductal/',dpi = 600,units = 'in',width = 10,height = 12)
 })
 
 varKeep <- list('gseaMsigDBProt','gseaMsigDBPhospho','gseaMsigDBRNA')
@@ -409,7 +409,7 @@ invisible(gc())
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-files <- list.files(path = '/multiomics/results/differentialexpression/ConsensusCluster/LNposvsLNneg/Lobular/Proteome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
+files <- list.files(path = '/home/multiomics/results/differentialexpression/ConsensusCluster/LNposvsLNneg/Lobular/Proteome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
 
 gseaMsigProt <- map(.x = files,.f = function(data){
   gseaMsigDBProt(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
@@ -444,7 +444,7 @@ plot_prot <- ggplot(resultsProt, aes(Cluster, ID, fill= NES)) +
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-files <- list.files(path = '/multiomics/results/differentialexpression/ConsensusCluster/LNposvsLNneg/Lobular/Phosphoproteome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
+files <- list.files(path = '/home/multiomics/results/differentialexpression/ConsensusCluster/LNposvsLNneg/Lobular/Phosphoproteome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
 
 gseaMsigPhospho <- map(.x = files,.f = function(data){
   gseaMsigDBPhospho(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
@@ -479,7 +479,7 @@ plot_phospho <- ggplot(resultsPhospho, aes(Cluster, ID, fill= NES)) +
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-files <- list.files(path = '/multiomics/results/differentialexpression/ConsensusCluster/LNposvsLNneg/Lobular/Transcriptome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
+files <- list.files(path = '/home/multiomics/results/differentialexpression/ConsensusCluster/LNposvsLNneg/Lobular/Transcriptome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
 
 gseaMsigRNA <- map(.x = files,.f = function(data){
   gseaMsigDBRNA(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
@@ -514,15 +514,15 @@ plot_RNA <- ggplot(resultsRNA, aes(Cluster, ID, fill= NES)) +
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-if(!dir.exists(paths = '/multiomics/results/figures/GSEA/ConsensusCluster/LNposvsLNneg/Lobular/')) {
-  dir.create(path = '/multiomics/results/figures/GSEA/ConsensusCluster/LNposvsLNneg/Lobular/',recursive = TRUE)
+if(!dir.exists(paths = '/home/multiomics/results/figures/GSEA/ConsensusCluster/LNposvsLNneg/Lobular/')) {
+  dir.create(path = '/home/multiomics/results/figures/GSEA/ConsensusCluster/LNposvsLNneg/Lobular/',recursive = TRUE)
 }
 
 plots <- list(plot_prot,plot_phospho,plot_RNA)
 plotNames <- list('GSEA_lnposlnsneg_lobular_cluster_proteome.png','GSEA_lnposlnsneg_lobular_cluster_phosphoproteome.png','GSEA_lnposlnsneg_lobular_cluster_transcriptome.png')
 
 map2(plots,plotNames,function(plot,name){
-  ggsave(filename = name, plot = plot,device = 'png',path = '/multiomics/results/figures/GSEA/ConsensusCluster/LNposvsLNneg/Lobular/',dpi = 600,units = 'in',width = 10,height = 12)
+  ggsave(filename = name, plot = plot,device = 'png',path = '/home/multiomics/results/figures/GSEA/ConsensusCluster/LNposvsLNneg/Lobular/',dpi = 600,units = 'in',width = 10,height = 12)
 })
 
 varKeep <- list('gseaMsigDBProt','gseaMsigDBPhospho','gseaMsigDBRNA')
@@ -539,7 +539,7 @@ invisible(gc())
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-files <- list.files(path = '/multiomics/results/differentialexpression/ConsensusCluster/G1vsG2/Proteome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
+files <- list.files(path = '/home/multiomics/results/differentialexpression/ConsensusCluster/G1vsG2/Proteome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
 
 gseaMsigProt <- map(.x = files,.f = function(data){
   gseaMsigDBProt(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
@@ -574,7 +574,7 @@ plot_prot <- ggplot(resultsProt, aes(Cluster, ID, fill= NES)) +
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-files <- list.files(path = '/multiomics/results/differentialexpression/ConsensusCluster/G1vsG2/Phosphoproteome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
+files <- list.files(path = '/home/multiomics/results/differentialexpression/ConsensusCluster/G1vsG2/Phosphoproteome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
 
 gseaMsigPhospho <- map(.x = files,.f = function(data){
   gseaMsigDBPhospho(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
@@ -609,7 +609,7 @@ plot_phospho <- ggplot(resultsPhospho, aes(Cluster, ID, fill= NES)) +
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-files <- list.files(path = '/multiomics/results/differentialexpression/ConsensusCluster/G1vsG2/Transcriptome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
+files <- list.files(path = '/home/multiomics/results/differentialexpression/ConsensusCluster/G1vsG2/Transcriptome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
 
 gseaMsigRNA <- map(.x = files,.f = function(data){
   gseaMsigDBRNA(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
@@ -644,15 +644,15 @@ plot_RNA <- ggplot(resultsRNA, aes(Cluster, ID, fill= NES)) +
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-if(!dir.exists(paths = '/multiomics/results/figures/GSEA/ConsensusCluster/G1vsG2/')) {
-  dir.create(path = '/multiomics/results/figures/GSEA/ConsensusCluster/G1vsG2/',recursive = TRUE)
+if(!dir.exists(paths = '/home/multiomics/results/figures/GSEA/ConsensusCluster/G1vsG2/')) {
+  dir.create(path = '/home/multiomics/results/figures/GSEA/ConsensusCluster/G1vsG2/',recursive = TRUE)
 }
 
 plots <- list(plot_prot,plot_phospho,plot_RNA)
 plotNames <- list('GSEA_g1g2_cluster_proteome.png','GSEA_g1g2_cluster_phosphoproteome.png','GSEA_g1g2_cluster_transcriptome.png')
 
 map2(plots,plotNames,function(plot,name){
-  ggsave(filename = name, plot = plot,device = 'png',path = '/multiomics/results/figures/GSEA/ConsensusCluster/G1vsG2/',dpi = 600,units = 'in',width = 10,height = 12)
+  ggsave(filename = name, plot = plot,device = 'png',path = '/home/multiomics/results/figures/GSEA/ConsensusCluster/G1vsG2/',dpi = 600,units = 'in',width = 10,height = 12)
 })
 
 varKeep <- list('gseaMsigDBProt','gseaMsigDBPhospho','gseaMsigDBRNA')
@@ -668,7 +668,7 @@ invisible(gc())
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-files <- list.files(path = '/multiomics/results/differentialexpression/ConsensusCluster/G3vsG4/Proteome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
+files <- list.files(path = '/home/multiomics/results/differentialexpression/ConsensusCluster/G3vsG4/Proteome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
 
 gseaMsigProt <- map(.x = files,.f = function(data){
   gseaMsigDBProt(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
@@ -703,7 +703,7 @@ plot_prot <- ggplot(resultsProt, aes(Cluster, ID, fill= NES)) +
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-files <- list.files(path = '/multiomics/results/differentialexpression/ConsensusCluster/G3vsG4/Phosphoproteome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
+files <- list.files(path = '/home/multiomics/results/differentialexpression/ConsensusCluster/G3vsG4/Phosphoproteome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
 
 gseaMsigPhospho <- map(.x = files,.f = function(data){
   gseaMsigDBPhospho(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
@@ -738,7 +738,7 @@ plot_phospho <- ggplot(resultsPhospho, aes(Cluster, ID, fill= NES)) +
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-files <- list.files(path = '/multiomics/results/differentialexpression/ConsensusCluster/G3vsG4/Transcriptome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
+files <- list.files(path = '/home/multiomics/results/differentialexpression/ConsensusCluster/G3vsG4/Transcriptome/',pattern = 'stats.tsv',full.names = TRUE,recursive = TRUE)
 
 gseaMsigRNA <- map(.x = files,.f = function(data){
   gseaMsigDBRNA(data = data,qvaluecutoff = 0.25,padjustmethod = 'fdr',species = 'Homo sapiens',category = 'H')
@@ -773,15 +773,15 @@ plot_RNA <- ggplot(resultsRNA, aes(Cluster, ID, fill= NES)) +
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-if(!dir.exists(paths = '/multiomics/results/figures/GSEA/ConsensusCluster/G3vsG4/')) {
-  dir.create(path = '/multiomics/results/figures/GSEA/ConsensusCluster/G3vsG4/',recursive = TRUE)
+if(!dir.exists(paths = '/home/multiomics/results/figures/GSEA/ConsensusCluster/G3vsG4/')) {
+  dir.create(path = '/home/multiomics/results/figures/GSEA/ConsensusCluster/G3vsG4/',recursive = TRUE)
 }
 
 plots <- list(plot_prot,plot_phospho,plot_RNA)
 plotNames <- list('GSEA_g3g4_cluster_proteome.png','GSEA_g3g4_cluster_phosphoproteome.png','GSEA_g3g4_cluster_transcriptome.png')
 
 map2(plots,plotNames,function(plot,name){
-  ggsave(filename = name, plot = plot,device = 'png',path = '/multiomics/results/figures/GSEA/ConsensusCluster/G3vsG4/',dpi = 600,units = 'in',width = 10,height = 12)
+  ggsave(filename = name, plot = plot,device = 'png',path = '/home/multiomics/results/figures/GSEA/ConsensusCluster/G3vsG4/',dpi = 600,units = 'in',width = 10,height = 12)
 })
 
 varKeep <- list('gseaMsigDBProt','gseaMsigDBPhospho','gseaMsigDBRNA')

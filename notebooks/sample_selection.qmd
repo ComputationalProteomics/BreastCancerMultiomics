@@ -19,7 +19,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r Output Directory}
-outputdir <- paste0('/multiomics/results/design_files/')
+outputdir <- paste0('/home/multiomics/results/design_files/')
 
 if(!dir.exists(paths = outputdir)) {
   dir.create(path = outputdir,recursive = TRUE)

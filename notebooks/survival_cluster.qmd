@@ -11,8 +11,8 @@ format:
     message: false
 engine: knitr
 params:
-  dataPath: '/multiomics/results/consensus_clustering/DuctalvsLobular/proteome/proteome.k=6.consensusClass.csv'
-  designPath: '/multiomics/results/design_files/design_Full_noPool.tsv'
+  dataPath: '/home/multiomics/results/consensus_clustering/DuctalvsLobular/proteome/proteome.k=6.consensusClass.csv'
+  designPath: '/home/multiomics/results/design_files/design_Full_noPool.tsv'
   time: 'RFi_days'
   event: 'RFi_event'
 editor_options: 
@@ -39,7 +39,7 @@ library(forestmodel)
 
 input <- params$dataPath %>% str_split(pattern = '/',simplify = T) %>% .[5:7] %>% paste0(collapse = '/')
 
-outputdir <- paste0('/multiomics/results/figures/survival_analysis/consensus_cluster/',input,'/')
+outputdir <- paste0('/home/multiomics/results/figures/survival_analysis/consensus_cluster/',input,'/')
 if(!dir.exists(paths = outputdir)) {
   dir.create(path = outputdir,recursive = TRUE)
 }

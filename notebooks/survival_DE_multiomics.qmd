@@ -36,7 +36,7 @@ library(forestmodel)
 
 
 ```{r Output Directory}
-outputdir <- paste0('/multiomics/results/figures/survival_analysis/DE/',params$comparison,'/',params$comparison,'_',params$event,'/')
+outputdir <- paste0('/home/multiomics/results/figures/survival_analysis/DE/',params$comparison,'/',params$comparison,'_',params$event,'/')
 
 if(!dir.exists(paths = outputdir)) {
   dir.create(path = outputdir,recursive = TRUE)
@@ -47,11 +47,11 @@ if(!dir.exists(paths = outputdir)) {
 ```{r}
 #| message: false
 
-files <- list.files(path = '/multiomics/results/',pattern = 'stats.tsv',recursive = TRUE,include.dirs = TRUE,full.names = TRUE) %>% 
+files <- list.files(path = '/home/multiomics/results/',pattern = 'stats.tsv',recursive = TRUE,include.dirs = TRUE,full.names = TRUE) %>% 
   .[str_detect(.,params$comparison)] %>% 
   .[!str_detect(.,'cluster')]
 
-design <- read_tsv(file = '/multiomics/results/design_files/design_multiomics_mofa.tsv')
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_multiomics_mofa.tsv')
 
 if(str_detect(params$comparison,'noG2')){
   design <- design %>% 

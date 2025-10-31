@@ -11,7 +11,7 @@ format:
     message: false
 engine: knitr
 params:
-  model: '/multiomics/results/MOFA/AllSamples_noG2/model.RDS'
+  model: '/home/multiomics/results/MOFA/AllSamples_noG2/model.RDS'
   outcome: 'LN'
   event: 'RFi_event'
   time: 'RFi_days'
@@ -22,13 +22,6 @@ params:
 ```{r required packages}
 #| message: false
 #| warning: false
-
-pkgCheck <- function(pkg)
-if(!require(package=pkg,quietly = TRUE,character.only = TRUE)){
-  install.packages(pkgs = pkg,dependencies = TRUE,clean = TRUE,quiet = TRUE)
-}
-packages <- c('survival','survminer')
-lapply(X = packages,FUN = pkgCheck)
 
 library(survival)
 library(survminer)
@@ -44,11 +37,11 @@ library(forestmodel)
 # Survival Analysis
 ## MOFA Factors
 ```{r}
-outputdir <- str_split(string = params$model,pattern = '/',n = 4)[[1]][4] %>% 
+outputdir <- str_split(string = params$model,pattern = '/',n = 5)[[1]][5] %>% 
   str_split_1(pattern = '/') %>% 
   .[1:length(.)-1] %>% 
   paste0(.,collapse = '/')
-outputdir <- paste0('/multiomics/results/figures/survival_analysis/',outputdir,'/',str_split_i(outputdir,'/',2),'_',params$outcome,'_',params$event,'/')
+outputdir <- paste0('/home/multiomics/results/figures/survival_analysis/',outputdir,'/',str_split_i(outputdir,'/',2),'_',params$outcome,'_',params$event,'/')
 
 
 if(!dir.exists(paths = outputdir)) {

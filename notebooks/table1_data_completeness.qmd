@@ -21,20 +21,20 @@ library(tidyverse)
 # Loading Necessary Data
 ## Proteomics
 ```{r}
-prot <- read_tsv(file = "/multiomics/results/rollup/fullproteome/cycloess_Rollup.tsv")
-design_prot <- read_tsv(file = "/multiomics/results/design_files/design_Full_noPool.tsv")
+prot <- read_tsv(file = "/home/multiomics/results/rollup/fullproteome/cycloess_Rollup.tsv")
+design_prot <- read_tsv(file = "/home/multiomics/results/design_files/design_Full_noPool.tsv")
 ```
 
 ## Phosphoproteomics
 ```{r}
-design_phospho <- read_tsv("/multiomics/results/design_files/design_phospho_noPool.tsv")
-phospho <- read_tsv("/multiomics/results/normalization/phosphoproteome/peptide_normalization/CycLoess-normalized.txt")
+design_phospho <- read_tsv("/home/multiomics/results/design_files/design_phospho_noPool.tsv")
+phospho <- read_tsv("/home/multiomics/results/normalization/phosphoproteome/peptide_normalization/CycLoess-normalized.txt")
 ```
 
 ## Transcriptomics
 ```{r}
-design_gene <- read_tsv("/multiomics/results/design_files/design_RNA_noPool.tsv")
-gene <- read_tsv("/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv")
+design_gene <- read_tsv("/home/multiomics/results/design_files/design_RNA_noPool.tsv")
+gene <- read_tsv("/home/multiomics/results/normalization/transcriptomics/genematrix_adjusted_cycloess.tsv")
 ```
 
 # Table Generation

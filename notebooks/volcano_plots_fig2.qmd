@@ -20,7 +20,7 @@ library(ggrepel)
 ```
 
 ```{r Output Directory}
-outputdir <- '/multiomics/results/figures/volcano_plots/'
+outputdir <- '/home/multiomics/results/figures/volcano_plots/'
 
 if(!dir.exists(paths = outputdir)) {
   dir.create(path = outputdir,recursive = TRUE)
@@ -29,9 +29,9 @@ if(!dir.exists(paths = outputdir)) {
 
 # Load Differential Expression Data
 ```{r}
-prot <- read_tsv(file = '/multiomics/results/differentialexpression/DuctalvsLobular/ductalvslobular_fullproteome_protein/ductalvslobular_fullproteome_protein_stats.tsv')
-phospho <- read_tsv(file = '/multiomics/results/differentialexpression/DuctalvsLobular/ductalvslobular_phosphoproteome_peptide_aggModSeq/ductalvslobular_phosphoproteome_peptide_aggModSeq_stats.tsv')
-gene <- read_tsv(file = '/multiomics/results/differentialexpression/DuctalvsLobular/ductalvslobular_transcriptome/ductalvslobular_transcriptome_stats.tsv')
+prot <- read_tsv(file = '/home/multiomics/results/differentialexpression/DuctalvsLobular/ductalvslobular_fullproteome_protein/ductalvslobular_fullproteome_protein_stats.tsv')
+phospho <- read_tsv(file = '/home/multiomics/results/differentialexpression/DuctalvsLobular/ductalvslobular_phosphoproteome_peptide_aggModSeq/ductalvslobular_phosphoproteome_peptide_aggModSeq_stats.tsv')
+gene <- read_tsv(file = '/home/multiomics/results/differentialexpression/DuctalvsLobular/ductalvslobular_transcriptome/ductalvslobular_transcriptome_stats.tsv')
 ```
 
 # Preprocessing

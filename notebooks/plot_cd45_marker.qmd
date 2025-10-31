@@ -28,22 +28,22 @@ library(ggpubr)
 # Output Directory
 
 ```{r}
-if(!dir.exists(paths = '/multiomics/results/figures/immune_infiltration/')) {
-  dir.create(path = '/multiomics/results/figures/immune_infiltration/',recursive = TRUE)
+if(!dir.exists(paths = '/home/multiomics/results/figures/immune_infiltration/')) {
+  dir.create(path = '/home/multiomics/results/figures/immune_infiltration/',recursive = TRUE)
 }
-outputdir <- '/multiomics/results/figures/immune_infiltration/'
+outputdir <- '/home/multiomics/results/figures/immune_infiltration/'
 ```
 
 # Load Required Data
 ```{r}
-design <- read_tsv(file = "/multiomics/results/design_files/ductalvslobular_consensus_clustering.tsv") |> 
+design <- read_tsv(file = "/home/multiomics/results/design_files/ductalvslobular_consensus_clustering.tsv") |> 
     select(c(sample_id, CC.Prot))
 
-immuneFeat <- read_tsv(file = '/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv') |> 
+immuneFeat <- read_tsv(file = '/home/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv') |> 
     filter(str_detect(Protein.Names, 'PTPRC')) |> 
     slice_max(order_by = pep_count, n=1) |> 
-    select(Protein.Names, design[["sample_id"]]) |> 
-    pivot_longer(cols = design[["sample_id"]], names_to = 'sample_id', values_to = 'expression')
+    select(Protein.Names, any_of(design[["sample_id"]])) |> 
+    pivot_longer(cols = any_of(design[["sample_id"]]), names_to = 'sample_id', values_to = 'expression')
 
 dataFilter <- left_join(design, immuneFeat) |> 
     filter(!is.na(CC.Prot)) |> 

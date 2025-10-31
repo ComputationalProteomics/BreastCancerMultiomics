@@ -30,8 +30,8 @@ library(colorspace)
 library(future)
 library(future.callr)
 library(furrr)
-source(file = '/multiomics/notebooks/filtering.R',chdir = TRUE)
-source(file = '/multiomics/notebooks/gprofiler_enrichment.R',chdir = TRUE)
+source(file = '/home/multiomics/notebooks/filtering.R',chdir = TRUE)
+source(file = '/home/multiomics/notebooks/gprofiler_enrichment.R',chdir = TRUE)
 
 
 pkgCheck <- function(pkg)
@@ -44,7 +44,7 @@ library(ggalluvial)
 ```
 
 ```{r}
-workers <- (availableCores(constraints = 'connections',which = 'min'))/2 |> floor()
+workers <- as.integer(Sys.getenv("NXF_TASK_CPUS", "1"))
 plan(callr,workers=workers)
 on.exit(expr = {plan(sequential)})
 ```
@@ -52,27 +52,27 @@ on.exit(expr = {plan(sequential)})
 # Unsupervised Clustering
 ## Ductal vs Lobular
 ```{r}
-if(!dir.exists(paths = '/multiomics/results/figures/clustering/DuctalvsLobular')) {
-  dir.create(path = '/multiomics/results/figures/clustering/DuctalvsLobular',recursive = TRUE)
+if(!dir.exists(paths = '/home/multiomics/results/figures/clustering/DuctalvsLobular')) {
+  dir.create(path = '/home/multiomics/results/figures/clustering/DuctalvsLobular',recursive = TRUE)
 }
 ```
 
 ### Consensus Clustering Info
 ```{r}
-ccProt %<-% read_csv(file = '/multiomics/results/consensus_clustering/DuctalvsLobular/proteome/proteome.k=6.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
-ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/DuctalvsLobular/phosphoproteome/phosphoproteome.k=5.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
-ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/DuctalvsLobular/transcriptome/transcriptome.k=5.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
+ccProt %<-% read_csv(file = '/home/multiomics/results/consensus_clustering/DuctalvsLobular/proteome/proteome.k=6.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
+ccPhospho %<-% read_csv(file = '/home/multiomics/results/consensus_clustering/DuctalvsLobular/phosphoproteome/phosphoproteome.k=5.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
+ccRNA %<-% read_csv(file = '/home/multiomics/results/consensus_clustering/DuctalvsLobular/transcriptome/transcriptome.k=5.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
 
 ccAll <- full_join(ccProt,ccPhospho) %>% full_join(.,ccRNA)
-write_tsv(x = ccAll,file = '/multiomics/results/design_files/ductalvslobular_consensus_clustering.tsv')
+write_tsv(x = ccAll,file = '/home/multiomics/results/design_files/ductalvslobular_consensus_clustering.tsv')
 ```
 
 ### Proteome
 #### Load Data
 ```{r}
-data <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_Full_noPool.tsv') %>% 
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_Full_noPool.tsv') %>% 
   left_join(.,ccAll)
 ```
 
@@ -254,11 +254,11 @@ alluvialPlot <- ccAll %>% ggplot(mapping = aes(axis1=CC.Phospho,axis2=CC.Prot,ax
   geom_stratum() +
   geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
   theme_minimal()
-ggsave2(filename = 'alluvialPlot.pdf',plot = alluvialPlot,device = 'pdf',path = '/multiomics/results/figures/clustering/DuctalvsLobular/',dpi = 1200,compress=TRUE)
+ggsave2(filename = 'alluvialPlot.pdf',plot = alluvialPlot,device = 'pdf',path = '/home/multiomics/results/figures/clustering/DuctalvsLobular/',dpi = 1200,compress=TRUE)
 
-ggsave2(filename = 'kmeans_proteome.pdf',plot = proteinHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/DuctalvsLobular',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
+ggsave2(filename = 'kmeans_proteome.pdf',plot = proteinHeatmapDraw,device = 'pdf',path = '/home/multiomics/results/figures/clustering/DuctalvsLobular',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
-varKeep <- c('madFiltering','NAFiltering','gprofilerEnrichment','ccAll','calZScore','varKeep')
+varKeep <- c('madFiltering','NAFiltering','gprofilerEnrichment','ccAll','calZScore','varKeep', 'params')
 rm(list = setdiff(ls(),varKeep))
 invisible(gc())
 ```
@@ -266,9 +266,9 @@ invisible(gc())
 ### Phosphoproteome
 #### Load Data
 ```{r}
-data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_noPool.tsv') %>% 
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_phospho_noPool.tsv') %>% 
   left_join(.,ccAll)
 ```
 #### Preprocessing
@@ -439,7 +439,7 @@ phosphohp <- Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn,
 ```{r}
 phosphoHeatmapDraw <- grid.grabExpr(draw(phosphohp,annotation_legend_list = allLegends, heatmap_legend_side = 'bottom', annotation_legend_side = 'right', legend_grouping = 'original')) %>% as.ggplot
 
-ggsave2(filename = 'kmeans_phosphoproteome.pdf',plot = phosphoHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/DuctalvsLobular',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
+ggsave2(filename = 'kmeans_phosphoproteome.pdf',plot = phosphoHeatmapDraw,device = 'pdf',path = '/home/multiomics/results/figures/clustering/DuctalvsLobular',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
 rm(list = setdiff(ls(),varKeep))
 invisible(gc())
@@ -448,9 +448,9 @@ invisible(gc())
 ### Transcriptome
 #### Load Data
 ```{r}
-data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/normalization/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_noPool.tsv') %>% 
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_RNA_noPool.tsv') %>% 
   left_join(.,ccAll)
 ```
 #### Preprocessing
@@ -623,7 +623,7 @@ rnahp <- Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 
 ```{r}
 rnaHeatmapDraw <- grid.grabExpr(draw(rnahp,annotation_legend_list = allLegends, heatmap_legend_side = 'bottom', annotation_legend_side = 'right', legend_grouping = 'original')) %>% as.ggplot
 
-ggsave2(filename = 'kmeans_transcriptome.pdf',plot = rnaHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/DuctalvsLobular',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
+ggsave2(filename = 'kmeans_transcriptome.pdf',plot = rnaHeatmapDraw,device = 'pdf',path = '/home/multiomics/results/figures/clustering/DuctalvsLobular',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
 rm(list = setdiff(ls(),varKeep))
 invisible(gc())
@@ -634,8 +634,8 @@ invisible(gc())
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-if(!dir.exists(paths = '/multiomics/results/figures/clustering/AllSamples_noG2')) {
-  dir.create(path = '/multiomics/results/figures/clustering/AllSamples_noG2',recursive = TRUE)
+if(!dir.exists(paths = '/home/multiomics/results/figures/clustering/AllSamples_noG2')) {
+  dir.create(path = '/home/multiomics/results/figures/clustering/AllSamples_noG2',recursive = TRUE)
 }
 ```
 
@@ -643,12 +643,12 @@ if(!dir.exists(paths = '/multiomics/results/figures/clustering/AllSamples_noG2')
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-ccProt %<-% read_csv(file = '/multiomics/results/consensus_clustering/AllSamples_noG2/proteome/proteome.k=6.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
-ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/AllSamples_noG2/phosphoproteome/phosphoproteome.k=6.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
-ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/AllSamples_noG2/transcriptome/transcriptome.k=4.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
+ccProt %<-% read_csv(file = '/home/multiomics/results/consensus_clustering/AllSamples_noG2/proteome/proteome.k=6.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
+ccPhospho %<-% read_csv(file = '/home/multiomics/results/consensus_clustering/AllSamples_noG2/phosphoproteome/phosphoproteome.k=6.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
+ccRNA %<-% read_csv(file = '/home/multiomics/results/consensus_clustering/AllSamples_noG2/transcriptome/transcriptome.k=4.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
 
 ccAll <- full_join(ccProt,ccPhospho) %>% full_join(.,ccRNA)
-write_tsv(x = ccAll,file = '/multiomics/results/design_files/ductalvslobular_consensus_clustering_noG2.tsv')
+write_tsv(x = ccAll,file = '/home/multiomics/results/design_files/ductalvslobular_consensus_clustering_noG2.tsv')
 ```
 
 ### Proteome
@@ -656,9 +656,9 @@ write_tsv(x = ccAll,file = '/multiomics/results/design_files/ductalvslobular_con
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_Full_noPool_noG2.tsv') %>% 
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_Full_noPool_noG2.tsv') %>% 
   left_join(.,ccAll)
 ```
 
@@ -852,9 +852,9 @@ alluvialPlot <- ccAll %>% ggplot(mapping = aes(axis1=CC.Phospho,axis2=CC.Prot,ax
   geom_stratum() +
   geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
   theme_minimal()
-ggsave2(filename = 'alluvialPlot.pdf',plot = alluvialPlot,device = 'pdf',path = '/multiomics/results/figures/clustering/AllSamples_noG2/',dpi = 1200,compress=TRUE)
+ggsave2(filename = 'alluvialPlot.pdf',plot = alluvialPlot,device = 'pdf',path = '/home/multiomics/results/figures/clustering/AllSamples_noG2/',dpi = 1200,compress=TRUE)
 
-ggsave2(filename = 'kmeans_proteome.pdf',plot = proteinHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/AllSamples_noG2',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
+ggsave2(filename = 'kmeans_proteome.pdf',plot = proteinHeatmapDraw,device = 'pdf',path = '/home/multiomics/results/figures/clustering/AllSamples_noG2',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
 varKeep <- c('madFiltering','NAFiltering','gprofilerEnrichment','ccAll','calZScore','varKeep')
 rm(list = setdiff(ls(),varKeep))
@@ -866,9 +866,9 @@ invisible(gc())
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_noPool_noG2.tsv') %>% 
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_phospho_noPool_noG2.tsv') %>% 
   left_join(.,ccAll)
 ```
 #### Preprocessing
@@ -1051,7 +1051,7 @@ phosphohp <- Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn,
 #| echo: !expr params$run
 phosphoHeatmapDraw <- grid.grabExpr(draw(phosphohp,annotation_legend_list = allLegends, heatmap_legend_side = 'bottom', annotation_legend_side = 'right', legend_grouping = 'original')) %>% as.ggplot
 
-ggsave2(filename = 'kmeans_phosphoproteome.pdf',plot = phosphoHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/AllSamples_noG2',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
+ggsave2(filename = 'kmeans_phosphoproteome.pdf',plot = phosphoHeatmapDraw,device = 'pdf',path = '/home/multiomics/results/figures/clustering/AllSamples_noG2',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
 rm(list = setdiff(ls(),varKeep))
 invisible(gc())
@@ -1062,9 +1062,9 @@ invisible(gc())
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/normalization/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_noPool_noG2.tsv') %>% 
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_RNA_noPool_noG2.tsv') %>% 
   left_join(.,ccAll)
 ```
 #### Preprocessing
@@ -1249,7 +1249,7 @@ rnahp <- Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 
 #| echo: !expr params$run
 rnaHeatmapDraw <- grid.grabExpr(draw(rnahp,annotation_legend_list = allLegends, heatmap_legend_side = 'bottom', annotation_legend_side = 'right', legend_grouping = 'original')) %>% as.ggplot
 
-ggsave2(filename = 'kmeans_transcriptome.pdf',plot = rnaHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/AllSamples_noG2',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
+ggsave2(filename = 'kmeans_transcriptome.pdf',plot = rnaHeatmapDraw,device = 'pdf',path = '/home/multiomics/results/figures/clustering/AllSamples_noG2',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
 rm(list = setdiff(ls(),varKeep))
 invisible(gc())
@@ -1260,8 +1260,8 @@ invisible(gc())
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-if(!dir.exists(paths = '/multiomics/results/figures/clustering/LNposvsLNneg/Ductal')) {
-  dir.create(path = '/multiomics/results/figures/clustering/LNposvsLNneg/Ductal',recursive = TRUE)
+if(!dir.exists(paths = '/home/multiomics/results/figures/clustering/LNposvsLNneg/Ductal')) {
+  dir.create(path = '/home/multiomics/results/figures/clustering/LNposvsLNneg/Ductal',recursive = TRUE)
 }
 ```
 
@@ -1269,12 +1269,12 @@ if(!dir.exists(paths = '/multiomics/results/figures/clustering/LNposvsLNneg/Duct
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-ccProt %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/proteome/proteome.k=5.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
-ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/phosphoproteome/phosphoproteome.k=4.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
-ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/transcriptome/transcriptome.k=4.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
+ccProt %<-% read_csv(file = '/home/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/proteome/proteome.k=5.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
+ccPhospho %<-% read_csv(file = '/home/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/phosphoproteome/phosphoproteome.k=4.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
+ccRNA %<-% read_csv(file = '/home/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/transcriptome/transcriptome.k=4.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
 
 ccAll <- full_join(ccProt,ccPhospho) %>% full_join(.,ccRNA)
-write_tsv(x = ccAll,file = '/multiomics/results/design_files/lnposvslnneg_ductal_consensus_clustering.tsv')
+write_tsv(x = ccAll,file = '/home/multiomics/results/design_files/lnposvslnneg_ductal_consensus_clustering.tsv')
 ```
 
 #### Proteome
@@ -1282,9 +1282,9 @@ write_tsv(x = ccAll,file = '/multiomics/results/design_files/lnposvslnneg_ductal
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_full_ductal.tsv') %>% 
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_full_ductal.tsv') %>% 
   left_join(.,ccAll)
 ```
 ##### Preprocessing
@@ -1475,9 +1475,9 @@ alluvialPlot <- ccAll %>% ggplot(mapping = aes(axis1=CC.Phospho,axis2=CC.Prot,ax
   geom_stratum() +
   geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
   theme_minimal()
-ggsave2(filename = 'alluvialPlot.pdf',plot = alluvialPlot,device = 'pdf',path = '/multiomics/results/figures/clustering/LNposvsLNneg/Ductal/',dpi = 1200,compress=TRUE)
+ggsave2(filename = 'alluvialPlot.pdf',plot = alluvialPlot,device = 'pdf',path = '/home/multiomics/results/figures/clustering/LNposvsLNneg/Ductal/',dpi = 1200,compress=TRUE)
 
-ggsave2(filename = 'kmeans_proteome.pdf',plot = proteinHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/LNposvsLNneg/Ductal/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
+ggsave2(filename = 'kmeans_proteome.pdf',plot = proteinHeatmapDraw,device = 'pdf',path = '/home/multiomics/results/figures/clustering/LNposvsLNneg/Ductal/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
 varKeep <- c('madFiltering','NAFiltering','gprofilerEnrichment','ccAll','calZScore','varKeep')
 rm(list = setdiff(ls(),varKeep))
@@ -1489,9 +1489,9 @@ invisible(gc())
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_ductal.tsv') %>% 
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_phospho_ductal.tsv') %>% 
   left_join(.,ccAll)
 ```
 ##### Preprocessing
@@ -1674,7 +1674,7 @@ phosphohp <- Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn,
 #| echo: !expr params$run
 phosphoHeatmapDraw <- grid.grabExpr(draw(phosphohp,annotation_legend_list = allLegends, heatmap_legend_side = 'bottom', annotation_legend_side = 'right', legend_grouping = 'original')) %>% as.ggplot
 
-ggsave2(filename = 'kmeans_phosphoproteome.pdf',plot = phosphoHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/LNposvsLNneg/Ductal/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
+ggsave2(filename = 'kmeans_phosphoproteome.pdf',plot = phosphoHeatmapDraw,device = 'pdf',path = '/home/multiomics/results/figures/clustering/LNposvsLNneg/Ductal/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
 rm(list = setdiff(ls(),varKeep))
 invisible(gc())
@@ -1685,9 +1685,9 @@ invisible(gc())
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/normalization/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_ductal.tsv') %>% 
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_RNA_ductal.tsv') %>% 
   left_join(.,ccAll)
 ```
 
@@ -1873,7 +1873,7 @@ rnahp <- Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 
 #| echo: !expr params$run
 rnaHeatmapDraw <- grid.grabExpr(draw(rnahp,annotation_legend_list = allLegends, heatmap_legend_side = 'bottom', annotation_legend_side = 'right', legend_grouping = 'original')) %>% as.ggplot
 
-ggsave2(filename = 'kmeans_transcriptome.pdf',plot = rnaHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/LNposvsLNneg/Ductal/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
+ggsave2(filename = 'kmeans_transcriptome.pdf',plot = rnaHeatmapDraw,device = 'pdf',path = '/home/multiomics/results/figures/clustering/LNposvsLNneg/Ductal/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
 rm(list = setdiff(ls(),varKeep))
 invisible(gc())
@@ -1884,8 +1884,8 @@ invisible(gc())
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-if(!dir.exists(paths = '/multiomics/results/figures/clustering/LNposvsLNneg/Ductal_noG2')) {
-  dir.create(path = '/multiomics/results/figures/clustering/LNposvsLNneg/Ductal_noG2',recursive = TRUE)
+if(!dir.exists(paths = '/home/multiomics/results/figures/clustering/LNposvsLNneg/Ductal_noG2')) {
+  dir.create(path = '/home/multiomics/results/figures/clustering/LNposvsLNneg/Ductal_noG2',recursive = TRUE)
 }
 ```
 
@@ -1893,12 +1893,12 @@ if(!dir.exists(paths = '/multiomics/results/figures/clustering/LNposvsLNneg/Duct
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-ccProt %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal_noG2/proteome/proteome.k=4.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
-ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal_noG2/phosphoproteome/phosphoproteome.k=6.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
-ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal_noG2/transcriptome/transcriptome.k=5.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
+ccProt %<-% read_csv(file = '/home/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal_noG2/proteome/proteome.k=4.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
+ccPhospho %<-% read_csv(file = '/home/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal_noG2/phosphoproteome/phosphoproteome.k=6.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
+ccRNA %<-% read_csv(file = '/home/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal_noG2/transcriptome/transcriptome.k=5.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
 
 ccAll <- full_join(ccProt,ccPhospho) %>% full_join(.,ccRNA)
-write_tsv(x = ccAll,file = '/multiomics/results/design_files/lnposvslnneg_ductal_consensus_clustering_noG2.tsv')
+write_tsv(x = ccAll,file = '/home/multiomics/results/design_files/lnposvslnneg_ductal_consensus_clustering_noG2.tsv')
 ```
 
 #### Proteome
@@ -1906,9 +1906,9 @@ write_tsv(x = ccAll,file = '/multiomics/results/design_files/lnposvslnneg_ductal
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_full_ductal_noG2.tsv') %>% 
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_full_ductal_noG2.tsv') %>% 
   left_join(.,ccAll)
 ```
 ##### Preprocessing
@@ -2099,9 +2099,9 @@ alluvialPlot <- ccAll %>% ggplot(mapping = aes(axis1=CC.Phospho,axis2=CC.Prot,ax
   geom_stratum() +
   geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
   theme_minimal()
-ggsave2(filename = 'alluvialPlot.pdf',plot = alluvialPlot,device = 'pdf',path = '/multiomics/results/figures/clustering/LNposvsLNneg/Ductal_noG2/',dpi = 1200,compress=TRUE)
+ggsave2(filename = 'alluvialPlot.pdf',plot = alluvialPlot,device = 'pdf',path = '/home/multiomics/results/figures/clustering/LNposvsLNneg/Ductal_noG2/',dpi = 1200,compress=TRUE)
 
-ggsave2(filename = 'kmeans_proteome.pdf',plot = proteinHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/LNposvsLNneg/Ductal_noG2/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
+ggsave2(filename = 'kmeans_proteome.pdf',plot = proteinHeatmapDraw,device = 'pdf',path = '/home/multiomics/results/figures/clustering/LNposvsLNneg/Ductal_noG2/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
 varKeep <- c('madFiltering','NAFiltering','gprofilerEnrichment','ccAll','calZScore','varKeep')
 rm(list = setdiff(ls(),varKeep))
@@ -2113,9 +2113,9 @@ invisible(gc())
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_ductal_noG2.tsv') %>% 
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_phospho_ductal_noG2.tsv') %>% 
   left_join(.,ccAll)
 ```
 ##### Preprocessing
@@ -2298,7 +2298,7 @@ phosphohp <- Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn,
 #| echo: !expr params$run
 phosphoHeatmapDraw <- grid.grabExpr(draw(phosphohp,annotation_legend_list = allLegends, heatmap_legend_side = 'bottom', annotation_legend_side = 'right', legend_grouping = 'original')) %>% as.ggplot
 
-ggsave2(filename = 'kmeans_phosphoproteome.pdf',plot = phosphoHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/LNposvsLNneg/Ductal_noG2/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
+ggsave2(filename = 'kmeans_phosphoproteome.pdf',plot = phosphoHeatmapDraw,device = 'pdf',path = '/home/multiomics/results/figures/clustering/LNposvsLNneg/Ductal_noG2/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
 rm(list = setdiff(ls(),varKeep))
 invisible(gc())
@@ -2309,9 +2309,9 @@ invisible(gc())
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/normalization/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_ductal_noG2.tsv') %>% 
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_RNA_ductal_noG2.tsv') %>% 
   left_join(.,ccAll)
 ```
 
@@ -2497,7 +2497,7 @@ rnahp <- Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 
 #| echo: !expr params$run
 rnaHeatmapDraw <- grid.grabExpr(draw(rnahp,annotation_legend_list = allLegends, heatmap_legend_side = 'bottom', annotation_legend_side = 'right', legend_grouping = 'original')) %>% as.ggplot
 
-ggsave2(filename = 'kmeans_transcriptome.pdf',plot = rnaHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/LNposvsLNneg/Ductal_noG2/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
+ggsave2(filename = 'kmeans_transcriptome.pdf',plot = rnaHeatmapDraw,device = 'pdf',path = '/home/multiomics/results/figures/clustering/LNposvsLNneg/Ductal_noG2/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
 rm(list = setdiff(ls(),varKeep))
 invisible(gc())
@@ -2507,8 +2507,8 @@ invisible(gc())
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-if(!dir.exists(paths = '/multiomics/results/figures/clustering/LNposvsLNneg/Lobular')) {
-  dir.create(path = '/multiomics/results/figures/clustering/LNposvsLNneg/Lobular',recursive = TRUE)
+if(!dir.exists(paths = '/home/multiomics/results/figures/clustering/LNposvsLNneg/Lobular')) {
+  dir.create(path = '/home/multiomics/results/figures/clustering/LNposvsLNneg/Lobular',recursive = TRUE)
 }
 ```
 
@@ -2516,12 +2516,12 @@ if(!dir.exists(paths = '/multiomics/results/figures/clustering/LNposvsLNneg/Lobu
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-ccProt %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/proteome/proteome.k=4.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
-ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/phosphoproteome/phosphoproteome.k=4.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
-ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/transcriptome/transcriptome.k=4.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
+ccProt %<-% read_csv(file = '/home/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/proteome/proteome.k=4.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
+ccPhospho %<-% read_csv(file = '/home/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/phosphoproteome/phosphoproteome.k=4.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
+ccRNA %<-% read_csv(file = '/home/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/transcriptome/transcriptome.k=4.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
 
 ccAll <- full_join(ccProt,ccPhospho) %>% full_join(.,ccRNA)
-write_tsv(x = ccAll,file = '/multiomics/results/design_files/lnposvslnneg_lobular_consensus_clustering.tsv')
+write_tsv(x = ccAll,file = '/home/multiomics/results/design_files/lnposvslnneg_lobular_consensus_clustering.tsv')
 ```
 
 #### Proteome
@@ -2529,9 +2529,9 @@ write_tsv(x = ccAll,file = '/multiomics/results/design_files/lnposvslnneg_lobula
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_full_lobular.tsv') %>% 
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_full_lobular.tsv') %>% 
   left_join(.,ccAll)
 ```
 ##### Preprocessing
@@ -2722,9 +2722,9 @@ alluvialPlot <- ccAll %>% ggplot(mapping = aes(axis1=CC.Phospho,axis2=CC.Prot,ax
   geom_stratum() +
   geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
   theme_minimal()
-ggsave2(filename = 'alluvialPlot.pdf',plot = alluvialPlot,device = 'pdf',path = '/multiomics/results/figures/clustering/LNposvsLNneg/Lobular/',dpi = 1200,compress=TRUE)
+ggsave2(filename = 'alluvialPlot.pdf',plot = alluvialPlot,device = 'pdf',path = '/home/multiomics/results/figures/clustering/LNposvsLNneg/Lobular/',dpi = 1200,compress=TRUE)
 
-ggsave2(filename = 'kmeans_proteome.pdf',plot = proteinHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/LNposvsLNneg/Lobular/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
+ggsave2(filename = 'kmeans_proteome.pdf',plot = proteinHeatmapDraw,device = 'pdf',path = '/home/multiomics/results/figures/clustering/LNposvsLNneg/Lobular/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
 varKeep <- c('madFiltering','NAFiltering','gprofilerEnrichment','ccAll','calZScore','varKeep')
 rm(list = setdiff(ls(),varKeep))
@@ -2736,9 +2736,9 @@ invisible(gc())
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_lobular.tsv') %>% 
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_phospho_lobular.tsv') %>% 
   left_join(.,ccAll)
 ```
 ##### Preprocessing
@@ -2921,7 +2921,7 @@ phosphohp <- Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn,
 #| echo: !expr params$run
 phosphoHeatmapDraw <- grid.grabExpr(draw(phosphohp,annotation_legend_list = allLegends, heatmap_legend_side = 'bottom', annotation_legend_side = 'right', legend_grouping = 'original')) %>% as.ggplot
 
-ggsave2(filename = 'kmeans_phosphoproteome.pdf',plot = phosphoHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/LNposvsLNneg/Lobular/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
+ggsave2(filename = 'kmeans_phosphoproteome.pdf',plot = phosphoHeatmapDraw,device = 'pdf',path = '/home/multiomics/results/figures/clustering/LNposvsLNneg/Lobular/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
 rm(list = setdiff(ls(),varKeep))
 invisible(gc())
@@ -2932,9 +2932,9 @@ invisible(gc())
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/normalization/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_lobular.tsv') %>% 
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_RNA_lobular.tsv') %>% 
   left_join(.,ccAll)
 ```
 ##### Preprocessing
@@ -3119,7 +3119,7 @@ rnahp <- Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 
 #| echo: !expr params$run
 rnaHeatmapDraw <- grid.grabExpr(draw(rnahp,annotation_legend_list = allLegends, heatmap_legend_side = 'bottom', annotation_legend_side = 'right', legend_grouping = 'original')) %>% as.ggplot
 
-ggsave2(filename = 'kmeans_transcriptome.pdf',plot = rnaHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/LNposvsLNneg/Lobular/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
+ggsave2(filename = 'kmeans_transcriptome.pdf',plot = rnaHeatmapDraw,device = 'pdf',path = '/home/multiomics/results/figures/clustering/LNposvsLNneg/Lobular/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
 rm(list = setdiff(ls(),varKeep))
 invisible(gc())
@@ -3129,8 +3129,8 @@ invisible(gc())
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-if(!dir.exists(paths = '/multiomics/results/figures/clustering/Group1vsGroup2')) {
-  dir.create(path = '/multiomics/results/figures/clustering/Group1vsGroup2',recursive = TRUE)
+if(!dir.exists(paths = '/home/multiomics/results/figures/clustering/Group1vsGroup2')) {
+  dir.create(path = '/home/multiomics/results/figures/clustering/Group1vsGroup2',recursive = TRUE)
 }
 ```
 
@@ -3138,12 +3138,12 @@ if(!dir.exists(paths = '/multiomics/results/figures/clustering/Group1vsGroup2'))
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-ccProt %<-% read_csv(file = '/multiomics/results/consensus_clustering/Group1vsGroup2/proteome/proteome.k=5.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
-ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/Group1vsGroup2/phosphoproteome/phosphoproteome.k=6.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
-ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/Group1vsGroup2/transcriptome/transcriptome.k=4.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
+ccProt %<-% read_csv(file = '/home/multiomics/results/consensus_clustering/Group1vsGroup2/proteome/proteome.k=5.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
+ccPhospho %<-% read_csv(file = '/home/multiomics/results/consensus_clustering/Group1vsGroup2/phosphoproteome/phosphoproteome.k=6.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
+ccRNA %<-% read_csv(file = '/home/multiomics/results/consensus_clustering/Group1vsGroup2/transcriptome/transcriptome.k=4.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
 
 ccAll <- full_join(ccProt,ccPhospho) %>% full_join(.,ccRNA)
-write_tsv(x = ccAll,file = '/multiomics/results/design_files/g1vsg2_consensus_clustering.tsv')
+write_tsv(x = ccAll,file = '/home/multiomics/results/design_files/g1vsg2_consensus_clustering.tsv')
 ```
 
 ### Proteome
@@ -3151,9 +3151,9 @@ write_tsv(x = ccAll,file = '/multiomics/results/design_files/g1vsg2_consensus_cl
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_full_g1g2.tsv') %>% 
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_full_g1g2.tsv') %>% 
   left_join(.,ccAll)
 ```
 #### Preprocessing
@@ -3346,9 +3346,9 @@ alluvialPlot <- ccAll %>% ggplot(mapping = aes(axis1=CC.Phospho,axis2=CC.Prot,ax
   geom_stratum() +
   geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
   theme_minimal()
-ggsave2(filename = 'alluvialPlot.pdf',plot = alluvialPlot,device = 'pdf',path = '/multiomics/results/figures/clustering/Group1vsGroup2/',dpi = 1200,compress=TRUE)
+ggsave2(filename = 'alluvialPlot.pdf',plot = alluvialPlot,device = 'pdf',path = '/home/multiomics/results/figures/clustering/Group1vsGroup2/',dpi = 1200,compress=TRUE)
 
-ggsave2(filename = 'kmeans_proteome.pdf',plot = proteinHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/Group1vsGroup2/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
+ggsave2(filename = 'kmeans_proteome.pdf',plot = proteinHeatmapDraw,device = 'pdf',path = '/home/multiomics/results/figures/clustering/Group1vsGroup2/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
 rm(list = setdiff(ls(),varKeep))
 invisible(gc())
@@ -3359,9 +3359,9 @@ invisible(gc())
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_g1g2.tsv') %>% 
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_phospho_g1g2.tsv') %>% 
   left_join(.,ccAll)
 ```
 #### Preprocessing
@@ -3544,7 +3544,7 @@ phosphohp <- Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn,
 #| echo: !expr params$run
 phosphoHeatmapDraw <- grid.grabExpr(draw(phosphohp,annotation_legend_list = allLegends, heatmap_legend_side = 'bottom', annotation_legend_side = 'right', legend_grouping = 'original')) %>% as.ggplot
 
-ggsave2(filename = 'kmeans_phosphoproteome.pdf',plot = phosphoHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/Group1vsGroup2/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
+ggsave2(filename = 'kmeans_phosphoproteome.pdf',plot = phosphoHeatmapDraw,device = 'pdf',path = '/home/multiomics/results/figures/clustering/Group1vsGroup2/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
 rm(list = setdiff(ls(),varKeep))
 invisible(gc())
@@ -3555,9 +3555,9 @@ invisible(gc())
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/normalization/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_g1g2.tsv') %>% 
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_RNA_g1g2.tsv') %>% 
   left_join(.,ccAll)
 ```
 #### Preprocessing
@@ -3742,7 +3742,7 @@ rnahp <- Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 
 #| echo: !expr params$run
 rnaHeatmapDraw <- grid.grabExpr(draw(rnahp,annotation_legend_list = allLegends, heatmap_legend_side = 'bottom', annotation_legend_side = 'right', legend_grouping = 'original')) %>% as.ggplot
 
-ggsave2(filename = 'kmeans_transcriptome.pdf',plot = rnaHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/Group1vsGroup2/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
+ggsave2(filename = 'kmeans_transcriptome.pdf',plot = rnaHeatmapDraw,device = 'pdf',path = '/home/multiomics/results/figures/clustering/Group1vsGroup2/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
 rm(list = setdiff(ls(),varKeep))
 invisible(gc())
@@ -3752,8 +3752,8 @@ invisible(gc())
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-if(!dir.exists(paths = '/multiomics/results/figures/clustering/Group3vsGroup4')) {
-  dir.create(path = '/multiomics/results/figures/clustering/Group3vsGroup4',recursive = TRUE)
+if(!dir.exists(paths = '/home/multiomics/results/figures/clustering/Group3vsGroup4')) {
+  dir.create(path = '/home/multiomics/results/figures/clustering/Group3vsGroup4',recursive = TRUE)
 }
 ```
 
@@ -3761,12 +3761,12 @@ if(!dir.exists(paths = '/multiomics/results/figures/clustering/Group3vsGroup4'))
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-ccProt %<-% read_csv(file = '/multiomics/results/consensus_clustering/Group3vsGroup4/proteome/proteome.k=4.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
-ccPhospho %<-% read_csv(file = '/multiomics/results/consensus_clustering/Group3vsGroup4/phosphoproteome/phosphoproteome.k=4.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
-ccRNA %<-% read_csv(file = '/multiomics/results/consensus_clustering/Group3vsGroup4/transcriptome/transcriptome.k=4.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
+ccProt %<-% read_csv(file = '/home/multiomics/results/consensus_clustering/Group3vsGroup4/proteome/proteome.k=4.consensusClass.csv',col_names = c('sample_id','CC.Prot'))
+ccPhospho %<-% read_csv(file = '/home/multiomics/results/consensus_clustering/Group3vsGroup4/phosphoproteome/phosphoproteome.k=4.consensusClass.csv',col_names = c('sample_id','CC.Phospho'))
+ccRNA %<-% read_csv(file = '/home/multiomics/results/consensus_clustering/Group3vsGroup4/transcriptome/transcriptome.k=4.consensusClass.csv',col_names = c('sample_id','CC.RNA'))
 
 ccAll <- full_join(ccProt,ccPhospho) %>% full_join(.,ccRNA)
-write_tsv(x = ccAll,file = '/multiomics/results/design_files/g3vsg4_consensus_clustering.tsv')
+write_tsv(x = ccAll,file = '/home/multiomics/results/design_files/g3vsg4_consensus_clustering.tsv')
 ```
 
 ### Proteome
@@ -3774,9 +3774,9 @@ write_tsv(x = ccAll,file = '/multiomics/results/design_files/g3vsg4_consensus_cl
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_full_g3g4.tsv') %>% 
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_full_g3g4.tsv') %>% 
   left_join(.,ccAll)
 ```
 #### Preprocessing
@@ -3969,9 +3969,9 @@ alluvialPlot <- ccAll %>% ggplot(mapping = aes(axis1=CC.Phospho,axis2=CC.Prot,ax
   geom_stratum() +
   geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
   theme_minimal()
-ggsave2(filename = 'alluvialPlot.pdf',plot = alluvialPlot,device = 'pdf',path = '/multiomics/results/figures/clustering/Group3vsGroup4/',dpi = 1200,compress=TRUE)
+ggsave2(filename = 'alluvialPlot.pdf',plot = alluvialPlot,device = 'pdf',path = '/home/multiomics/results/figures/clustering/Group3vsGroup4/',dpi = 1200,compress=TRUE)
 
-ggsave2(filename = 'kmeans_proteome.pdf',plot = proteinHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/Group3vsGroup4/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
+ggsave2(filename = 'kmeans_proteome.pdf',plot = proteinHeatmapDraw,device = 'pdf',path = '/home/multiomics/results/figures/clustering/Group3vsGroup4/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
 rm(list = setdiff(ls(),varKeep))
 invisible(gc())
@@ -3982,9 +3982,9 @@ invisible(gc())
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_g3g4.tsv') %>% 
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_phospho_g3g4.tsv') %>% 
   left_join(.,ccAll)
 ```
 #### Preprocessing
@@ -4167,7 +4167,7 @@ phosphohp <- Heatmap(matrix = phosphodataNorm,top_annotation = annotationColumn,
 #| echo: !expr params$run
 phosphoHeatmapDraw <- grid.grabExpr(draw(phosphohp,annotation_legend_list = allLegends, heatmap_legend_side = 'bottom', annotation_legend_side = 'right', legend_grouping = 'original')) %>% as.ggplot
 
-ggsave2(filename = 'kmeans_phosphoproteome.pdf',plot = phosphoHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/Group3vsGroup4/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
+ggsave2(filename = 'kmeans_phosphoproteome.pdf',plot = phosphoHeatmapDraw,device = 'pdf',path = '/home/multiomics/results/figures/clustering/Group3vsGroup4/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
 rm(list = setdiff(ls(),varKeep))
 invisible(gc())
@@ -4178,9 +4178,9 @@ invisible(gc())
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/normalization/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_g3g4.tsv') %>% 
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_RNA_g3g4.tsv') %>% 
   left_join(.,ccAll)
 ```
 #### Preprocessing
@@ -4365,7 +4365,7 @@ rnahp <- Heatmap(matrix = rnadataNorm,top_annotation = annotationColumn, name = 
 #| echo: !expr params$run
 rnaHeatmapDraw <- grid.grabExpr(draw(rnahp,annotation_legend_list = allLegends, heatmap_legend_side = 'bottom', annotation_legend_side = 'right', legend_grouping = 'original')) %>% as.ggplot
 
-ggsave2(filename = 'kmeans_transcriptome.pdf',plot = rnaHeatmapDraw,device = 'pdf',path = '/multiomics/results/figures/clustering/Group3vsGroup4/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
+ggsave2(filename = 'kmeans_transcriptome.pdf',plot = rnaHeatmapDraw,device = 'pdf',path = '/home/multiomics/results/figures/clustering/Group3vsGroup4/',dpi = 1200,width = 12,height = 12,units = 'in',compress=TRUE)
 
 rm(list = setdiff(ls(),varKeep))
 invisible(gc())

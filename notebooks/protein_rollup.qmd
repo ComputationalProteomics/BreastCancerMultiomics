@@ -10,6 +10,11 @@ format:
     smooth-scroll: true
 engine: knitr
 ---
+# Clone ProteinRollup repo
+
+```{bash}
+git clone https://github.com/ComputationalProteomics/ProteinRollup.git /home/multiomics/ProteinRollup
+```
 
 # Requires Packages:
 ```{r required packages}
@@ -19,44 +24,48 @@ library(tidyverse)
 library(NormalyzerDE)
 library(argparser)
 library(devtools)
+source('/home/multiomics/ProteinRollup/R/ProteinRollup.R')
 
-if(!requireNamespace("ProteinRollup")){
-  devtools::install_git(url = 'https://github.com/ComputationalProteomics/ProteinRollup.git')
-  library(ProteinRollup)
-}else{
-  library(ProteinRollup)
-}
-source(file = '/multiomics/notebooks/id_sorting.R',chdir = TRUE)
+source(file = '/home/multiomics/notebooks/id_sorting.R',chdir = TRUE)
 ```
 
 # Protein Rollup
 ## Full proteome
 ### Sorting IDs alphabetically
 ```{r fullproteome sorting ids}
-data <- read_tsv(file = '/multiomics/results/normalization/fullproteome/peptide_normalization/CycLoess-normalized.txt') %>%
+data <- read_tsv(file = '/home/multiomics/results/normalization/fullproteome/peptide_normalization/CycLoess-normalized.txt') %>%
   sortIds(data = .,proteinColumn = 'Protein.Ids')
 
-if(!dir.exists(paths = '/multiomics/results/rollup/fullproteome/')) {
-  dir.create(path = '/multiomics/results/rollup/fullproteome/',recursive = TRUE)
+if(!dir.exists(paths = '/home/multiomics/results/rollup/fullproteome/')) {
+  dir.create(path = '/home/multiomics/results/rollup/fullproteome/',recursive = TRUE)
 }
 
-write_tsv(x = data,file = '/multiomics/results/rollup/fullproteome/cycloess_normalized_sorted.tsv')
+write_tsv(x = data,file = '/home/multiomics/results/rollup/fullproteome/cycloess_normalized_sorted.tsv')
 ```
 
 ### Rollup
-```{bash rollup fullproteome}
-Rscript /multiomics/ProteinRollup/R/protein_rollup.R \
-    --rdf_fp /multiomics/results/rollup/fullproteome/cycloess_normalized_sorted.tsv \
-    --ddf_fp /multiomics/results/design_files/mergedDesign_final.tsv \
-    --sample_col sample_id \
-    --protein_col Protein \
-    --out_fp /multiomics/results/rollup/fullproteome/cycloess_Rollup.tsv
+```{r rollup fullproteome}
+# Rscript /home/multiomics/ProteinRollup/run_protein_rollup.R \
+#     --rdf_fp /home/multiomics/results/rollup/fullproteome/cycloess_normalized_sorted.tsv \
+#     --ddf_fp /home/multiomics/results/design_files/mergedDesign_final.tsv \
+#     --sample_col sample_id \
+#     --protein_col Protein \
+#     --out_fp /home/multiomics/results/rollup/fullproteome/cycloess_Rollup.tsv
+  
+design <- read_tsv('/home/multiomics/results/design_files/mergedDesign_final.tsv')
+data <- read_tsv('/home/multiomics/results/rollup/fullproteome/cycloess_normalized_sorted.tsv')
+peptide_mat <- data |> 
+    select(which(colnames(data) %in% design[["sample_id"]])) |> 
+    as.matrix()
+proteinIds <- data[["Protein"]]
+rollupRes <- protein_rollup(protein_ids = proteinIds, pep_mat = peptide_mat)
+write_tsv(x = rollupRes, file = '/home/multiomics/results/rollup/fullproteome/cycloess_Rollup.tsv')
 ```
 
 ### Adding Gene Information
 ```{r add genes fullproteome}
-diaP <- '/multiomics/results/rollup/fullproteome/cycloess_Rollup.tsv'
-diannP <- '/multiomics/results/rollup/fullproteome/cycloess_normalized_sorted.tsv'
+diaP <- '/home/multiomics/results/rollup/fullproteome/cycloess_Rollup.tsv'
+diannP <- '/home/multiomics/results/rollup/fullproteome/cycloess_normalized_sorted.tsv'
 diaData <- read_tsv(diaP)
 diann <- read_tsv(diannP)
 diannReduced <- diann %>% 
@@ -68,34 +77,42 @@ newColNames <- diaDataGenes %>% select(-c(1:6)) %>% colnames(.) %>% str_remove(p
 newColNames <- c(colnames(diaDataGenes)[1:6],newColNames)
 colnames(diaDataGenes) <- newColNames
 
-write_tsv(x = diaDataGenes,file = '/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv')
+write_tsv(x = diaDataGenes,file = '/home/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv')
 ```
 
 ## Phosphoproteome
 ```{r sortids phosphoproteome}
-data <- read_tsv(file = '/multiomics/results/normalization/phosphoproteome/peptide_normalization/CycLoess-normalized.txt') %>%
+data <- read_tsv(file = '/home/multiomics/results/normalization/phosphoproteome/peptide_normalization/CycLoess-normalized.txt') %>%
   sortIds(data = .,proteinColumn = 'Protein.Ids')
 
-if(!dir.exists(paths = '/multiomics/results/rollup/phosphoproteome/')) {
-  dir.create(path = '/multiomics/results/rollup/phosphoproteome/',recursive = TRUE)
+if(!dir.exists(paths = '/home/multiomics/results/rollup/phosphoproteome/')) {
+  dir.create(path = '/home/multiomics/results/rollup/phosphoproteome/',recursive = TRUE)
 }
-write_tsv(x = data,file = '/multiomics/results/rollup/phosphoproteome/cycloess_normalized_sorted.tsv')
+write_tsv(x = data,file = '/home/multiomics/results/rollup/phosphoproteome/cycloess_normalized_sorted.tsv')
 ```
 
 ### Rollup
-```{bash rollup phosphoproteome}
-Rscript /multiomics/ProteinRollup/R/protein_rollup.R \
-    --rdf_fp /multiomics/results/rollup/phosphoproteome/cycloess_normalized_sorted.tsv \
-    --ddf_fp /multiomics/results/design_files/mergedDesign_PHOSPHO_Filtered.tsv \
-    --sample_col sample_id \
-    --protein_col Protein \
-    --out_fp /multiomics/results/rollup/phosphoproteome/cycloess_Rollup.tsv
+```{r rollup phosphoproteome}
+# Rscript /home/multiomics/ProteinRollup/run_protein_rollup.R \
+#     --rdf_fp /home/multiomics/results/rollup/phosphoproteome/cycloess_normalized_sorted.tsv \
+#     --ddf_fp /home/multiomics/results/design_files/mergedDesign_PHOSPHO_Filtered.tsv \
+#     --sample_col sample_id \
+#     --protein_col Protein \
+#     --out_fp /home/multiomics/results/rollup/phosphoproteome/cycloess_Rollup.tsv
+design <- read_tsv('/home/multiomics/results/design_files/mergedDesign_PHOSPHO_Filtered.tsv')
+data <- read_tsv('/home/multiomics/results/rollup/phosphoproteome/cycloess_normalized_sorted.tsv')
+peptide_mat <- data |> 
+    select(which(colnames(data) %in% design[["sample_id"]])) |> 
+    as.matrix()
+proteinIds <- data[["Protein"]]
+rollupRes <- protein_rollup(protein_ids = proteinIds, pep_mat = peptide_mat)
+write_tsv(x = rollupRes, file = '/home/multiomics/results/rollup/phosphoproteome/cycloess_Rollup.tsv')
 ```
 
 ### Adding Gene Information
 ```{r add genes phosphoproteome}
-diaP <- '/multiomics/results/rollup/phosphoproteome/cycloess_Rollup.tsv'
-diannP <- '/multiomics/results/rollup/phosphoproteome/cycloess_normalized_sorted.tsv'
+diaP <- '/home/multiomics/results/rollup/phosphoproteome/cycloess_Rollup.tsv'
+diannP <- '/home/multiomics/results/rollup/phosphoproteome/cycloess_normalized_sorted.tsv'
 diaData <- read_tsv(diaP)
 diann <- read_tsv(diannP)
 diannReduced <- diann %>% 
@@ -107,5 +124,5 @@ newColNames <- diaDataGenes %>% select(-c(1:6)) %>% colnames(.) %>% str_remove(p
 newColNames <- c(colnames(diaDataGenes)[1:6],newColNames)
 colnames(diaDataGenes) <- newColNames
 
-write_tsv(x = diaDataGenes,file = '/multiomics/results/rollup/phosphoproteome/cycloess_Rollup_Genes.tsv')
+write_tsv(x = diaDataGenes,file = '/home/multiomics/results/rollup/phosphoproteome/cycloess_Rollup_Genes.tsv')
 ```

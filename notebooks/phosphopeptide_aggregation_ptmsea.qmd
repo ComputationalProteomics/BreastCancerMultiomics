@@ -16,16 +16,16 @@ editor_options:
 # Output Directory
 
 ```{r}
-if(!dir.exists(paths = '/multiomics/results/phospho_aggregation/')) {
-  dir.create(path = '/multiomics/results/phospho_aggregation/',recursive = TRUE)
+if(!dir.exists(paths = '/home/multiomics/results/phospho_aggregation/')) {
+  dir.create(path = '/home/multiomics/results/phospho_aggregation/',recursive = TRUE)
 }
-outputdir <- '/multiomics/results/phospho_aggregation/'
+outputdir <- '/home/multiomics/results/phospho_aggregation/'
 ```
 
 ```{r}
 library("Biostrings")
 
-fastaFile <- readAAStringSet("/multiomics/data/Sergio_mergedb.fasta")
+fastaFile <- readAAStringSet("/home/multiomics/data/Sergio_mergedb.fasta")
 
 seq_name <- names(fastaFile) 
 seq_name <- sapply(strsplit(seq_name, "\\|"), "[", 2)
@@ -39,7 +39,7 @@ sequence <- paste(fastaFile)
 library(tidyverse)
 
 input_file <- "CycLoess-normalized.txt"
-input_path <- '/multiomics/results/normalization/phosphoproteome/peptide_normalization/'
+input_path <- '/home/multiomics/results/normalization/phosphoproteome/peptide_normalization/'
 diann_df <- read_tsv(paste0(input_path,input_file))
 
 findSite <- function(x){
@@ -71,7 +71,7 @@ findSite <- function(x){
       offset2 <- offsets[2]
       #print(offsets)
       phosphosite=paste(phosphosite, (pos+offset2-2-11), sep=",")
-      residue=paste(residue, str_sub(cleanSeq,offset-1,offset-1), sep=",")
+      residue=paste(residue, str_sub(cleanSeq,offset2-1,offset2-1), sep=",")
       nphos=2
       #print(paste0("second site:",offset2," ", phosphosite))
     }
@@ -127,15 +127,14 @@ diann_df <- cbind(diann_df, Phosphosite)
 diann_df <- cbind(diann_df, Residue)
 diann_df <- cbind(diann_df, N_phos)
 diann_df <- subset(diann_df, Phosphosite>-1)
+
+write_tsv(diann_df,paste0(outputdir,input_file,".phosphopeptides_flanking.tsv"))
+
 diann_df <- separate_rows(diann_df, Phosphosite, Residue, convert = TRUE)
 id <- apply(diann_df[,c("Protein.Group","Phosphosite")],1,flanking)
 diann_df <- cbind(id, diann_df)
 id.flanking <- paste(diann_df$id, "p", sep="-")
 diann_df <- cbind(id.flanking, diann_df)
-
-
-
-write_tsv(diann_df,paste0(outputdir,input_file,".phosphopeptides_flanking.tsv"))
 
 aggregated_df <- diann_df %>%
   group_by(id.flanking) %>%
@@ -149,8 +148,8 @@ write_tsv(aggregated_df,agg_file)
 
 # Generate design file
 ```{r}
-designP <- "/multiomics/results/design_files/design_phospho_g1g2_g1g34.tsv"
-design <- read_tsv("/multiomics/results/design_files/design_phospho_ductal.tsv")
+designP <- "/home/multiomics/results/design_files/design_phospho_g1g2_g1g34.tsv"
+design <- read_tsv("/home/multiomics/results/design_files/design_phospho_ductal.tsv")
 design <- design %>% 
   mutate(Group.Info = replace(Group.Info, Group.Info == "Group3", "Groups34")) %>%
   mutate(Group.Info = replace(Group.Info, Group.Info == "Group4", "Groups34")) %>%
@@ -173,14 +172,6 @@ normalyzerDE(jDEName, designPath = designP, dataPath = agg_file, comparisons = c
 ```
 
 # Prepare GCT file
-
-# Install the cmapR package for gct files if not installed
-
-```{r}
-if (!require("BiocManager", quietly = TRUE))
-    install.packages("BiocManager")
-BiocManager::install("cmapR")
-```
 
 ```{r}
 library(tidyverse)
@@ -222,15 +213,6 @@ write_gct(gct_matrix, gctFile, precision=2, appenddim = FALSE)
 download.file(url = "https://raw.githubusercontent.com/broadinstitute/ssGSEA2.0/refs/heads/master/db/ptmsigdb/v2.0.0/KINASE/ptm.sig.db.KINASE.flanking.human.v2.0.0.gmt", destfile = paste0(outputdir,"ptm.sig.db.KINASE.flanking.human.v2.0.0.gmt"))
 ```
 
-# Install PTM-SEA package if not already installed
-
-```{r}
-if (!require("devtools", quietly = TRUE)){
-  install.packages("devtools")
-}
-devtools::install_github("nicolerg/ssGSEA2")
-```
-
 # Run ssGSEA
 ```{r}
 library(ssGSEA2)
@@ -239,7 +221,7 @@ ptmSeaResults <- "PTM-SEA"
 
 res = run_ssGSEA2(gctFile,
                   output.prefix = ptmSeaResults,
-                  gene.set.databases = "ptm.sig.db.KINASE.flanking.human.v2.0.0.gmt",
+                  gene.set.databases = paste0(outputdir,"ptm.sig.db.KINASE.flanking.human.v2.0.0.gmt"),
                   output.directory = outputdir,
                   sample.norm.type = "none", 
                   weight = 0.75, 
@@ -247,10 +229,10 @@ res = run_ssGSEA2(gctFile,
                   statistic = "area.under.RES",
                   output.score.type = "NES", 
                   nperm = 10000, 
-                  min.overlap = 5, 
+                  min.overlap = 10, 
                   extended.output = TRUE, 
                   global.fdr = FALSE,
-                  log.file = "/tmp/run.log")
+                  log.file = paste0(outputdir,"run.log"))
 
 ```
 
@@ -262,11 +244,13 @@ res <- read_tsv(paste0(outputdir, "/", ptmSeaResults,"-combined.gct"), skip = 2)
 
 comps <- str_replace(comparisons,"-",".")
 fdrcomps <- paste0("fdr.pvalue.",comps)
+setoverlaps <- paste0("Signature.set.overlap.percent.",comps)
 
 filtered <- res %>% 
   filter(if_any(fdrcomps, ~.x < 0.01)) %>%
-     filter(str_detect(id, "^KINASE")) %>%
-        transform(id=str_replace(id,"KINASE-",""))
+  filter(if_any(setoverlaps, ~.x >= 10)) %>%
+  filter(str_detect(id, "^KINASE")) %>%
+  transform(id=str_replace(id,"KINASE-",""))
 ```
 
 
@@ -279,8 +263,10 @@ for (comp in comps)
 {
   fdrp <- paste0("fdr.pvalue.",comp)
   comp1 <- str_replace(comp,"\\.","-")
+  label <- "LN- Recurrence vs no recurrence"
+  if (comp == "Groups34.Group1"){ label <- "LN+ vs LN-"}
   plotTreatments <- plotTreatments +
-   geom_point(mapping = aes(x = .data[[comp1]],y = id,size = .data[[fdrp]],fill = {{ comp }}),shape = 21,alpha=0.85)
+   geom_point(mapping = aes(x = .data[[comp1]],y = id,size = .data[[fdrp]],fill = {{ label }}),shape = 21,alpha=0.85)
 }
 
 plotTreatments <- plotTreatments + 

@@ -1,0 +1,27 @@
+services:
+  analysis_pipeline:
+    image: ghcr.io/computationalproteomics/breastcancermultiomics/multiomics_analysis:latest
+    container_name: multiomics_analysis
+    working_dir: /home/multiomics
+    cpus: 6
+    mem_limit: 12G
+    environment:
+      - HOME=/home/multiomics
+      - PUID=${UID}
+      - PGID=${GID}
+    volumes:
+      - ./results:/home/multiomics/results
+      - ./nextflow_work:/home/multiomics/work
+      - ./notebooks:/home/multiomics/notebooks:ro
+      - ./data/proteomics/phospho/230815_report.pr_matrix.tsv:/home/multiomics/data/proteomics/phospho/230815_report.pr_matrix.tsv:ro
+      - ./data/proteomics/full/230814_report.pr_matrix.tsv:/home/multiomics/data/proteomics/full/230814_report.pr_matrix.tsv:ro
+      - ./data/proteomics/full/230814_report.pg_matrix.tsv:/home/multiomics/data/proteomics/full/230814_report.pg_matrix.tsv:ro
+      - .nextflow:/home/multiomics/.nextflow
+      - .nextflow.log:/home/multiomics/.nextflow.log
+    command: >
+      nextflow -log /home/multiomics/.nextflow.log 
+      run /home/multiomics/notebooks/multiomics_workflow.nf 
+      -w /home/multiomics/work 
+      -c /home/multiomics/notebooks/nextflow.config 
+      -with-dag /home/multiomics/results/flowchart.html 
+      -resume

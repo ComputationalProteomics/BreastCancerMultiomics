@@ -16,22 +16,22 @@ engine: knitr
 library(ConsensusClusterPlus)
 library(tidyverse)
 library(ComplexHeatmap)
-source(file = '~/multiomics/notebooks/filtering.R',chdir = TRUE)
+source(file = '/home/multiomics/notebooks/filtering.R',chdir = TRUE)
 ```
 
 # Consensus Clustering Features
 ```{r}
-if(!dir.exists(paths = '~/multiomics/results/consensus_clustering/features/')) {
-  dir.create(path = '~/multiomics/results/consensus_clustering/features/',recursive = TRUE)
+if(!dir.exists(paths = '/home/multiomics/results/consensus_clustering/features/')) {
+  dir.create(path = '/home/multiomics/results/consensus_clustering/features/',recursive = TRUE)
 }
 ```
 
 ### Proteome
 #### Load Data
 ```{r}
-data <- read_tsv(file = '~/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
   drop_na()
-design <- read_tsv(file = '~/multiomics/results/design_files/design_Full_noPool.tsv')
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_Full_noPool.tsv')
 ```
 
 #### Preprocessing
@@ -48,7 +48,7 @@ colnames(proteinDataReduced) <- make.names(proteinDataFiltered[['Protein.Names']
 
 #### Plotting
 ```{r}
-setwd('~/multiomics/results/consensus_clustering/features/')
+setwd('/home/multiomics/results/consensus_clustering/features/')
 results <-  ConsensusClusterPlus(d = proteinDataReduced,
                                  maxK = 10,
                                  clusterAlg = 'km',
@@ -61,9 +61,9 @@ results <-  ConsensusClusterPlus(d = proteinDataReduced,
 ### Phosphoproteome
 #### Load Data
 ```{r}
-data <- read_tsv(file = '~/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv') %>% 
   drop_na
-design <- read_tsv(file = '~/multiomics/results/design_files/design_phospho_noPool.tsv')
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_phospho_noPool.tsv')
 ```
 #### Preprocessing
 ```{r}
@@ -79,7 +79,7 @@ colnames(phosphoDataReduced) <- make.names(names = phosphoDataFiltered[['Protein
 
 #### Plotting
 ```{r}
-setwd('~/multiomics/results/consensus_clustering/features/')
+setwd('/home/multiomics/results/consensus_clustering/features/')
 results <-  ConsensusClusterPlus(d = phosphoDataReduced,
                                  maxK = 10,
                                  clusterAlg = 'km',
@@ -91,9 +91,9 @@ results <-  ConsensusClusterPlus(d = phosphoDataReduced,
 ### Transcriptome
 #### Load Data
 ```{r}
-data <- read_tsv(file = '~/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
   drop_na
-design <- read_tsv(file = '~/multiomics/results/design_files/design_RNA_noPool.tsv')
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_RNA_noPool.tsv')
 ```
 
 #### Preprocessing
@@ -110,7 +110,7 @@ colnames(rnaDataReduced) <- make.names(names = rnaDataFiltered[['Gene.ID']],uniq
 
 #### Plotting
 ```{r}
-setwd('~/multiomics/results/consensus_clustering/features/')
+setwd('/home/multiomics/results/consensus_clustering/features/')
 results <-  ConsensusClusterPlus(d = rnaDataReduced,
                                  maxK = 10,
                                  clusterAlg = 'km',

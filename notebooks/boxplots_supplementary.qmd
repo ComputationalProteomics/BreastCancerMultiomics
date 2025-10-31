@@ -19,7 +19,7 @@ library(cowplot)
 ```
 
 ```{r Output Directory}
-outputdir <- paste0('/multiomics/results/figures/boxplots/')
+outputdir <- paste0('/home/multiomics/results/figures/boxplots/')
 
 if(!dir.exists(paths = outputdir)) {
   dir.create(path = outputdir,recursive = TRUE)
@@ -30,16 +30,16 @@ if(!dir.exists(paths = outputdir)) {
 
 ```{r}
 design <- list(
-    proteomics = read_tsv('/multiomics/results/design_files/design_Full_noPool.tsv'),
-    phosphoproteomics = read_tsv('/multiomics/results/design_files/design_phospho_noPool.tsv'),
-    transcriptomics = read_tsv('/multiomics/results/design_files/design_RNA_noPool.tsv')
+    proteomics = read_tsv('/home/multiomics/results/design_files/design_Full_noPool.tsv'),
+    phosphoproteomics = read_tsv('/home/multiomics/results/design_files/design_phospho_noPool.tsv'),
+    transcriptomics = read_tsv('/home/multiomics/results/design_files/design_RNA_noPool.tsv')
 )
 ```
 
 # No Special Type vs. Invasive Lobular Carcinoma
 
 ```{r}
-files <- list.files(path = '/multiomics/results/',pattern = 'stats.tsv',recursive = TRUE,include.dirs = TRUE,full.names = TRUE) %>% 
+files <- list.files(path = '/home/multiomics/results/',pattern = 'stats.tsv',recursive = TRUE,include.dirs = TRUE,full.names = TRUE) %>% 
   .[str_detect(.,'DuctalvsLobular/')] %>% 
   .[!str_detect(.,'cluster')]
 
@@ -116,7 +116,7 @@ ggsave(filename = paste0(outputdir,'supplementary_figure_s2.pdf'), plot = plotsD
 
 # Lymph Node Status
 ```{r}
-dataSurv <- read_tsv('/multiomics/results/figures/survival_analysis/DE/AllSamples_noG2/AllSamples_noG2_RFi_event/cox_analysis_res.tsv') |> 
+dataSurv <- read_tsv('/home/multiomics/results/figures/survival_analysis/DE/AllSamples_noG2/AllSamples_noG2_RFi_event/cox_analysis_res.tsv') |> 
     mutate(variable = str_replace_all(string = variable, pattern = '\\.(?=proteomics|phosphoproteomics|transcriptomics)', replacement = '_')) |> 
     filter(p.value_multivariable<0.05) |> 
     mutate(
@@ -129,7 +129,7 @@ dataSurv <- read_tsv('/multiomics/results/figures/survival_analysis/DE/AllSample
             )
         ) |> unlist()
     )
-dataMofa <- read_tsv('/multiomics/results/figures/survival_analysis/MOFA/AllSamples_noG2/AllSamples_noG2_LN_RFi_event/cox_analysis_res.tsv') |> 
+dataMofa <- read_tsv('/home/multiomics/results/figures/survival_analysis/MOFA/AllSamples_noG2/AllSamples_noG2_LN_RFi_event/cox_analysis_res.tsv') |> 
     mutate(variable = str_replace_all(string = variable, pattern = '\\.(?=proteomics|phosphoproteomics|transcriptomics)', replacement = '_')) |> 
     filter(p.value_multivariable<0.05) |> 
     mutate(
@@ -148,7 +148,7 @@ variables <- list(de = dataSurv, mofa = dataMofa) |>
     pull(variable) |> 
     unique()
 
-files <- list.files(path = '/multiomics/results/',pattern = 'stats.tsv',recursive = TRUE,include.dirs = TRUE,full.names = TRUE) %>% 
+files <- list.files(path = '/home/multiomics/results/',pattern = 'stats.tsv',recursive = TRUE,include.dirs = TRUE,full.names = TRUE) %>% 
   .[str_detect(.,'AllSamples_noG2')] %>% 
   .[!str_detect(.,'cluster')]
 
@@ -226,7 +226,7 @@ ggsave(filename = paste0(outputdir,'supplementary_figure_s6.pdf'), plot = plotsL
 
 # Distant Recurrence Event
 ```{r}
-dataSurv <- read_tsv('/multiomics/results/figures/survival_analysis/DE/Group1vsGroup2/Group1vsGroup2_DRFi_event/cox_analysis_res.tsv') |> 
+dataSurv <- read_tsv('/home/multiomics/results/figures/survival_analysis/DE/Group1vsGroup2/Group1vsGroup2_DRFi_event/cox_analysis_res.tsv') |> 
     mutate(variable = str_replace_all(string = variable, pattern = '\\.(?=proteomics|phosphoproteomics|transcriptomics)', replacement = '_')) |> 
     filter(p.value_multivariable<0.05) |> 
     mutate(
@@ -239,7 +239,7 @@ dataSurv <- read_tsv('/multiomics/results/figures/survival_analysis/DE/Group1vsG
             )
         ) |> unlist()
     )
-dataMofa <- read_tsv('/multiomics/results/figures/survival_analysis/MOFA/Group1vsGroup2/Group1vsGroup2_DRFi_event_DRFi_event/cox_analysis_res.tsv') |> 
+dataMofa <- read_tsv('/home/multiomics/results/figures/survival_analysis/MOFA/Group1vsGroup2/Group1vsGroup2_DRFi_event_DRFi_event/cox_analysis_res.tsv') |> 
     mutate(variable = str_replace_all(string = variable, pattern = '\\.(?=proteomics|phosphoproteomics|transcriptomics)', replacement = '_')) |> 
     filter(p.value_multivariable<0.05) |> 
     mutate(
@@ -258,7 +258,7 @@ variables <- list(de = dataSurv, mofa = dataMofa) |>
     pull(variable) |> 
     unique()
 
-files <- list.files(path = '/multiomics/results/',pattern = 'stats.tsv',recursive = TRUE,include.dirs = TRUE,full.names = TRUE) %>% 
+files <- list.files(path = '/home/multiomics/results/',pattern = 'stats.tsv',recursive = TRUE,include.dirs = TRUE,full.names = TRUE) %>% 
   .[str_detect(.,'Group1vsGroup2')] %>% 
   .[!str_detect(.,'cluster')]
 

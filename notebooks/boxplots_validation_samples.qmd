@@ -36,13 +36,13 @@ library(ggpubr)
 ```{r}
 #| eval: !expr (params$comparison!="AllSamples_noG2")
 #Output Directory
-outputdir <- paste0('/multiomics/results/figures/survival_analysis/DE/',params$comparison,'/',params$comparison,'_',params$event,'/')
+outputdir <- paste0('/home/multiomics/results/figures/survival_analysis/DE/',params$comparison,'/',params$comparison,'_',params$event,'/')
 
-files <- list.files(path = '/multiomics/results/',pattern = 'stats.tsv',recursive = TRUE,include.dirs = TRUE,full.names = TRUE) %>% 
+files <- list.files(path = '/home/multiomics/results/',pattern = 'stats.tsv',recursive = TRUE,include.dirs = TRUE,full.names = TRUE) %>% 
   .[str_detect(.,params$comparison)] %>% 
   .[!str_detect(.,'cluster')]
 
-design <- read_tsv(file = '/multiomics/results/design_files/design_multiomics_mofa.tsv')
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_multiomics_mofa.tsv')
 
 if(str_detect(params$comparison,'noG2')){
   design <- design %>% 
@@ -68,7 +68,7 @@ omics_type <- list('_proteomics','_phosphoproteomics','_transcriptomics')
 
 colTypes <- cols("Residue"=col_character(),.default = col_guess())
 
-coxFeats <- list.files(path = '/multiomics/results/figures/survival_analysis/DE/',pattern = 'cox_analysis_res',full.names = TRUE,recursive = TRUE) %>% 
+coxFeats <- list.files(path = '/home/multiomics/results/figures/survival_analysis/DE/',pattern = 'cox_analysis_res',full.names = TRUE,recursive = TRUE) %>% 
   .[str_detect(.,params$comparison)] %>% 
   .[str_detect(.,params$event)] %>% 
   map(function(x){read_tsv(file = x,col_types = colTypes)}) %>% 
@@ -78,7 +78,7 @@ coxFeats <- list.files(path = '/multiomics/results/figures/survival_analysis/DE/
   unlist() %>% 
   unique()
 
-idMap <- list.files(path = "/multiomics/results/figures/survival_analysis/DE/",pattern = "featIDs\\.tsv",full.names = TRUE,recursive = TRUE) %>%
+idMap <- list.files(path = "/home/multiomics/results/figures/survival_analysis/DE/",pattern = "featIDs\\.tsv",full.names = TRUE,recursive = TRUE) %>%
   .[str_detect(.,params$comparison)] %>%
   map(function(x){read_tsv(file = x,col_types = colTypes)}) %>%
   list_rbind() %>%
@@ -167,10 +167,10 @@ dev.off()
 ## Select Features
 ```{r}
 #Output Directory
-outputdir <- paste0("/multiomics/results/figures/survival_analysis/MOFA/",params$comparison,"/",params$comparison,"_",params$outcome,"_",params$event,"/")
+outputdir <- paste0("/home/multiomics/results/figures/survival_analysis/MOFA/",params$comparison,"/",params$comparison,"_",params$outcome,"_",params$event,"/")
 colTypes <- cols("Residue"=col_character(),.default = col_guess())
 
-coxFeats <- list.files(path = '/multiomics/results/figures/survival_analysis/MOFA/',pattern = 'cox_analysis_res',full.names = TRUE,recursive = TRUE) %>% 
+coxFeats <- list.files(path = '/home/multiomics/results/figures/survival_analysis/MOFA/',pattern = 'cox_analysis_res',full.names = TRUE,recursive = TRUE) %>% 
   .[str_detect(.,params$comparison)] %>% 
   .[str_detect(.,params$event)] %>% 
   map(function(x){read_tsv(file = x,col_types = colTypes)}) %>% 
@@ -180,7 +180,7 @@ coxFeats <- list.files(path = '/multiomics/results/figures/survival_analysis/MOF
   unlist() %>% 
   unique()
 
-model <- list.files(path = "/multiomics/results/MOFA/",pattern = "model.RDS",full.names = TRUE,recursive = TRUE) %>% 
+model <- list.files(path = "/home/multiomics/results/MOFA/",pattern = "model.RDS",full.names = TRUE,recursive = TRUE) %>% 
   .[str_detect(.,params$comparison)] %>% 
   read_rds()
 

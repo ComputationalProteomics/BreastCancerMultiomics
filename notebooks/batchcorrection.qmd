@@ -24,8 +24,8 @@ library(limma)
 ## Full proteome
 ### Peptide level
 ```{r}
-data <- read_tsv(file = '/multiomics/results/rollup/fullproteome/cycloess_normalized_sorted.tsv')
-design <- read_tsv(file = '/multiomics/results/design_files/design_Full_noPool.tsv')
+data <- read_tsv(file = '/home/multiomics/results/rollup/fullproteome/cycloess_normalized_sorted.tsv')
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_Full_noPool.tsv')
 
 dataReduced <- data %>% 
   dplyr::select(design$sample_id)
@@ -35,16 +35,16 @@ newData <- data %>%
   select(1:6) %>% 
   bind_cols(.,dataBatchRemoved)
 
-if(!dir.exists(paths = '/multiomics/results/batchcorrection/fullproteome/')) {
-  dir.create(path = '/multiomics/results/batchcorrection/fullproteome/',recursive = TRUE)
+if(!dir.exists(paths = '/home/multiomics/results/batchcorrection/fullproteome/')) {
+  dir.create(path = '/home/multiomics/results/batchcorrection/fullproteome/',recursive = TRUE)
 }
-write_tsv(x = newData,file = '/multiomics/results/batchcorrection/fullproteome/cycloess_peptide_batchcorrected.tsv')
+write_tsv(x = newData,file = '/home/multiomics/results/batchcorrection/fullproteome/cycloess_peptide_batchcorrected.tsv')
 ```
 
 ### Protein level
 ```{r}
-data <- read_tsv(file = '/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv')
-design <- read_tsv(file = '/multiomics/results/design_files/design_Full_noPool.tsv')
+data <- read_tsv(file = '/home/multiomics/results/rollup/fullproteome/cycloess_Rollup_Genes.tsv')
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_Full_noPool.tsv')
 
 dataReduced <- data %>% 
   dplyr::select(design$sample_id)
@@ -54,14 +54,14 @@ newData <- data %>%
   select(1:6) %>% 
   bind_cols(.,dataBatchRemoved)
 
-write_tsv(x = newData,file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
+write_tsv(x = newData,file = '/home/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv')
 ```
 
 ## Phosphoproteome
 ### Peptide level
 ```{r}
-data <- read_tsv(file = '/multiomics/results/rollup/phosphoproteome/cycloess_normalized_sorted.tsv')
-design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_noPool.tsv')
+data <- read_tsv(file = '/home/multiomics/results/rollup/phosphoproteome/cycloess_normalized_sorted.tsv')
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_phospho_noPool.tsv')
 
 dataReduced <- data %>% 
   dplyr::select(design$sample_id)
@@ -71,36 +71,36 @@ newData <- data %>%
   select(1:10) %>% 
   bind_cols(.,dataBatchRemoved)
 
-if(!dir.exists(paths = '/multiomics/results/batchcorrection/phosphoproteome/')) {
-  dir.create(path = '/multiomics/results/batchcorrection/phosphoproteome/',recursive = TRUE)
+if(!dir.exists(paths = '/home/multiomics/results/batchcorrection/phosphoproteome/')) {
+  dir.create(path = '/home/multiomics/results/batchcorrection/phosphoproteome/',recursive = TRUE)
 }
-write_tsv(x = newData,file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv')
+write_tsv(x = newData,file = '/home/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_batchcorrected.tsv')
 ```
 
 #### Charge Aggregation
 ```{r}
-data <- read_tsv(file = '/multiomics/data/proteomics/phospho/phospho_aggregation/Phosphopeptide_CycLoess-normalized.txt.phosphopeptides_flanking.tsv')
-design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_noPool.tsv')
+data <- read_tsv(file = '/home/multiomics/results/phospho_aggregation/CycLoess-normalized.txt.phosphopeptides_flanking.tsv')
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_phospho_noPool.tsv')
 
 dataReduced <- data %>% 
   dplyr::select(design$sample_id)
 
 dataBatchRemoved <- removeBatchEffect(x = dataReduced,batch = design$ms_run_order,batch2 = design$sample_prep_batch,design = design,group = design$Group.Info)
 newData <- data %>% 
-  select(1:10,Phosphosite,Residue) %>% 
+  select(1:Proteotypic,Phosphosite,Residue) %>% 
   bind_cols(.,dataBatchRemoved)
 
-if(!dir.exists(paths = '/multiomics/results/batchcorrection/phosphoproteome/')) {
-  dir.create(path = '/multiomics/results/batchcorrection/phosphoproteome/',recursive = TRUE)
+if(!dir.exists(paths = '/home/multiomics/results/batchcorrection/phosphoproteome/')) {
+  dir.create(path = '/home/multiomics/results/batchcorrection/phosphoproteome/',recursive = TRUE)
 }
-write_tsv(x = newData,file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv')
+write_tsv(x = newData,file = '/home/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv')
 ```
 
 
 ### Protein level
 ```{r}
-data <- read_tsv(file = '/multiomics/results/rollup/phosphoproteome/cycloess_Rollup_Genes.tsv')
-design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_noPool.tsv')
+data <- read_tsv(file = '/home/multiomics/results/rollup/phosphoproteome/cycloess_Rollup_Genes.tsv')
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_phospho_noPool.tsv')
 
 dataReduced <- data %>% 
   dplyr::select(design$sample_id)
@@ -110,5 +110,5 @@ newData <- data %>%
   select(1:6) %>% 
   bind_cols(.,dataBatchRemoved)
 
-write_tsv(x = newData,file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_rollup_genes_batchcorrected.tsv')
+write_tsv(x = newData,file = '/home/multiomics/results/batchcorrection/phosphoproteome/cycloess_rollup_genes_batchcorrected.tsv')
 ```

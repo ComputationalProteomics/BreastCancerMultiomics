@@ -20,23 +20,23 @@ params:
 library(ConsensusClusterPlus)
 library(tidyverse)
 library(ComplexHeatmap)
-source(file = '/multiomics/notebooks/filtering.R',chdir = TRUE)
+source(file = '/home/multiomics/notebooks/filtering.R',chdir = TRUE)
 ```
 
 # Consensus Clustering
 ## Ductal vs Lobular
 ```{r}
-if(!dir.exists(paths = '/multiomics/results/consensus_clustering/DuctalvsLobular/')) {
-  dir.create(path = '/multiomics/results/consensus_clustering/DuctalvsLobular/',recursive = TRUE)
+if(!dir.exists(paths = '/home/multiomics/results/consensus_clustering/DuctalvsLobular/')) {
+  dir.create(path = '/home/multiomics/results/consensus_clustering/DuctalvsLobular/',recursive = TRUE)
 }
 ```
 
 ### Proteome
 #### Load Data
 ```{r}
-data <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
   drop_na()
-design <- read_tsv(file = '/multiomics/results/design_files/design_Full_noPool.tsv')
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_Full_noPool.tsv')
 ```
 
 #### Preprocessing
@@ -53,7 +53,7 @@ proteinDataReduced <- proteinDataFiltered %>%
 
 #### Plotting
 ```{r}
-setwd('/multiomics/results/consensus_clustering/DuctalvsLobular/')
+setwd('/home/multiomics/results/consensus_clustering/DuctalvsLobular/')
 results <-  ConsensusClusterPlus(d = proteinDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
@@ -65,9 +65,9 @@ results <-  ConsensusClusterPlus(d = proteinDataReduced,
 ### Phosphoproteome
 #### Load Data
 ```{r}
-data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_noPool.tsv')
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_phospho_noPool.tsv')
 ```
 
 #### Preprocessing
@@ -84,7 +84,7 @@ phosphoDataReduced <- phosphoDataFiltered %>%
 
 #### Plotting
 ```{r}
-setwd('/multiomics/results/consensus_clustering/DuctalvsLobular/')
+setwd('/home/multiomics/results/consensus_clustering/DuctalvsLobular/')
 results <-  ConsensusClusterPlus(d = phosphoDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
@@ -96,9 +96,9 @@ results <-  ConsensusClusterPlus(d = phosphoDataReduced,
 ### Transcriptome
 #### Load Data
 ```{r}
-data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/normalization/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_noPool.tsv')
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_RNA_noPool.tsv')
 ```
 
 #### Preprocessing
@@ -115,7 +115,7 @@ rnaDataReduced <- rnaDataFiltered %>%
 
 #### Plotting
 ```{r}
-setwd('/multiomics/results/consensus_clustering/DuctalvsLobular/')
+setwd('/home/multiomics/results/consensus_clustering/DuctalvsLobular/')
 results <-  ConsensusClusterPlus(d = rnaDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
@@ -129,8 +129,8 @@ results <-  ConsensusClusterPlus(d = rnaDataReduced,
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-if(!dir.exists(paths = '/multiomics/results/consensus_clustering/AllSamples_noG2/')) {
-  dir.create(path = '/multiomics/results/consensus_clustering/AllSamples_noG2/',recursive = TRUE)
+if(!dir.exists(paths = '/home/multiomics/results/consensus_clustering/AllSamples_noG2/')) {
+  dir.create(path = '/home/multiomics/results/consensus_clustering/AllSamples_noG2/',recursive = TRUE)
 }
 ```
 
@@ -139,9 +139,9 @@ if(!dir.exists(paths = '/multiomics/results/consensus_clustering/AllSamples_noG2
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
   drop_na()
-design <- read_tsv(file = '/multiomics/results/design_files/design_Full_noPool_noG2.tsv')
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_Full_noPool_noG2.tsv')
 ```
 
 #### Preprocessing
@@ -162,7 +162,7 @@ proteinDataReduced <- proteinDataFiltered %>%
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-setwd('/multiomics/results/consensus_clustering/AllSamples_noG2/')
+setwd('/home/multiomics/results/consensus_clustering/AllSamples_noG2/')
 results <-  ConsensusClusterPlus(d = proteinDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
@@ -176,9 +176,9 @@ results <-  ConsensusClusterPlus(d = proteinDataReduced,
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_noPool_noG2.tsv')
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_phospho_noPool_noG2.tsv')
 ```
 
 #### Preprocessing
@@ -199,7 +199,7 @@ phosphoDataReduced <- phosphoDataFiltered %>%
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-setwd('/multiomics/results/consensus_clustering/AllSamples_noG2/')
+setwd('/home/multiomics/results/consensus_clustering/AllSamples_noG2/')
 results <-  ConsensusClusterPlus(d = phosphoDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
@@ -213,9 +213,9 @@ results <-  ConsensusClusterPlus(d = phosphoDataReduced,
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/normalization/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_noPool_noG2.tsv')
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_RNA_noPool_noG2.tsv')
 ```
 
 #### Preprocessing
@@ -236,7 +236,7 @@ rnaDataReduced <- rnaDataFiltered %>%
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-setwd('/multiomics/results/consensus_clustering/AllSamples_noG2/')
+setwd('/home/multiomics/results/consensus_clustering/AllSamples_noG2/')
 results <-  ConsensusClusterPlus(d = rnaDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
@@ -250,8 +250,8 @@ results <-  ConsensusClusterPlus(d = rnaDataReduced,
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-if(!dir.exists(paths = '/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/')) {
-  dir.create(path = '/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/',recursive = TRUE)
+if(!dir.exists(paths = '/home/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/')) {
+  dir.create(path = '/home/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/',recursive = TRUE)
 }
 ```
 
@@ -260,9 +260,9 @@ if(!dir.exists(paths = '/multiomics/results/consensus_clustering/LNposvsLNneg/Du
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
   drop_na()
-design <- read_tsv(file = '/multiomics/results/design_files/design_full_ductal.tsv')
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_full_ductal.tsv')
 ```
 
 ##### Preprocessing
@@ -283,7 +283,7 @@ proteinDataReduced <- proteinDataFiltered %>%
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-setwd('/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/')
+setwd('/home/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/')
 results <-  ConsensusClusterPlus(d = proteinDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
@@ -297,9 +297,9 @@ results <-  ConsensusClusterPlus(d = proteinDataReduced,
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_ductal.tsv')
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_phospho_ductal.tsv')
 ```
 ##### Preprocessing
 ```{r}
@@ -319,7 +319,7 @@ phosphoDataReduced <- phosphoDataFiltered %>%
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-setwd('/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/')
+setwd('/home/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/')
 results <-  ConsensusClusterPlus(d = phosphoDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
@@ -333,9 +333,9 @@ results <-  ConsensusClusterPlus(d = phosphoDataReduced,
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/normalization/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_ductal.tsv')
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_RNA_ductal.tsv')
 ```
 
 ##### Preprocessing
@@ -356,7 +356,7 @@ rnaDataReduced <- rnaDataFiltered %>%
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-setwd('/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/')
+setwd('/home/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal/')
 results <-  ConsensusClusterPlus(d = rnaDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
@@ -370,8 +370,8 @@ results <-  ConsensusClusterPlus(d = rnaDataReduced,
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-if(!dir.exists(paths = '/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal_noG2/')) {
-  dir.create(path = '/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal_noG2/',recursive = TRUE)
+if(!dir.exists(paths = '/home/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal_noG2/')) {
+  dir.create(path = '/home/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal_noG2/',recursive = TRUE)
 }
 ```
 
@@ -380,9 +380,9 @@ if(!dir.exists(paths = '/multiomics/results/consensus_clustering/LNposvsLNneg/Du
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
   drop_na()
-design <- read_tsv(file = '/multiomics/results/design_files/design_full_ductal_noG2.tsv')
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_full_ductal_noG2.tsv')
 ```
 
 ##### Preprocessing
@@ -403,7 +403,7 @@ proteinDataReduced <- proteinDataFiltered %>%
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-setwd('/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal_noG2/')
+setwd('/home/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal_noG2/')
 results <-  ConsensusClusterPlus(d = proteinDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
@@ -417,9 +417,9 @@ results <-  ConsensusClusterPlus(d = proteinDataReduced,
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_ductal_noG2.tsv')
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_phospho_ductal_noG2.tsv')
 ```
 
 ##### Preprocessing
@@ -440,7 +440,7 @@ phosphoDataReduced <- phosphoDataFiltered %>%
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-setwd('/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal_noG2/')
+setwd('/home/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal_noG2/')
 results <-  ConsensusClusterPlus(d = phosphoDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
@@ -454,9 +454,9 @@ results <-  ConsensusClusterPlus(d = phosphoDataReduced,
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/normalization/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_ductal_noG2.tsv')
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_RNA_ductal_noG2.tsv')
 ```
 
 ##### Preprocessing
@@ -477,7 +477,7 @@ rnaDataReduced <- rnaDataFiltered %>%
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-setwd('/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal_noG2/')
+setwd('/home/multiomics/results/consensus_clustering/LNposvsLNneg/Ductal_noG2/')
 results <-  ConsensusClusterPlus(d = rnaDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
@@ -490,8 +490,8 @@ results <-  ConsensusClusterPlus(d = rnaDataReduced,
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-if(!dir.exists(paths = '/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/')) {
-  dir.create(path = '/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/',recursive = TRUE)
+if(!dir.exists(paths = '/home/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/')) {
+  dir.create(path = '/home/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/',recursive = TRUE)
 }
 ```
 
@@ -500,9 +500,9 @@ if(!dir.exists(paths = '/multiomics/results/consensus_clustering/LNposvsLNneg/Lo
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
   drop_na()
-design <- read_tsv(file = '/multiomics/results/design_files/design_full_lobular.tsv')
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_full_lobular.tsv')
 ```
 
 ##### Preprocessing
@@ -523,7 +523,7 @@ proteinDataReduced <- proteinDataFiltered %>%
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-setwd('/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/')
+setwd('/home/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/')
 results <-  ConsensusClusterPlus(d = proteinDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
@@ -537,9 +537,9 @@ results <-  ConsensusClusterPlus(d = proteinDataReduced,
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_lobular.tsv')
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_phospho_lobular.tsv')
 ```
 ##### Preprocessing
 ```{r}
@@ -559,7 +559,7 @@ phosphoDataReduced <- phosphoDataFiltered %>%
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-setwd('/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/')
+setwd('/home/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/')
 results <-  ConsensusClusterPlus(d = phosphoDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
@@ -573,9 +573,9 @@ results <-  ConsensusClusterPlus(d = phosphoDataReduced,
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/normalization/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_lobular.tsv')
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_RNA_lobular.tsv')
 ```
 
 ##### Preprocessing
@@ -596,7 +596,7 @@ rnaDataReduced <- rnaDataFiltered %>%
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-setwd('/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/')
+setwd('/home/multiomics/results/consensus_clustering/LNposvsLNneg/Lobular/')
 results <-  ConsensusClusterPlus(d = rnaDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
@@ -609,8 +609,8 @@ results <-  ConsensusClusterPlus(d = rnaDataReduced,
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-if(!dir.exists(paths = '/multiomics/results/consensus_clustering/Group1vsGroup2/')) {
-  dir.create(path = '/multiomics/results/consensus_clustering/Group1vsGroup2/',recursive = TRUE)
+if(!dir.exists(paths = '/home/multiomics/results/consensus_clustering/Group1vsGroup2/')) {
+  dir.create(path = '/home/multiomics/results/consensus_clustering/Group1vsGroup2/',recursive = TRUE)
 }
 ```
 
@@ -619,9 +619,9 @@ if(!dir.exists(paths = '/multiomics/results/consensus_clustering/Group1vsGroup2/
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
   drop_na()
-design <- read_tsv(file = '/multiomics/results/design_files/design_full_g1g2.tsv')
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_full_g1g2.tsv')
 ```
 
 #### Preprocessing
@@ -642,7 +642,7 @@ proteinDataReduced <- proteinDataFiltered %>%
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-setwd('/multiomics/results/consensus_clustering/Group1vsGroup2/')
+setwd('/home/multiomics/results/consensus_clustering/Group1vsGroup2/')
 results <-  ConsensusClusterPlus(d = proteinDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
@@ -656,9 +656,9 @@ results <-  ConsensusClusterPlus(d = proteinDataReduced,
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_g1g2.tsv')
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_phospho_g1g2.tsv')
 ```
 
 #### Preprocessing
@@ -679,7 +679,7 @@ phosphoDataReduced <- phosphoDataFiltered %>%
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-setwd('/multiomics/results/consensus_clustering/Group1vsGroup2/')
+setwd('/home/multiomics/results/consensus_clustering/Group1vsGroup2/')
 results <-  ConsensusClusterPlus(d = phosphoDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
@@ -693,9 +693,9 @@ results <-  ConsensusClusterPlus(d = phosphoDataReduced,
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/normalization/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_g1g2.tsv')
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_RNA_g1g2.tsv')
 ```
 
 #### Preprocessing
@@ -716,7 +716,7 @@ rnaDataReduced <- rnaDataFiltered %>%
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-setwd('/multiomics/results/consensus_clustering/Group1vsGroup2/')
+setwd('/home/multiomics/results/consensus_clustering/Group1vsGroup2/')
 results <-  ConsensusClusterPlus(d = rnaDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
@@ -729,8 +729,8 @@ results <-  ConsensusClusterPlus(d = rnaDataReduced,
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-if(!dir.exists(paths = '/multiomics/results/consensus_clustering/Group3vsGroup4/')) {
-  dir.create(path = '/multiomics/results/consensus_clustering/Group3vsGroup4/',recursive = TRUE)
+if(!dir.exists(paths = '/home/multiomics/results/consensus_clustering/Group3vsGroup4/')) {
+  dir.create(path = '/home/multiomics/results/consensus_clustering/Group3vsGroup4/',recursive = TRUE)
 }
 ```
 
@@ -739,9 +739,9 @@ if(!dir.exists(paths = '/multiomics/results/consensus_clustering/Group3vsGroup4/
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/batchcorrection/fullproteome/cycloess_rollup_genes_batchcorrected.tsv') %>% 
   drop_na()
-design <- read_tsv(file = '/multiomics/results/design_files/design_full_g3g4.tsv')
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_full_g3g4.tsv')
 ```
 
 #### Preprocessing
@@ -762,7 +762,7 @@ proteinDataReduced <- proteinDataFiltered %>%
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-setwd('/multiomics/results/consensus_clustering/Group3vsGroup4/')
+setwd('/home/multiomics/results/consensus_clustering/Group3vsGroup4/')
 results <-  ConsensusClusterPlus(d = proteinDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
@@ -776,9 +776,9 @@ results <-  ConsensusClusterPlus(d = proteinDataReduced,
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/batchcorrection/phosphoproteome/cycloess_peptide_flanking_batchcorrected.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_phospho_g3g4.tsv')
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_phospho_g3g4.tsv')
 ```
 
 #### Preprocessing
@@ -799,7 +799,7 @@ phosphoDataReduced <- phosphoDataFiltered %>%
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-setwd('/multiomics/results/consensus_clustering/Group3vsGroup4/')
+setwd('/home/multiomics/results/consensus_clustering/Group3vsGroup4/')
 results <-  ConsensusClusterPlus(d = phosphoDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',
@@ -813,9 +813,9 @@ results <-  ConsensusClusterPlus(d = phosphoDataReduced,
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-data <- read_tsv(file = '/multiomics/data/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
+data <- read_tsv(file = '/home/multiomics/results/normalization/transcriptomics/genematrix_adjusted_cycloess.tsv') %>% 
   drop_na
-design <- read_tsv(file = '/multiomics/results/design_files/design_RNA_g3g4.tsv')
+design <- read_tsv(file = '/home/multiomics/results/design_files/design_RNA_g3g4.tsv')
 ```
 
 #### Preprocessing
@@ -836,7 +836,7 @@ rnaDataReduced <- rnaDataFiltered %>%
 ```{r}
 #| eval: !expr params$run
 #| echo: !expr params$run
-setwd('/multiomics/results/consensus_clustering/Group3vsGroup4/')
+setwd('/home/multiomics/results/consensus_clustering/Group3vsGroup4/')
 results <-  ConsensusClusterPlus(d = rnaDataReduced,
                                  maxK = 12,
                                  clusterAlg = 'pam', distance = 'pearson',

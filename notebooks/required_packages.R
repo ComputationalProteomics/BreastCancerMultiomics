@@ -1,6 +1,20 @@
-# Required packages
+# Ensure 'renv' and 'pak' are installed
+if (!requireNamespace("renv", quietly = TRUE)) {
+  install.packages("renv", repos = getOption("repos"), dependencies = TRUE)
+}
+if (!requireNamespace("pak", quietly = TRUE)) {
+  install.packages("pak", repos = getOption("repos"), dependencies = TRUE)
+}
 
-install.packages(pkgs = 'pak',clean = TRUE,quiet = TRUE,dependencies = TRUE)
+# Restore packages from renv lockfile
+renv::restore(
+  lockfile = '/home/multiomics/data/renv/renv.lock',
+  prompt = FALSE,
+  # EXCLUDE the BiocStyle package from the renv restore process:
+  exclude = c('BiocStyle', 'DOSE', 'GOSemSim')
+)
+
+renv::install(packages = c('bioc::BiocStyle@2.32.0', 'bioc::DOSE@3.30.1', 'GOSemSim@2.30.0'))
 
 packages <- c(
   'quarto',
@@ -19,7 +33,6 @@ packages <- c(
   'factoextra',
   'gprofiler2',
   'BiocManager',
-  'tidymodels',
   'censored',
   'glmnet',
   'survival',
@@ -45,18 +58,21 @@ packages <- c(
   'Biostrings',
   'cmapR',
   'nicolerg/ssGSEA2',
-  'openxlsx')
+  'openxlsx',
+  'outliers',
+  'matrixStats')
 
 
+missing <- packages[!vapply(packages, requireNamespace, logical(1), quietly = TRUE)]
+if(length(missing)) {
+  message("Installing missing packages with pak: ", paste(missing, collapse = ", "))
 
-packageCheckInstall <- function(x){
-  if(!require(x,quietly = FALSE,character.only = TRUE)){
-    pak::pkg_install(pkg = x,ask = FALSE,dependencies = TRUE)
+  pak::pkg_install(missing, upgrade = FALSE, ask = FALSE)
+
+  if (length(missing) > 0) {
+      message("Updating renv.lock with newly installed packages.")
+      renv::snapshot(prompt = FALSE)
   }
 }
-
-
-lapply(X = packages,FUN = packageCheckInstall)
-BiocManager::install("preprocessCore", configure.args = c(preprocessCore = "--disable-threading"), force= TRUE, update=TRUE, type = "source")
 
 pak::pak_cleanup(package_cache = TRUE,metadata_cache = TRUE,force = TRUE)

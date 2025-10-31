@@ -21,7 +21,13 @@ library(tidyverse)
 # Immuneinfiltration data
 ## General variables and functions
 ```{r}
-dirP <- '/multiomics/data/Immune_infiltration/'
+dirP <- '/home/multiomics/data/Immune_infiltration/'
+outputdir <- '/home/multiomics/results/immune_infiltration/'
+
+if(!dir.exists(paths = outputdir)) {
+  dir.create(path = outputdir,recursive = TRUE)
+}
+
 calZScore <- function(data){
   zScore <- function(x){
     (x-mean(c_across(starts_with('S0'))))/sd(c_across(starts_with('S0')))
@@ -55,7 +61,7 @@ epicdata <- purrr::map(dataEpic,calZScore) %>%
   dplyr::mutate(across(starts_with('S0'),~na_if(.x,NaN))) %>% 
   dplyr::select(c('cell_type',dplyr::starts_with('S0')))
 
-write_tsv(x = epicdata,file = paste0(dirP,'epic_aggregated.tsv'))
+write_tsv(x = epicdata,file = paste0(outputdir,'epic_aggregated.tsv'))
 ```
 
 ## CIBERSORTX
@@ -74,13 +80,13 @@ ciberData <- purrr::map(dataCibersort,calZScore) %>%
   dplyr::mutate(across(starts_with('S0'),~na_if(.x,NaN))) %>% 
   dplyr::select(c('cell_type',dplyr::starts_with('S0')))
 
-write_tsv(x = ciberData,file = paste0(dirP,'cibersortx_aggregated.tsv'))
+write_tsv(x = ciberData,file = paste0(outputdir,'cibersortx_aggregated.tsv'))
 ```
 
 ## Combining both datasets
 ```{r}
 combinedImmun <- bind_rows(epicdata,ciberData)
-write_tsv(x = combinedImmun,file = paste0(dirP,'combined_immuneinfiltration.tsv'))
+write_tsv(x = combinedImmun,file = paste0(outputdir,'combined_immuneinfiltration.tsv'))
 ```
 
 
@@ -94,7 +100,7 @@ sampleName <- hisscore[["Name"]]
 hisscore <- hisscore %>% select(-c(1:3)) %>% t %>% as_tibble() %>% mutate(.,score=score,.before = 1)
 colnames(hisscore) <- c('score',sampleName)
 
-write_tsv(x = hisscore,file = paste0(dirP,'hisscore_zscore.tsv'))
+write_tsv(x = hisscore,file = paste0(outputdir,'hisscore_zscore.tsv'))
 ```
 
 

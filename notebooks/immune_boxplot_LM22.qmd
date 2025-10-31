@@ -22,8 +22,8 @@ library(ggplot2)
 
 # Load Required Data
 ```{r}
-immuneFeat <- read_tsv(file = '/multiomics/data/Immune_infiltration/CIBERSORTx_Job41_Results_transcriptomics_LM22-absolute.txt')
-design <- read_tsv(file = "/multiomics/results/design_files/ductalvslobular_consensus_clustering.tsv")
+immuneFeat <- read_tsv(file = '/home/multiomics/data/Immune_infiltration/CIBERSORTx_Job41_Results_transcriptomics_LM22-absolute.txt')
+design <- read_tsv(file = "/home/multiomics/results/design_files/ductalvslobular_consensus_clustering.tsv")
 ```
 
 # Data Preprocessing
@@ -74,6 +74,6 @@ plot <- ggdotplot(data = immuneFeat_process,x = "CC.Prot",
   ylab(label = NULL)+
   xlab(label = NULL)
 
-ggsave(filename = "LM22_boxplot.pdf",plot = plot,device = "pdf",path = "/multiomics/results/figures/immune_infiltration",height = 20,width = 15,units = "in",dpi = 600,create.dir = TRUE)
+ggsave(filename = "LM22_boxplot.pdf",plot = plot,device = "pdf",path = "/home/multiomics/results/figures/immune_infiltration",height = 20,width = 15,units = "in",dpi = 600,create.dir = TRUE)
 ```
 

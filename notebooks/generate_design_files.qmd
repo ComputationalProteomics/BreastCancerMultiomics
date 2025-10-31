@@ -11,38 +11,38 @@ format:
     message: false
 engine: knitr
 params:
-  ref_design: '/multiomics/data/base_design.tsv'
-  hiscore_data: '/multiomics/data/Immune_infiltration/HisScoreComplete.tsv'
-  ref_design_hisscore: '/multiomics/results/design_files/mergedDesign_ref_hisscore.tsv'
-  proteome_design: '/multiomics/data/proteomics/full/sample_metadata_full.txt'
-  phospho_design: '/multiomics/data/proteomics/phospho/sample_metadata_phospho.tsv'
-  phospho_data: '/multiomics/data/proteomics/phospho/230815_report.pr_matrix.tsv'
-  proteome_out: '/multiomics/results/design_files/mergedDesign_final.tsv'
-  proteome_out_filtered: '/multiomics/results/design_files/mergedDesign_final_filtered.tsv'
-  phospho_out: '/multiomics/results/design_files/mergedDesign_PHOSPHO_final.tsv'
-  phospho_out_filtered: '/multiomics/results/design_files/mergedDesign_PHOSPHO_Filtered.tsv'
-  proteome_noPool: '/multiomics/results/design_files/design_Full_noPool.tsv'
-  phospho_noPool: '/multiomics/results/design_files/design_phospho_noPool.tsv'
-  transcriptome_noPool: '/multiomics/results/design_files/design_RNA_noPool.tsv'
-  proteome_noPool_noG2: '/multiomics/results/design_files/design_Full_noPool_noG2.tsv'
-  phospho_noPool_noG2: '/multiomics/results/design_files/design_phospho_noPool_noG2.tsv'
-  transcriptome_noPool_noG2: '/multiomics/results/design_files/design_RNA_noPool_noG2.tsv'
-  proteome_ductal: '/multiomics/results/design_files/design_full_ductal.tsv'
-  phospho_ductal: '/multiomics/results/design_files/design_phospho_ductal.tsv'
-  transcriptome_ductal: '/multiomics/results/design_files/design_RNA_ductal.tsv'
-  proteome_ductal_noG2: '/multiomics/results/design_files/design_full_ductal_noG2.tsv'
-  phospho_ductal_noG2: '/multiomics/results/design_files/design_phospho_ductal_noG2.tsv'
-  transcriptome_ductal_noG2: '/multiomics/results/design_files/design_RNA_ductal_noG2.tsv'
-  proteome_lobular: '/multiomics/results/design_files/design_full_lobular.tsv'
-  phospho_lobular: '/multiomics/results/design_files/design_phospho_lobular.tsv'
-  transcriptome_lobular: '/multiomics/results/design_files/design_RNA_lobular.tsv'
-  multiomics_mofa: '/multiomics/results/design_files/design_multiomics_mofa.tsv'
-  proteome_g1g2: '/multiomics/results/design_files/design_full_g1g2.tsv'
-  phospho_g1g2: '/multiomics/results/design_files/design_phospho_g1g2.tsv'
-  transcriptome_g1g2: '/multiomics/results/design_files/design_RNA_g1g2.tsv'
-  proteome_g3g4: '/multiomics/results/design_files/design_full_g3g4.tsv'
-  phospho_g3g4: '/multiomics/results/design_files/design_phospho_g3g4.tsv'
-  transcriptome_g3g4: '/multiomics/results/design_files/design_RNA_g3g4.tsv'
+  ref_design: '/home/multiomics/results/design_files/base_design.tsv'
+  hiscore_data: '/home/multiomics/data/Immune_infiltration/HisScoreComplete.tsv'
+  ref_design_hisscore: '/home/multiomics/results/design_files/mergedDesign_ref_hisscore.tsv'
+  proteome_design: '/home/multiomics/data/proteomics/full/sample_metadata_full.tsv'
+  phospho_design: '/home/multiomics/data/proteomics/phospho/sample_metadata_phospho.tsv'
+  phospho_data: '/home/multiomics/data/proteomics/phospho/230815_report.pr_matrix.tsv'
+  proteome_out: '/home/multiomics/results/design_files/mergedDesign_final.tsv'
+  proteome_out_filtered: '/home/multiomics/results/design_files/mergedDesign_final_filtered.tsv'
+  phospho_out: '/home/multiomics/results/design_files/mergedDesign_PHOSPHO_final.tsv'
+  phospho_out_filtered: '/home/multiomics/results/design_files/mergedDesign_PHOSPHO_Filtered.tsv'
+  proteome_noPool: '/home/multiomics/results/design_files/design_Full_noPool.tsv'
+  phospho_noPool: '/home/multiomics/results/design_files/design_phospho_noPool.tsv'
+  transcriptome_noPool: '/home/multiomics/results/design_files/design_RNA_noPool.tsv'
+  proteome_noPool_noG2: '/home/multiomics/results/design_files/design_Full_noPool_noG2.tsv'
+  phospho_noPool_noG2: '/home/multiomics/results/design_files/design_phospho_noPool_noG2.tsv'
+  transcriptome_noPool_noG2: '/home/multiomics/results/design_files/design_RNA_noPool_noG2.tsv'
+  proteome_ductal: '/home/multiomics/results/design_files/design_full_ductal.tsv'
+  phospho_ductal: '/home/multiomics/results/design_files/design_phospho_ductal.tsv'
+  transcriptome_ductal: '/home/multiomics/results/design_files/design_RNA_ductal.tsv'
+  proteome_ductal_noG2: '/home/multiomics/results/design_files/design_full_ductal_noG2.tsv'
+  phospho_ductal_noG2: '/home/multiomics/results/design_files/design_phospho_ductal_noG2.tsv'
+  transcriptome_ductal_noG2: '/home/multiomics/results/design_files/design_RNA_ductal_noG2.tsv'
+  proteome_lobular: '/home/multiomics/results/design_files/design_full_lobular.tsv'
+  phospho_lobular: '/home/multiomics/results/design_files/design_phospho_lobular.tsv'
+  transcriptome_lobular: '/home/multiomics/results/design_files/design_RNA_lobular.tsv'
+  multiomics_mofa: '/home/multiomics/results/design_files/design_multiomics_mofa.tsv'
+  proteome_g1g2: '/home/multiomics/results/design_files/design_full_g1g2.tsv'
+  phospho_g1g2: '/home/multiomics/results/design_files/design_phospho_g1g2.tsv'
+  transcriptome_g1g2: '/home/multiomics/results/design_files/design_RNA_g1g2.tsv'
+  proteome_g3g4: '/home/multiomics/results/design_files/design_full_g3g4.tsv'
+  phospho_g3g4: '/home/multiomics/results/design_files/design_phospho_g3g4.tsv'
+  transcriptome_g3g4: '/home/multiomics/results/design_files/design_RNA_g3g4.tsv'
 ---
 
 # Requires Packages:
@@ -52,8 +52,8 @@ params:
 library(tidyverse)
 ```
 ```{r}
-if(!dir.exists(paths = '/multiomics/results/design_files/')) {
-  dir.create(path = '/multiomics/results/design_files/',recursive = TRUE)
+if(!dir.exists(paths = '/home/multiomics/results/design_files/')) {
+  dir.create(path = '/home/multiomics/results/design_files/',recursive = TRUE)
 }
 ```
 
@@ -74,7 +74,8 @@ referenceDesign <- read_tsv(file = params$ref_design_hisscore,col_names = TRUE)
 batchDesign <- read_tsv(file = params$proteome_design) %>% 
   mutate(across(.cols = where(is.character),.fns = ~str_replace_all(string = .x,pattern = '\\-',replacement = '\\_')))
 
-mergedDesign <- left_join(x = batchDesign,y = referenceDesign, by= join_by(sample_id==Sample), keep=TRUE)
+mergedDesign <- left_join(x = batchDesign,y = referenceDesign, by= join_by(sample_id==Sample), keep=TRUE) |> 
+  mutate(Group.Info = Group.Info |> replace_na('Pool'))
 write_tsv(x = mergedDesign,file = params$proteome_out)
 
 samplesToRemove <- c('S000785','S003045','S002208','S000621','S000454')
@@ -91,7 +92,8 @@ write_tsv(x = designFiltered,file = params$proteome_out_filtered)
 referenceDesign <- read_tsv(file = params$ref_design_hisscore, col_names = TRUE)
 designPhospho <- read_tsv(file = params$phospho_design) %>% 
   mutate(across(.cols = where(is.character),.fns = ~str_replace_all(string = .x,pattern = '\\-',replacement = '\\_')))
-mergedDesign <- left_join(x = designPhospho,y = referenceDesign, by= join_by(sample_id==Sample), keep=TRUE)
+mergedDesign <- left_join(x = designPhospho,y = referenceDesign, by= join_by(sample_id==Sample), keep=TRUE) |> 
+  mutate(Group.Info = Group.Info |> replace_na('Pool'))
 
 data <- read_tsv(file = params$phospho_data) %>% 
   mutate(across(where(is.double),~na_if(.,0.0))) %>% 
@@ -261,7 +263,7 @@ write_tsv(x = newDesign,file = params$transcriptome_lobular)
 ```{r}
 designprotein <- read_tsv(file = params$proteome_noPool)
 designphospho <- read_tsv(file = params$phospho_noPool)
-designMix <- inner_join(x = designprotein,y = designphospho,by = colnames(designphospho)[-c(1,2,4:6,128)])
+designMix <- inner_join(x = designprotein,y = designphospho,by = colnames(designphospho)[!(colnames(designphospho) %in% c("file_name", "ms_run_order", "type", "sample_prep_batch", "Precursors"))])
 
 write_tsv(x = designMix,file = params$multiomics_mofa)
 ```

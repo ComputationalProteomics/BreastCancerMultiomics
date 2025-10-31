@@ -17,11 +17,18 @@ library(tidyverse)
 library(gtsummary)
 library(gt)
 library(webshot2)
+library(broom)
+```
+
+```{r}
+if(!dir.exists(paths = '/home/multiomics/results/figures')) {
+  dir.create(path = '/home/multiomics/results/figures',recursive = TRUE)
+}
 ```
 
 # Import Data
 ```{r}
-data <- read_tsv(file = '/multiomics/results/design_files/mergedDesign_ref_hisscore.tsv') |> 
+data <- read_tsv(file = '/home/multiomics/results/design_files/mergedDesign_ref_hisscore.tsv') |> 
     filter(!Sample %in% c('S008448', 'S008597')) |>  # Excluded because stock tubes were not available
     select('Age (years)'=`Age.(5-year.range,.e.g.,.35(31-35),.40(36-40),.45(41-45).etc.)`,'Tumor Size (mm)'=Size.mm,LN,PR,NHG,'Histological Subtype'=InvCa.type, Group = Group.Info) |>
     arrange(Group) |> 
@@ -38,5 +45,5 @@ table1Clinic <- data |>
     add_overall() |> 
     as_gt()
 
-gtsave(data = table1Clinic, filename = 'table1_patient_tumor_characteristics.html', path = '/multiomics/results/figures' )
+gtsave(data = table1Clinic, filename = 'table1_patient_tumor_characteristics.html', path = '/home/multiomics/results/figures' )
 ```

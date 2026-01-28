@@ -66,17 +66,17 @@ diann_search_results_proteomics.zip
 
 3. 7zip might be required to extract only the required files for the analysis
 
-On macOS:
+    On macOS:
 
-```bash
-brew install p7zip
-```
+    ```bash
+    brew install p7zip
+    ```
 
-On Linux (Ubuntu/Debian):
+    On Linux (Ubuntu/Debian):
 
-```bash
-sudo apt install p7zip-full
-```
+    ```bash
+    sudo apt install p7zip-full
+    ```
 
 4. Extract the data files
 
@@ -104,6 +104,7 @@ PUID=$(id -u) PGID=$(id -g) docker compose -f BreastCancerMultiomics/docker-comp
 ## Citation
 
 If you use this repository or its contents, please cite:
+
 ```bash
 Mosquim Junior, S., Zamore, M., Vallon-Christersson, J. et al. Multiomic profiling of ER-positive HER2-negative breast cancer reveals markers associated with metastatic spread. Breast Cancer Res 28, 12 (2026). https://doi.org/10.1186/s13058-025-02173-9
 ```
